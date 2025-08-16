@@ -1,5 +1,6 @@
 {
   "expo": {
+    "assetBundlePatterns": ["**/*"],
     "name": "boxxp",
     "slug": "boxxp",
     "version": "1.0.0",
@@ -24,6 +25,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
