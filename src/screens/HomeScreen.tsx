@@ -1,14 +1,12 @@
 import React from 'react';
-import { SafeAreaView, StyleSheet, View } from 'react-native';
+import { SafeAreaView, StyleSheet } from 'react-native';
 import {colors} from "../theme/theme";
-import T from "../theme/T";
+import {Header} from "../theme/T";
 
 export default function HomeScreen() {
     return (
         <SafeAreaView style={styles.safeArea}>
-            <View style={[styles.container, { padding: 16 }]}>
-                <T style={{ fontSize: 60, color: colors.text }}>BOX XP+</T>
-            </View>
+            <Header title={"BOX XP+"}/>
         </SafeAreaView>
     );
 }

@@ -3,6 +3,7 @@ import RootNavigator from "./src/navigation/RootNavigator";
 import React from "react";
 import {useFonts} from "expo-font";
 import {ThemeProvider} from "./src/theme/ThemeProvider";
+import {SafeAreaProvider} from "react-native-safe-area-context";
 
 export default function App() {
     const [fontsLoaded] = useFonts({
@@ -15,7 +16,9 @@ export default function App() {
 
     return(
         <ThemeProvider>
-            <RootNavigator />
+            <SafeAreaProvider>
+                <RootNavigator />
+            </SafeAreaProvider>
         </ThemeProvider>
     );
 }
