@@ -2,6 +2,7 @@ import 'react-native-gesture-handler'
 import RootNavigator from "./src/navigation/RootNavigator";
 import React from "react";
 import {useFonts} from "expo-font";
+import {ThemeProvider} from "./src/theme/ThemeProvider";
 
 export default function App() {
     const [fontsLoaded] = useFonts({
@@ -12,5 +13,9 @@ export default function App() {
         return null;
     }
 
-    return <RootNavigator/>
+    return(
+        <ThemeProvider>
+            <RootNavigator />
+        </ThemeProvider>
+    );
 }
