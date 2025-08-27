@@ -2,7 +2,9 @@ import {StyleSheet} from "react-native";
 
 export const colors = {
     text: '#FFFF00',
-    background: '#00008B'
+    background: '#00008B',
+    signIn: '#160733',
+    offWhite: '#EFE9FC',
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
@@ -28,19 +30,11 @@ export const sharedStyle = StyleSheet.create({
         paddingHorizontal: spacing.md,
         paddingVertical: spacing.md
     },
-    headerLeft: {
-        width: 100,
-        height: 100,
-        justifyContent: 'center',
-        alignItems: 'flex-end'
-    },
     headerCenter: {
+        flexDirection: 'row',
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center'
-    },
-    headerRight: {
-        width: 40
     },
     headerTitle: {
         fontFamily: fonts.heading,

@@ -10,6 +10,10 @@ export default function T(props: Props) {
     return (<Text {...props} style={[{ fontFamily: 'FugazOne' }, props.style]} />);
 }
 
+export function BodyText(props: Props) {
+    return (<Text {...props} style={[{ fontFamily: 'DMSans' }, props.style, { fontWeight: 600}]} />);
+}
+
 export function Header({ title }: { title: string }) {
     const nav = useNavigation<any>();
     const route = useRoute();
@@ -17,16 +21,14 @@ export function Header({ title }: { title: string }) {
 
     return (
         <View style={sharedStyle.headerRow}>
-            <Pressable
-                onPress={() => { if (!isHome) nav.navigate('Home'); }}
-                disabled={isHome}
-                style={sharedStyle.headerLeft}
-                hitSlop={8}
-            >
-                <Logo width={70} height={70} />
-            </Pressable>
-
             <View style={sharedStyle.headerCenter}>
+                <Pressable
+                    onPress={() => { if (!isHome) nav.navigate('Home'); }}
+                    disabled={isHome}
+                    hitSlop={8}
+                >
+                    <Logo width={70} height={70} />
+                </Pressable>
                 <T
                     style={sharedStyle.headerTitle}
                     numberOfLines={1}
@@ -36,8 +38,6 @@ export function Header({ title }: { title: string }) {
                 {title}
                 </T>
             </View>
-
-            <View style={sharedStyle.headerRight}/>
         </View>
-    )
+    );
 }

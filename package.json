@@ -30,7 +30,8 @@
     "react-native-svg": "15.11.2",
     "react-native-svg-transformer": "^1.5.1",
     "react-native-web": "^0.20.0",
-    "zustand": "^5.0.7"
+    "zustand": "^5.0.7",
+    "expo-auth-session": "~6.2.1"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
