@@ -11,7 +11,7 @@ export default function T(props: Props) {
 }
 
 export function BodyText(props: Props) {
-    return (<Text {...props} style={[{ fontFamily: 'DMSans' }, props.style, { fontWeight: 600}]} />);
+    return (<Text {...props} style={[{ fontFamily: 'DMSans' }, props.style]} />);
 }
 
 export function Header({ title }: { title: string }) {

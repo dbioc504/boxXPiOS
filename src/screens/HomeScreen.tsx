@@ -25,7 +25,7 @@ export default function HomeScreen() {
     );
 }
 
-const signInBtnStyles = StyleSheet.create({
+export const signInBtnStyles = StyleSheet.create({
     container: {
         display: 'flex',
         borderRadius: 25,
