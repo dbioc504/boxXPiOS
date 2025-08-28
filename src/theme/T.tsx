@@ -6,7 +6,7 @@ import Logo from '../../assets/bxpLogo.svg'
 
 type Props = React.ComponentProps<typeof Text>;
 
-export default function T(props: Props) {
+export function T(props: Props) {
     return (<Text {...props} style={[{ fontFamily: 'FugazOne' }, props.style]} />);
 }
 
@@ -27,7 +27,7 @@ export function Header({ title }: { title: string }) {
                     disabled={isHome}
                     hitSlop={8}
                 >
-                    <Logo width={70} height={70} />
+                    <Logo width={70} height={70} fill='#FCEAA2' />
                 </Pressable>
                 <T
                     style={sharedStyle.headerTitle}

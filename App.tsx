@@ -11,6 +11,8 @@ export default function App() {
         DMSansRegular: require('./assets/fonts/DMSans-Regular.ttf'),
         DMSansBold: require('./assets/fonts/DMSans-Bold.ttf'),
         DMSansBoldItalic: require('./assets/fonts/DMSans_18pt-BoldItalic.ttf'),
+        Roboto: require('./assets/fonts/Roboto-Regular.ttf'),
+        RobotoMedium: require('./assets/fonts/Roboto-Medium.ttf'),
     });
 
     if (!fontsLoaded) {

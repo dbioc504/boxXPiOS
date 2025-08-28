@@ -1,10 +1,10 @@
 import {StyleSheet} from "react-native";
 
 export const colors = {
-    text: '#FFFF00',
-    background: '#00008B',
-    signIn: '#160733',
-    offWhite: '#EFE9FC',
+    text: '#FCEAA2',
+    signIn: '#000000',
+    background: '#2B262E',
+    offWhite: '#DFDAF0',
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
