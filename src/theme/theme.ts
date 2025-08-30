@@ -3,7 +3,7 @@ import {StyleSheet} from "react-native";
 export const colors = {
     text: '#FCEAA2',
     signIn: '#000000',
-    background: '#2B262E',
+    background: '#120B17',
     offWhite: '#DFDAF0',
 }
 
@@ -39,8 +39,15 @@ export const sharedStyle = StyleSheet.create({
     headerTitle: {
         fontFamily: fonts.heading,
         color: colors.text,
-        fontSize: 60
+        fontSize: 60,
+        borderColor: colors.offWhite,
+    },
+    backButton: {
+        width: 30,
+        height: 30,
+        tintColor: colors.text,
     }
 });
+
 
 export type Theme = typeof theme;

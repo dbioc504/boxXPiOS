@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, View, StyleSheet} from 'react-native';
+import {Button, View, StyleSheet, SafeAreaView} from 'react-native';
 import {colors, sharedStyle} from "../theme/theme";
 import {Header} from "../theme/T";
 import {useNavigation} from "@react-navigation/native";
@@ -9,10 +9,11 @@ import {RootStackParamList} from "../navigation/RootNavigator";
 type HomeScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
+
     const nav = useNavigation<HomeScreenNavProp>();
 
     return (
-        <View style={sharedStyle.safeArea}>
+        <SafeAreaView style={sharedStyle.safeArea}>
             <Header title={"BOX XP+"}/>
             <View style={signInBtnStyles.container}>
                 <Button
@@ -21,7 +22,7 @@ export default function HomeScreen() {
                     color="#F0FFFF"
                 />
             </View>
-        </View>
+        </SafeAreaView>
     );
 }
 
