@@ -1,7 +1,14 @@
 {
   "expo": {
-    "assetBundlePatterns": ["**/*"],
-    "name": "boxxp",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "name": "Boxxp",
+    "scheme": "boxxp",
+    "owner": "dominickbioc",
+    "platforms": [
+      "ios"
+    ],
     "slug": "boxxp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,30 +21,32 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dominickbioc.boxxp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.dominickbioc.boxxp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font",
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "useFrameworks": "static"
-          }
-        }
-      ]
-    ]
+      "expo-font"
+    ],
+    "extra": {
+      "EXPO_PUBLIC_SUPABASE_URL": "https://okhbdsvzevhfqbeoclft.supabase.co",
+      "EXPO_PUBLIC_SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9raGJkc3Z6ZXZoZnFiZW9jbGZ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY1NjcwMjAsImV4cCI6MjA3MjE0MzAyMH0.l3uurstZfcvzJuqNjZwq0w0M--BvVZfuKSSuLsxy4Wo",
+      "eas": {
+        "projectId": "76c6e858-658e-4a4e-9d3e-15a972307f8f"
+      }
+    }
   }
 }

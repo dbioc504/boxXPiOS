@@ -1,4 +1,3 @@
-import React, { useEffect } from "react";
 import { SafeAreaView, StyleSheet, View, Pressable, Text, Image } from "react-native";
 import { colors, sharedStyle } from "../theme/theme";
 import { BodyText } from "../theme/T";
@@ -12,56 +11,84 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../navigation/RootNavigator";
 
+import { supabase } from "../lib/supabase";
 import * as WebBrowser from "expo-web-browser";
-import * as Google from "expo-auth-session/providers/google";
-import { GoogleAuthProvider, signInWithCredential } from "firebase/auth";
-import { auth } from "../lib/firebase";  // make sure path matches your project
+import { makeRedirectUri } from "expo-auth-session";
+import * as QueryParams from "expo-auth-session/build/QueryParams";
+import * as Linking from "expo-linking";
+
+type SignInNavProp = NativeStackNavigationProp<RootStackParamList, "SignIn">;
 
 WebBrowser.maybeCompleteAuthSession();
+const redirectTo = makeRedirectUri(); // should resolve to boxxp://redirect
 
-type SignInNavProp = NativeStackNavigationProp<RootStackParamList, 'SignIn'>;
+async function createSessionFromUrl(url: string) {
+    const { params, errorCode } = QueryParams.getQueryParams(url);
+    if (errorCode) {
+        console.error("Auth error code:", errorCode);
+        return;
+    }
+
+    const { access_token, refresh_token } = params as Record<string, string>;
+    if (access_token) {
+        const { error } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+        });
+        if (error) console.error("❌ Error setting Supabase session", error);
+        else console.log("✅ Supabase session set!");
+    }
+}
+
+async function signInWith(provider: "google" | "apple") {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo, skipBrowserRedirect: true },
+    });
+
+    if (error) {
+        console.error(`OAuth error with ${provider}:`, error.message);
+        return;
+    }
+
+    const res = await WebBrowser.openAuthSessionAsync(data?.url ?? "", redirectTo);
+    if (res.type === "success" && res.url) {
+        console.log("Deep link received:", res.url);
+        await createSessionFromUrl(res.url);
+    }
+}
+    console.log("RedirectTo I'm passing:", redirectTo);
+
+
+// Catch links if app is already open
+    Linking.addEventListener("url", ({ url }) => {
+        console.log("Deep link event:", url);
+        createSessionFromUrl(url);
+});
 
 export default function SignInScreen() {
     const nav = useNavigation<SignInNavProp>();
 
-    // Google OAuth request
-    const [request, response, promptAsync] = Google.useAuthRequest({
-        clientId: "274613580349-q2as3iku0sos79bmqms7j3o74jo8f4mf.apps.googleusercontent.com.apps.googleusercontent.com",
-        iosClientId: "<YOUR_IOS_CLIENT_ID>.apps.googleusercontent.com"
-    });
-
-    // Handle login response
-    useEffect(() => {
-        if (response?.type === "success") {
-            const { id_token } = response.params;
-
-            // Build Firebae credential with Google ID token
-            const credential = GoogleAuthProvider.credential(id_token);
-
-            // Sign in to Firebase
-            signInWithCredential(auth, credential)
-                .then(userCred => {
-                  console.log("User signed in with Google: ", userCred.user);
-                  nav.navigate("Home");
-                })
-                .catch(error => {
-                    console.error("Error signing in with Google: ", error);
-            });
-        }
-    }, [response]);
-
     return (
         <SafeAreaView style={[sharedStyle.safeArea]}>
             {/* Logo + Header */}
-            <View style={[{marginTop: 20, marginBottom: 20, flexDirection: 'row'}]}>
+            <View style={{ marginTop: 20, marginBottom: 20, flexDirection: "row" }}>
                 <Pressable
-                    onPress={() => nav.navigate('Home')}
-                    style={{alignSelf: 'flex-start', position: 'absolute',
-                    top: 15, left: 30}}>
-                    <Image source={require('../../assets/back-button.png')} style={sharedStyle.backButton}></Image>
+                    onPress={() => nav.navigate("Home")}
+                    style={{
+                        alignSelf: "flex-start",
+                        position: "absolute",
+                        top: 15,
+                        left: 30,
+                    }}
+                >
+                    <Image
+                        source={require("../../assets/back-button.png")}
+                        style={sharedStyle.backButton}
+                    />
                 </Pressable>
                 <View style={signInStyles.centerWrapper}>
-                    <Logo width={70} height={70} fill='#FCEAA2'></Logo>
+                    <Logo width={70} height={70} fill="#FCEAA2" />
                 </View>
             </View>
 
@@ -69,12 +96,9 @@ export default function SignInScreen() {
 
             {/* Sign In Buttons */}
             <View style={signInStyles.buttonGroup}>
-
                 {/* Apple Button */}
                 <AppleAuthenticationButton
-                    onPress={() => {
-                        console.log('Pressed')
-                    }}
+                    onPress={() => signInWith("apple")}
                     buttonType={AppleAuthenticationButtonType.SIGN_IN}
                     buttonStyle={AppleAuthenticationButtonStyle.WHITE_OUTLINE}
                     style={signInStyles.appleBtn}
@@ -82,8 +106,11 @@ export default function SignInScreen() {
                 />
 
                 {/* Google Button */}
-                <Pressable style={signInStyles.googleBtn} onPress={() => promptAsync()}>
-                    <Image source={require('../../assets/google_logo.png')} style={signInStyles.googleLogo}/>
+                <Pressable style={signInStyles.googleBtn} onPress={() => signInWith("google")}>
+                    <Image
+                        source={require("../../assets/google_logo.png")}
+                        style={signInStyles.googleLogo}
+                    />
                     <Text style={signInStyles.googleText}>Sign in with Google</Text>
                 </Pressable>
             </View>
@@ -95,22 +122,21 @@ const signInStyles = StyleSheet.create({
     signInText: {
         color: colors.text,
         fontSize: 40,
-        textAlign: 'center',
+        textAlign: "center",
         marginBottom: 50,
         marginHorizontal: 40,
     },
     googleBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: 'white',
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "white",
         borderRadius: 50,
         height: 53,
         width: 300,
-        alignSelf: 'center',
+        alignSelf: "center",
         marginHorizontal: 40,
         marginVertical: 20,
-        fontFamily: 'RobotoMedium',
     },
     googleLogo: {
         width: 16,
@@ -119,21 +145,21 @@ const signInStyles = StyleSheet.create({
     },
     googleText: {
         fontSize: 21,
-        color: 'black',
-        fontWeight: 500
+        color: "black",
+        fontWeight: "500",
     },
     appleBtn: {
         width: 300,
         height: 60,
-        alignSelf: 'center'
+        alignSelf: "center",
     },
     buttonGroup: {
         paddingHorizontal: 40,
-        alignItems: 'center',
+        alignItems: "center",
     },
     centerWrapper: {
         flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    }
-})
+        alignItems: "center",
+        justifyContent: "center",
+    },
+});

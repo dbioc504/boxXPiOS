@@ -7,6 +7,7 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 import { StatusBar } from 'expo-status-bar';
 
 export default function App() {
+
     const [fontsLoaded] = useFonts({
         FugazOne: require('./assets/fonts/FugazOne-Regular.ttf'),
         DMSansRegular: require('./assets/fonts/DMSans-Regular.ttf'),

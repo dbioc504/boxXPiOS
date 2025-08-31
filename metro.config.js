@@ -1,18 +1,24 @@
-// ... existing code ...
-
 const { getDefaultConfig } = require("@expo/metro-config");
 
 module.exports = (async () => {
     const defaultConfig = await getDefaultConfig(__dirname);
 
-    // Ensure svg is treated as a React component
+    // --- Force Metro to advertise your LAN IP ---
+    defaultConfig.server = {
+        ...defaultConfig.server,
+        port: 8081, // or 8082 if Expo chooses that
+        host: "192.168.1.156", // <-- replace with your actual IPv4 from ipconfig
+    };
+
+    // --- SVG support ---
     defaultConfig.resolver.sourceExts.push("svg");
     const assetExts = defaultConfig.resolver.assetExts;
     defaultConfig.resolver.assetExts = assetExts.filter((ext) => ext !== "svg");
-    defaultConfig.resolver.assetExts.push("png", "jpg", "jpeg"); // keep other assets
+    defaultConfig.resolver.assetExts.push("png", "jpg", "jpeg");
 
-    // Use react-native-svg-transformer for svg files
-    defaultConfig.transformer.babelTransformerPath = require.resolve("react-native-svg-transformer");
+    defaultConfig.transformer.babelTransformerPath = require.resolve(
+        "react-native-svg-transformer"
+    );
 
     return defaultConfig;
 })();
