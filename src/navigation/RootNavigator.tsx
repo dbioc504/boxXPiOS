@@ -11,9 +11,12 @@ export type RootStackParamList = {
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
+    // @ts-ignore
     return(
         <NavigationContainer>
-            <Stack.Navigator screenOptions={{headerShown: false}}>
+            <Stack.Navigator
+                screenOptions={
+                { headerShown: false, animation: "fade", animationDuration: 190 }}>
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="SignIn" component={SignInScreen} />
             </Stack.Navigator>

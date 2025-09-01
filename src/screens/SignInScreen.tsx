@@ -113,7 +113,12 @@ export default function SignInScreen() {
                 />
 
                 {/* Google Button */}
-                <Pressable style={signInStyles.googleBtn} onPress={() => signInWith("google")}>
+                <Pressable
+                    style={({ pressed }) => [
+                        signInStyles.googleBtn,
+                        pressed && { backgroundColor: "#7D7D7D"}
+                    ]}
+                    onPress={() => signInWith("google")}>
                     <Image
                         source={require("../../assets/google_logo.png")}
                         style={signInStyles.googleLogo}
