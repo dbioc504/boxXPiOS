@@ -16,11 +16,35 @@ import * as WebBrowser from "expo-web-browser";
 import { makeRedirectUri } from "expo-auth-session";
 import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Linking from "expo-linking";
+import {useAuth} from "../lib/AuthProvider";
+import {useEffect} from "react";
 
 type SignInNavProp = NativeStackNavigationProp<RootStackParamList, "SignIn">;
 
 WebBrowser.maybeCompleteAuthSession();
-const redirectTo = makeRedirectUri(); // should resolve to boxxp://redirect
+const redirectTo = makeRedirectUri();
+
+async function signInWith(provider: "google" | "apple") {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo, skipBrowserRedirect: true },
+    });
+
+    if (error) {
+        console.error(`OAuth error with ${provider}:`, error.message);
+        return;
+    }
+
+    const res = await WebBrowser.openAuthSessionAsync(data?.url ?? "", redirectTo);
+    if (res.type === "success" && res.url) {
+        await createSessionFromUrl(res.url);
+    }
+}
+
+    Linking.addEventListener("url", ({ url }) => {
+        console.log("Deep link event:", url);
+        createSessionFromUrl(url);
+});
 
 async function createSessionFromUrl(url: string) {
     const { params, errorCode } = QueryParams.getQueryParams(url);
@@ -36,38 +60,21 @@ async function createSessionFromUrl(url: string) {
             refresh_token,
         });
         if (error) console.error("❌ Error setting Supabase session", error);
-        else console.log("✅ Supabase session set!");
+        else {
+            console.log("✅ Supabase session set!");
+        }
     }
 }
-
-async function signInWith(provider: "google" | "apple") {
-    const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo, skipBrowserRedirect: true },
-    });
-
-    if (error) {
-        console.error(`OAuth error with ${provider}:`, error.message);
-        return;
-    }
-
-    const res = await WebBrowser.openAuthSessionAsync(data?.url ?? "", redirectTo);
-    if (res.type === "success" && res.url) {
-        console.log("Deep link received:", res.url);
-        await createSessionFromUrl(res.url);
-    }
-}
-    console.log("RedirectTo I'm passing:", redirectTo);
-
-
-// Catch links if app is already open
-    Linking.addEventListener("url", ({ url }) => {
-        console.log("Deep link event:", url);
-        createSessionFromUrl(url);
-});
 
 export default function SignInScreen() {
     const nav = useNavigation<SignInNavProp>();
+    const { user } = useAuth();
+
+    useEffect(() => {
+        if (user) {
+            nav.navigate("Home");
+        }
+    }, [user]);
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea]}>

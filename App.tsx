@@ -5,6 +5,7 @@ import {useFonts} from "expo-font";
 import {ThemeProvider} from "./src/theme/ThemeProvider";
 import {SafeAreaProvider} from "react-native-safe-area-context";
 import { StatusBar } from 'expo-status-bar';
+import { AuthProvider } from "./src/lib/AuthProvider";
 
 export default function App() {
 
@@ -22,11 +23,13 @@ export default function App() {
     }
 
     return(
-        <ThemeProvider>
-            <StatusBar style="light" />
-            <SafeAreaProvider>
-                <RootNavigator />
-            </SafeAreaProvider>
-        </ThemeProvider>
+        <AuthProvider>
+            <ThemeProvider>
+                <StatusBar style="light"/>
+                <SafeAreaProvider>
+                    <RootNavigator/>
+                </SafeAreaProvider>
+            </ThemeProvider>
+        </AuthProvider>
     );
 }
