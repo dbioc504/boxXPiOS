@@ -19,6 +19,7 @@ import * as Linking from "expo-linking";
 import {useAuth} from "../lib/AuthProvider";
 import {useEffect} from "react";
 import { useState } from "react";
+import { Keyboard } from "react-native";
 
 type SignInNavProp = NativeStackNavigationProp<RootStackParamList, "SignIn">;
 
@@ -71,6 +72,7 @@ export default function SignInScreen() {
     const { user } = useAuth();
     const [email, setEmail] = useState("");
     const [sent, setSent] = useState(false);
+    const [isButtonPressed, setIsButtonPressed] = useState(false);
 
     async function signInWithEmail() {
         const { error } = await supabase.auth.signInWithOtp({
@@ -139,16 +141,26 @@ export default function SignInScreen() {
                     placeholderTextColor={colors.offWhite}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    returnKeyType="done"
                     value={email}
                     onChangeText={setEmail}
+                    onSubmitEditing={() => {
+                        setIsButtonPressed(true);
+                        signInWithEmail();
+                        Keyboard.dismiss();
+                        setTimeout(() => setIsButtonPressed(false), 200);
+                    }}
                 />
 
                 <Pressable
                     style={({ pressed }) => [
                         signInStyles.signInBtn,
-                        pressed && { backgroundColor: "#B1A473"}
+                        (pressed || isButtonPressed) && { backgroundColor: "#B1A473"}
                     ]}
-                    onPress={signInWithEmail}
+                    onPress={ () => {
+                    signInWithEmail();
+                    Keyboard.dismiss();
+                    }}
                 >
                     <Text style={signInStyles.googleText}>Continue</Text>
                 </Pressable>

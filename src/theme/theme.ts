@@ -2,8 +2,10 @@ import {StyleSheet} from "react-native";
 
 export const colors = {
     text: '#FCEAA2',
+    pressedBorder: '#998E64',
     signIn: '#000000',
     background: '#120B17',
+    mainBtn: '#07040A',
     form: '#5A5361',
     offWhite: '#DFDAF0',
 }
