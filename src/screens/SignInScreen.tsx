@@ -1,5 +1,5 @@
-import { SafeAreaView, StyleSheet, View, Pressable, Text, Image } from "react-native";
-import { colors, sharedStyle } from "../theme/theme";
+import {SafeAreaView, View, Pressable, Text, Image, TextInput} from "react-native";
+import {colors, sharedStyle, signInStyles} from "../theme/theme";
 import { BodyText } from "../theme/T";
 import Logo from "../../assets/bxpLogo.svg";
 import {
@@ -18,6 +18,7 @@ import * as QueryParams from "expo-auth-session/build/QueryParams";
 import * as Linking from "expo-linking";
 import {useAuth} from "../lib/AuthProvider";
 import {useEffect} from "react";
+import { useState } from "react";
 
 type SignInNavProp = NativeStackNavigationProp<RootStackParamList, "SignIn">;
 
@@ -25,6 +26,7 @@ WebBrowser.maybeCompleteAuthSession();
 const redirectTo = makeRedirectUri();
 
 async function signInWith(provider: "google" | "apple") {
+    console.log("RedirectTo being used:", redirectTo);
     const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo, skipBrowserRedirect: true },
@@ -38,16 +40,14 @@ async function signInWith(provider: "google" | "apple") {
     const res = await WebBrowser.openAuthSessionAsync(data?.url ?? "", redirectTo);
     if (res.type === "success" && res.url) {
         await createSessionFromUrl(res.url);
+        console.log("Auth session result:", res);
     }
 }
 
-    Linking.addEventListener("url", ({ url }) => {
-        console.log("Deep link event:", url);
-        createSessionFromUrl(url);
-});
-
 async function createSessionFromUrl(url: string) {
     const { params, errorCode } = QueryParams.getQueryParams(url);
+    console.log("URL received:", url);
+    console.log("Params parsed:", params, "Error code:", errorCode);
     if (errorCode) {
         console.error("Auth error code:", errorCode);
         return;
@@ -69,6 +69,33 @@ async function createSessionFromUrl(url: string) {
 export default function SignInScreen() {
     const nav = useNavigation<SignInNavProp>();
     const { user } = useAuth();
+    const [email, setEmail] = useState("");
+    const [sent, setSent] = useState(false);
+
+    async function signInWithEmail() {
+        const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+                emailRedirectTo: redirectTo
+            }
+        });
+
+        if (error) {
+            console.error("Error sending magic link:", error.message);
+        } else {
+            console.log("Magic link sent!");
+            setSent(true);
+        }
+    }
+
+    useEffect(() => {
+        const sub = Linking.addEventListener("url", ({ url }) => {
+            console.log("Deeplink URL:", url);
+            createSessionFromUrl(url);
+        });
+
+        return () => sub.remove();
+    }, []);
 
     useEffect(() => {
         if (user) {
@@ -101,8 +128,37 @@ export default function SignInScreen() {
 
             <BodyText style={signInStyles.signInText}>Sign In</BodyText>
 
-            {/* Sign In Buttons */}
+            {/* Sign In Buttons */}\
             <View style={signInStyles.buttonGroup}>
+
+
+                {/*Email Input*/}
+                <TextInput
+                    style={signInStyles.emailInput}
+                    placeholder="Your email address"
+                    placeholderTextColor={colors.offWhite}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
+                />
+
+                <Pressable
+                    style={({ pressed }) => [
+                        signInStyles.signInBtn,
+                        pressed && { backgroundColor: "#B1A473"}
+                    ]}
+                    onPress={signInWithEmail}
+                >
+                    <Text style={signInStyles.googleText}>Continue</Text>
+                </Pressable>
+
+                <Text style={{
+                    color:colors.offWhite,
+                    fontSize: 16,
+                    // marginVertical:20
+                }}>OR</Text>
+
                 {/* Apple Button */}
                 <AppleAuthenticationButton
                     onPress={() => signInWith("apple")}
@@ -126,52 +182,13 @@ export default function SignInScreen() {
                     <Text style={signInStyles.googleText}>Sign in with Google</Text>
                 </Pressable>
             </View>
+
+            {sent && (
+                <Text style={{ color: colors.offWhite, marginTop: 20, textAlign: "center" }}>
+                    Check your email for the login link
+                </Text>
+            )}
         </SafeAreaView>
     );
 }
 
-const signInStyles = StyleSheet.create({
-    signInText: {
-        color: colors.text,
-        fontSize: 40,
-        textAlign: "center",
-        marginBottom: 50,
-        marginHorizontal: 40,
-    },
-    googleBtn: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "white",
-        borderRadius: 50,
-        height: 53,
-        width: 300,
-        alignSelf: "center",
-        marginHorizontal: 40,
-        marginVertical: 20,
-    },
-    googleLogo: {
-        width: 16,
-        height: 16,
-        marginRight: 10,
-    },
-    googleText: {
-        fontSize: 21,
-        color: "black",
-        fontWeight: "500",
-    },
-    appleBtn: {
-        width: 300,
-        height: 60,
-        alignSelf: "center",
-    },
-    buttonGroup: {
-        paddingHorizontal: 40,
-        alignItems: "center",
-    },
-    centerWrapper: {
-        flex: 1,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-});

@@ -4,6 +4,7 @@ export const colors = {
     text: '#FCEAA2',
     signIn: '#000000',
     background: '#120B17',
+    form: '#5A5361',
     offWhite: '#DFDAF0',
 }
 
@@ -46,6 +47,74 @@ export const sharedStyle = StyleSheet.create({
         width: 30,
         height: 30,
         tintColor: colors.text,
+    }
+});
+
+export const signInStyles = StyleSheet.create({
+    signInText: {
+        color: colors.text,
+        fontSize: 40,
+        textAlign: "center",
+        marginBottom: 50,
+        marginHorizontal: 40,
+    },
+    googleBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "white",
+        borderRadius: 50,
+        height: 53,
+        width: 300,
+        alignSelf: "center",
+        marginHorizontal: 40,
+    },
+    signInBtn: {
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: colors.text,
+        borderRadius: 50,
+        height: 53,
+        width: 300,
+        alignSelf: "center",
+        marginHorizontal: 40,
+    },
+    googleLogo: {
+        width: 16,
+        height: 16,
+        marginRight: 10,
+    },
+    googleText: {
+        fontSize: 21,
+        color: "black",
+        fontWeight: "500",
+    },
+    appleBtn: {
+        width: 300,
+        height: 60,
+        alignSelf: "center",
+    },
+    buttonGroup: {
+        paddingHorizontal: 40,
+        alignItems: "center",
+        rowGap: 20,
+        justifyContent: "center",
+    },
+    centerWrapper: {
+        flex: 1,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    emailInput: {
+        borderRadius: 50,
+        height: 56,
+        width: 300,
+        backgroundColor: colors.form,
+        paddingHorizontal: 40,
+        textAlign: "center",
+        fontSize: 21,
+        color: colors.text,
     }
 });
 
