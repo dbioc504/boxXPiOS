@@ -1,11 +1,12 @@
-// src/types/validation.ts
 import { z } from 'zod';
-import { validate as uuidValidate, version as uuidVersion } from 'uuid';
 
-/** ids */
+const UUID_V7_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export const zUuidV7 = z
     .string()
-    .refine((s) => uuidValidate(s) && uuidVersion(s) === 7, { message: 'must be UUID v7' });
+    .regex(UUID_V7_REGEX, 'must be UUID v7');
+
 
 export const zLocalId = z.string().startsWith('tmp_');
 export const zAnyId = z.union([zUuidV7, zLocalId]);
