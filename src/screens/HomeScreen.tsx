@@ -22,7 +22,7 @@ export default function HomeScreen() {
             {/*App Buttons*/}
             <View style={[signInStyles.buttonGroup, {rowGap: 20}, {marginBottom: 20}]}>
 
-                <MainButton label="SKILLS" onPress={() => {}}/>
+                <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
                 <MainButton label="COMBOS" onPress={() => {}}/>
                 <MainButton label="MECHANICS" onPress={() => {}}/>
                 <MainButton label="WORKOUTS" onPress={() => {}}/>
@@ -59,7 +59,7 @@ export const homeBtns = StyleSheet.create({
         borderRadius: 25,
         backgroundColor: colors.signIn,
         alignItems: 'center',
-        marginHorizontal: 40
+        marginHorizontal: 80
     },
     mainBtn: {
         borderRadius: 35,

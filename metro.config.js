@@ -7,7 +7,6 @@ module.exports = (async () => {
     defaultConfig.server = {
         ...defaultConfig.server,
         port: 8081, // or 8082 if Expo chooses that
-        host: "192.168.1.156", // <-- replace with your actual IPv4 from ipconfig
     };
 
     // --- SVG support ---
