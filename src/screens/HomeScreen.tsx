@@ -1,11 +1,11 @@
 import React from 'react';
 import {Button, View, StyleSheet, SafeAreaView, Pressable} from 'react-native';
-import {colors, sharedStyle, signInStyles} from "../theme/theme";
-import {BodyText, Header} from "../theme/T";
+import {colors, sharedStyle, signInStyles} from "@/theme/theme";
+import {BodyText, Header} from "@/theme/T";
 import {useNavigation} from "@react-navigation/native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
-import {RootStackParamList} from "../navigation/RootNavigator";
-import {useAuth} from "../lib/AuthProvider";
+import {RootStackParamList} from "@/navigation/RootNavigator";
+import {useAuth} from "@/lib/AuthProvider";
 
 
 
@@ -62,10 +62,10 @@ export const homeBtns = StyleSheet.create({
         marginHorizontal: 80
     },
     mainBtn: {
-        borderRadius: 35,
+        borderRadius: 25,
         backgroundColor: colors.mainBtn,
         alignItems: 'center',
-        height: 90,
+        height: 97,
         width: 310,
         borderColor: colors.text,
         borderWidth: 2,
