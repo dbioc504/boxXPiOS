@@ -1,14 +1,13 @@
-import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { RootStackParamList } from "@/navigation/RootNavigator";
-import {useNavigation} from "@react-navigation/native";
 import {Pressable, SafeAreaView, ScrollView, StyleSheet, View} from "react-native";
 import {colors, fonts, sharedStyle, signInStyles} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
+import { useUserStyle } from '@/lib/hooks/useUserStyle'
+import { useCategory } from "@/lib/hooks/useCategory";
+import {STYLE_TO_CATEGORIES} from "@/types/validation";
 
-type SkillsScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Skills'>;
 
 export default function SkillsScreen() {
-    const nav = useNavigation<SkillsScreenNavProp>();
+    const { style, setStyle } = useUserStyle('user-1');
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -18,24 +17,31 @@ export default function SkillsScreen() {
                 {/*style button*/}
                 <Pressable
                     style={[skillsSheet.styleSelector, {marginBottom: 30}]}
+                    onPress={() => {
+                        const next = style === 'outboxer'
+                            ? 'infighter'
+                            : style === 'infighter'
+                            ? 'boxer_puncher'
+                            : 'outboxer';
+                        setStyle(next);
+                    }}
                 >
-                    <BodyText style={skillsSheet.styleText}>STYLE: </BodyText>
+                    <BodyText style={skillsSheet.styleText}>
+                        STYLE: { style ?? '(none)' }
+                    </BodyText>
                 </Pressable>
 
                 {/*Skills Categories*/}
                 <View style={[signInStyles.buttonGroup, {paddingHorizontal: 20}]}>
 
-                    {/*Category 1*/}
-                    <CategoryCard title='Cat 1' onEdit={() => {
-                    }}/>
-
-                    {/* Category 2*/}
-                    <CategoryCard title='Cat 2' onEdit={() => {
-                    }}/>
-
-                    {/*Category 3*/}
-                    <CategoryCard title='Cat 3' onEdit={() => {
-                    }}/>
+                    {style
+                        ? STYLE_TO_CATEGORIES[style].map((cat) => (
+                            <CategoryCard key={cat} title={cat} onEdit={() => {}} />
+                        ))
+                        : <BodyText style={{ textAlign: 'center', color: colors.offWhite }}>
+                            Select a style to see categories
+                        </BodyText>
+                    }
 
                 </View>
             </ScrollView>
@@ -50,7 +56,9 @@ type CategoryCardProps = {
     children?: React.ReactNode;
 };
 
-function CategoryCard({ title, onEdit, children }: CategoryCardProps) {
+function CategoryCard({ title, onEdit }: CategoryCardProps) {
+    const { all: techniques, loading, error } = useCategory('user-1', title as any);
+
     return (
         <View style={skillsSheet.categoryBorder}>
             <View style={skillsSheet.headerRow}>
@@ -60,9 +68,19 @@ function CategoryCard({ title, onEdit, children }: CategoryCardProps) {
                 </Pressable>
             </View>
 
-                <View style={skillsSheet.categoryBody}>
-                    { children ?? <BodyText style={[skillsSheet.categoryTitle, {fontSize: 12}]}>(empty)</BodyText> }
-                </View>
+            <View style={skillsSheet.categoryBody}>
+                {loading && <BodyText style={{ opacity: 0.6 }}>(loading...)</BodyText>}
+                {error && <BodyText style={{ color: 'red' }}>{error}</BodyText>}
+                {!loading && !error && (
+                    techniques.length > 0
+                        ? techniques.map((t) => (
+                            <BodyText key={t.id} style={{ fontSize: 14 }}>
+                                {t.title}
+                            </BodyText>
+                        ))
+                        : <BodyText style={{ opacity: 0.6 }}>(empty)</BodyText>
+                )}
+            </View>
         </View>
     );
 }

@@ -2,10 +2,11 @@ import 'react-native-gesture-handler'
 import RootNavigator from "./src/navigation/RootNavigator";
 import React from "react";
 import {useFonts} from "expo-font";
-import {ThemeProvider} from "./src/theme/ThemeProvider";
+import {ThemeProvider} from "@/theme/ThemeProvider";
 import {SafeAreaProvider} from "react-native-safe-area-context";
-import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from "./src/lib/AuthProvider";
+import {StatusBar} from 'expo-status-bar';
+import {AuthProvider} from "@/lib/AuthProvider";
+import {RepoProvider} from '@/lib/providers/RepoProvider'
 
 export default function App() {
 
@@ -22,14 +23,16 @@ export default function App() {
         return null;
     }
 
-    return(
+    return (
         <AuthProvider>
-            <ThemeProvider>
-                <StatusBar style="light"/>
-                <SafeAreaProvider>
-                    <RootNavigator/>
-                </SafeAreaProvider>
-            </ThemeProvider>
+            <RepoProvider>
+                <ThemeProvider>
+                    <StatusBar style="light"/>
+                    <SafeAreaProvider>
+                        <RootNavigator/>
+                    </SafeAreaProvider>
+                </ThemeProvider>
+            </RepoProvider>
         </AuthProvider>
     );
 }

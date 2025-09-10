@@ -47,7 +47,7 @@ const rawCombos = [
         id: makeUuidV7(12),
         name: 'rope trap',
         category: 'infighting',
-        steps: ['stab', 'right_shovel', 'left_shovel', 'right_hook', 'left_hook','roll_right',
+        steps: ['stab', 'right_shovel_hook', 'left_shovel_hook', 'right_hook', 'left_hook','roll_right',
         'straight', 'left_hook', 'straight', 'roll_right']
     }
 ] as const;
