@@ -1,16 +1,17 @@
 import React from 'react';
 import { Image, Pressable, Text, View, StyleSheet } from "react-native";
 import {colors, sharedStyle} from "./theme";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {useNavigation, useRoute} from "@react-navigation/native";
 import Logo from '../../assets/bxpLogo.svg'
-import type { ViewStyle } from 'react-native';
+import {Ionicons} from "@expo/vector-icons";
 
 
 type Props = React.ComponentProps<typeof Text>;
 type HeaderProps = {
     title: string;
     forceMode?: 'home' | 'back';
+    isModal?: boolean;
+    onClose?: () => void;
 };
 
 export function T(props: Props) {
@@ -24,7 +25,7 @@ export function BodyText(props: Props) {
 const SIDE_WIDTH = 56;
 
 
-export function Header({ title, forceMode }: HeaderProps) {
+export function Header({ title, forceMode, onClose, isModal }: HeaderProps) {
     const nav = useNavigation<any>();
     const route = useRoute();
 
@@ -36,11 +37,32 @@ export function Header({ title, forceMode }: HeaderProps) {
         else nav.navigate('Home');
     };
 
+    const handleClose = () => {
+        if (onClose) onClose();
+        else if (canGoBack) nav.goBack();
+    }
+
     return (
         <View style={[styles.container, { paddingTop: 10 }]}>
             {/* LEFT SIDE: back button only on non-Home */}
             <View style={[styles.side, { width: SIDE_WIDTH }]}>
-                {!isHome && (
+                {   isModal ? (
+                    <Pressable
+                        onPress={handleClose}
+                        hitSlop={12}
+                        accessibilityRole='button'
+                        accessibilityLabel='Close modal'
+                    >
+                        {({ pressed }) => (
+                            <Ionicons
+                                name='close-circle-outline'
+                                size={26}
+                                color={ pressed ? colors.pressedBorder : colors.text }
+                            />
+                        )}
+                    </Pressable>
+                    ) : (
+                    !isHome && (
                     <Pressable
                         onPress={handleBack}
                         hitSlop={12}
@@ -57,7 +79,7 @@ export function Header({ title, forceMode }: HeaderProps) {
                             />
                         )}
                     </Pressable>
-                )}
+                ))}
             </View>
 
             {/* CENTER: Home => Logo + Title (in a row). Non-Home => Title centered. */}
