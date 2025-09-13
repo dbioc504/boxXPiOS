@@ -6,6 +6,18 @@ export const STYLE_LABEL: Record<Style, string> = {
     infighter: 'Infighter'
 }
 
+export const STYLE_DESCRIPT: Record<Style, string> = {
+    outboxer: 'Fleet footed. Quick. Elusive. Never stops moving. The outboxer masters controlling range and creating' +
+        ' angles to hit their opponents before/after they get a chance to hit back. Examples include Sugar Ray Leonard,' +
+        ' Boots Ennis, Bud Crawford, Sweet Pea Whitaker, and Mark Too Sharp Johnson.',
+    boxer_puncher: 'May not have always have blinding speed nor kiss of death power. But the Boxer-Puncher doesn\'t ' +
+        'need to. Instead they\'re laid a brick and mortar foundation. Fundamentally sound in all aspects. Live by the ' +
+        'book. Die by nothing. Examples include Canelo Alvarez, Miguel Cotto, Andre Ward, Winky Wright, and Lennox Lewis.',
+    infighter: 'The human shield. The brick wall. Knuckles of steel with a guard built from concrete. Walks through ' +
+        'opponents defenses and demolishes them like a wrecking ball while minimizing their own damage. Examples include' +
+        ' Roberto "Hands of Stone" Duran, Errol Spence, Dwight Muhammad Qawi, David Benavidez, Vergil Ortiz, and GGG.'
+}
+
 export type Category =
     | 'mid_long_range'
     | 'counterpunching'

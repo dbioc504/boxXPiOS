@@ -9,6 +9,7 @@ export const colors = {
     categories: '#1F122C',
     form: '#5A5361',
     offWhite: '#DFDAF0',
+    select: '#C26B6B'
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
