@@ -7,7 +7,9 @@ export const skillsStyles = StyleSheet.create({
         borderWidth: 0.5,
         borderColor: colors.offWhite,
         justifyContent: "center",
-        marginHorizontal: 90
+        paddingHorizontal: 10,
+        alignSelf: 'stretch',
+        marginBottom: 30
     },
     styleSelectorText: {
         color: colors.offWhite,
@@ -93,7 +95,7 @@ export const skillsStyles = StyleSheet.create({
         height: 22,
         borderRadius: 11,
         borderWidth: 2,
-        borderColor: colors.select,
+        borderColor: colors.offWhite,
         alignItems: 'center',
         justifyContent: 'center',
         marginRight: 10,
@@ -102,9 +104,9 @@ export const skillsStyles = StyleSheet.create({
         width: 12,
         height: 12,
         borderRadius: 6,
-        backgroundColor: colors.select,
+        backgroundColor: colors.offWhite,
     },
-    radioLabel: { color: colors.select, fontSize: 16 },
+    radioLabel: { color: colors.offWhite, fontSize: 16 },
     saveBtn: {
         borderRadius: 10,
         paddingVertical: 12,

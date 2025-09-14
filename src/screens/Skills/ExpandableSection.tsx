@@ -8,9 +8,12 @@ import {colors} from "@/theme/theme";
 import {RadioRow} from "@/screens/Skills/RadioRow";
 
 type Props = {
+    id: string;
     title: string;
     children: React.ReactNode;
     defaultExpanded?: boolean;
+    expanded?: boolean;
+    onToggle?: (id: string) => void;
     isStyleCard: boolean;
     value?: Style;
     selected?: Style | null;
@@ -19,21 +22,28 @@ type Props = {
 }
 
 export function ExpandableSection({
+    id,
     title,
     children,
     defaultExpanded,
+    expanded,
+    onToggle,
     isStyleCard = false,
     value,
     selected = null,
     onSelect,
     showRadio = true,
 }: Props) {
-    const [expanded, setExpanded] = useState(!!defaultExpanded);
+    const [internal, setInternal] = useState(!!defaultExpanded);
+    const isControlled = expanded !== undefined;
+    const isOpen = isControlled ? !!expanded : internal;
+
     const isSelected = isStyleCard && selected === value;
 
     const toggle = () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.spring);
-        setExpanded((e) => !e);
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+        if (isControlled) onToggle?.(id);
+        else setInternal(v => !v);
     };
 
     return (
@@ -46,10 +56,10 @@ export function ExpandableSection({
         >
             <Pressable onPress={toggle} hitSlop={8} style={skillsStyles.cardHeader}>
                 <BodyText style={skillsStyles.cardHeaderText}>{title}  </BodyText>
-                <Ionicons name={expanded ? 'caret-up': 'caret-down'} size={20} color={colors.offWhite}/>
+                <Ionicons name={isOpen ? 'caret-up': 'caret-down'} size={20} color={colors.offWhite}/>
             </Pressable>
 
-            {expanded && (
+            {isOpen && (
                 <>
                     <View style={skillsStyles.cardDivider} />
                     <View style={skillsStyles.cardBody}>

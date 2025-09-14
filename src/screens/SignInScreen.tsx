@@ -103,7 +103,6 @@ export default function SignInScreen() {
         }
     }, [emailOk, emailNormalized]);
 
-    // Handle deep links returning from OAuth
     useEffect(() => {
         const sub = Linking.addEventListener('url', ({ url }) => {
             console.log('Deeplink URL:', url);
@@ -112,7 +111,6 @@ export default function SignInScreen() {
         return () => sub.remove();
     }, []);
 
-    // Navigate to Home when session is ready
     useEffect(() => {
         if (user) nav.navigate('Home');
     }, [user, nav]);

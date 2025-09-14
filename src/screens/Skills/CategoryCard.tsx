@@ -16,7 +16,7 @@ export function CategoryCard({ title, onEdit }: Props) {
     return (
         <View style={skillsStyles.categoryCard}>
             <View style={skillsStyles.categoryHeaderRow}>
-                <BodyText style={skillsStyles.categoryTitle}>{title}</BodyText>
+                <BodyText style={[skillsStyles.categoryTitle, { marginLeft: 7 }, ]}>{title.toUpperCase()}</BodyText>
                 <Pressable onPress={onEdit} style={skillsStyles.categoryEditBtn}>
                     <BodyText style={[skillsStyles.categoryTitle, { fontSize: 16 }]}>EDIT</BodyText>
                 </Pressable>
