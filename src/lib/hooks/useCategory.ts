@@ -1,47 +1,80 @@
-import {useEffect, useState, useCallback} from "react";
-import type { TechniqueRow } from '@/lib/repos/skills.repo'
+import { useEffect, useMemo, useState } from "react";
 import { useRepos } from '@/lib/providers/RepoProvider'
+import type { Category, Id } from "@/types/common";
+import type { TechniqueRow } from "@/lib/repos/skills.repo";
 
-export function useCategory(userId: string, cat: string) {
+type State = {
+    all: TechniqueRow[];
+    selectedIds: Id[];
+    loading: boolean;
+    saving: boolean;
+    error: string;
+};
+
+export function useCategory(userId: string, category: Category) {
     const { skills } = useRepos();
-    const [all, setAll] = useState<TechniqueRow[]>([]);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [state, setState] = useState<State>({
+       all: [],
+       selectedIds: [],
+       loading: true,
+       saving: false,
+       error: '',
+    });
 
     useEffect(() => {
-        let mounted = true;
-        (async () => {
-            try {
-                setLoading(true);
-                const [catalog, selected] = await Promise.all([
-                    skills.listTechniquesByCategory(cat),
-                    skills.getUserTechniques(userId, cat),
-                ]);
-                if (!mounted) return;
-                setAll(catalog);
-                setSelectedIds(selected);
-            } catch {
-                if (mounted) setError('Failed to load category');
-            } finally {
-                if (mounted) setLoading(false);
-            }
-        })();
-        return () => { mounted = false; };
-    }, [skills, userId, cat]);
+        let cancelled = false;
+        setState(s => ({ ...s, loading: true, error: '' }))
 
-    const setSelected = useCallback(async (ids: string[]) => {
+        Promise.all([
+            skills.listTechniquesByCategory(category),
+            skills.getUserTechniques(userId, category),
+        ])
+            .then(([all, selectedIds]) => {
+                if (cancelled) return;
+                setState(s => ({ ...s, all, selectedIds, loading: false }));
+            })
+            .catch(err => {
+                if (cancelled) return;
+                setState(s => ({ ...s, loading: false, error: err?.message ?? 'Failed to load' }));
+            });
+
+            return () => { cancelled = true };
+    }, [skills, userId, category]);
+
+    async function setSelected(nextIds: Id[]) {
+        const next = Array.from(new Set(nextIds));
+        const prev = state.selectedIds;
+
+        setState(s => ({ ...s, selectedIds: next, saving: true, error: '' }));
+
         try {
-            setSaving(true);
-            setSelected(ids);
-            await skills.setUserTechniques(userId, cat, ids);
-        } catch {
-            setError('Failed to save techniques');
-        } finally {
-            setSaving(false);
+            await skills.setUserTechniques(userId, category, next);
+            setState(s => ({  ...s, saving: false }));
+        } catch (e: any) {
+            setState(s => ({
+                ...s,
+                selectedIds: prev,
+                saving: false,
+                error: e?.message ?? 'Failed to save selection',
+            }));
         }
-    }, [skills, userId, cat]);
+    }
 
-    return { all, selectedIds, setSelected, loading, saving, error };
+    function toggleSelection(id: Id) {
+        const has = state.selectedIds.includes(id);
+        const next = has
+            ? state.selectedIds.filter(x => x !== id)
+            : [...state.selectedIds, id];
+        void setSelected(next);
+    }
+
+    return useMemo(() => ({
+        all: state.all,
+        selectedIds: state.selectedIds,
+        loading: state.loading,
+        saving: state.saving,
+        error: state.error,
+        setSelected,
+        toggleSelection,
+    }), [state]);
 }

@@ -19,7 +19,6 @@ export default function SkillsScreen() {
     useEffect(() => {
         if (modalVisible) {
             setSelectedStyle((originalStyle as Style) && null);
-            // setActivePanel('memoir');
         }
     }, [modalVisible, originalStyle]);
 
@@ -50,6 +49,9 @@ export default function SkillsScreen() {
         setActivePanel(prev => (prev === id ? null : id));
     }
 
+    const displayStyle = originalStyle
+        ? STYLE_LABEL[originalStyle].toUpperCase()
+        : '(none)';
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -101,7 +103,7 @@ export default function SkillsScreen() {
                                             ? '#666'
                                             : pressed
                                                 ? colors.pressedBorder
-                                                : colors.select,
+                                                : colors.select ,
                                 },
                             ]}
                         >
@@ -119,7 +121,7 @@ export default function SkillsScreen() {
                     <Pressable style={[skillsStyles.styleSelector, { alignSelf: 'center', paddingHorizontal: 12 }]}
                               onPress={() => setModalVisible(true)}>
                         <BodyText style={skillsStyles.styleSelectorText} >
-                            STYLE: {STYLE_LABEL[originalStyle] ?? "(none)"}
+                            STYLE: {displayStyle}
                         </BodyText>
                     </Pressable>
                 </View>
