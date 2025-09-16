@@ -1,6 +1,6 @@
 import { Style } from '@/types/common';
 import {useState} from "react";
-import {LayoutAnimation, Pressable, View} from "react-native";
+import { Pressable, View} from "react-native";
 import {skillsStyles} from "@/screens/Skills/styles";
 import {BodyText} from "@/theme/T";
 import {Ionicons} from "@expo/vector-icons";
@@ -40,12 +40,6 @@ export function ExpandableSection({
 
     const isSelected = isStyleCard && selected === value;
 
-    const toggle = () => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        if (isControlled) onToggle?.(id);
-        else setInternal(v => !v);
-    };
-
     return (
         <View
             style={[
@@ -54,7 +48,7 @@ export function ExpandableSection({
                 isSelected && skillsStyles.cardSelected,
             ]}
         >
-            <Pressable onPress={toggle} hitSlop={8} style={skillsStyles.cardHeader}>
+            <Pressable onPress={() => onToggle(id)} hitSlop={8} style={skillsStyles.cardHeader}>
                 <BodyText style={skillsStyles.cardHeaderText}>{title}  </BodyText>
                 <Ionicons name={isOpen ? 'caret-up': 'caret-down'} size={20} color={colors.offWhite}/>
             </Pressable>

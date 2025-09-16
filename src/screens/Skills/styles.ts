@@ -114,4 +114,77 @@ export const skillsStyles = StyleSheet.create({
         marginHorizontal: 40
     },
     saveBtnText: { color: colors.offWhite, fontSize: 16 },
+    // Modal styles
+    modalContainer: {
+        flex: 1,
+        paddingHorizontal: 20,
+    },
+    modalLoadingText: {
+        opacity: 0.6,
+        textAlign: 'center',
+        marginTop: 20
+    },
+    modalErrorText: {
+        color: 'red',
+        textAlign: 'center',
+        marginTop: 20,
+    },
+    modalList: {
+        flex: 1,
+        marginTop: 20
+    },
+    modalListContent: {
+        paddingBottom: 100
+    },
+    modalListSeparator: {
+        height: 1,
+        backgroundColor: colors.offWhite,
+        opacity: 0.2,
+        marginVertical: 8
+    },
+    modalListItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16
+    },
+    modalListItemIcon: {
+        marginRight: 12
+    },
+    modalListItemText: {
+        fontSize: 16,
+        flex: 1,
+        color: colors.offWhite
+    },
+    modalSavingText: {
+        opacity: 0.6,
+        marginTop: 16,
+        textAlign: 'center'
+    },
+    modalBottomContainer: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: colors.background,
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: colors.offWhite,
+    },
+    modalAddButton: {
+        borderRadius: 10,
+        paddingVertical: 16,
+        alignItems: 'center',
+        flexDirection: 'row',
+        justifyContent: 'center'
+    },
+    modalAddButtonIcon: {
+        marginRight: 8
+    },
+    modalAddButtonText: {
+        fontSize: 16,
+        fontWeight: '600'
+    }
 });

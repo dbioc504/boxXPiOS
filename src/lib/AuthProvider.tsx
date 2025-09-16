@@ -10,6 +10,7 @@ type AuthUser = {
 type AuthContextValue = {
     user: AuthUser;
     loading: boolean;
+    signOut: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -41,11 +42,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
     }, []);
 
+    const signOut = async () => {
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error('Error signing out', error.message);
+            return;
+        }
+        setUser(null);
+    };
+
     return (
-        <AuthContext.Provider value={{ user, loading }}>
-            {children}
+        <AuthContext.Provider value={{ user, loading, signOut }}>
+            { children }
         </AuthContext.Provider>
-    );
+    )
 }
 
 // Optional helper
