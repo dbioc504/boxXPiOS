@@ -1,8 +1,7 @@
 {
   "cli": {
-    "version": ">= 16.18.0",
-    "appVersionSource": "remote",
-    "appRoot": "boxxp"
+    "version": ">= 16.19.2",
+    "appVersionSource": "remote"
   },
   "build": {
     "development": {
@@ -13,9 +12,7 @@
       "distribution": "internal"
     },
     "production": {
-      "ios": {
-        "simulator": true
-      }
+      "autoIncrement": true
     }
   },
   "submit": {
