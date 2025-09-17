@@ -1,3 +1,12 @@
-!package-lock.json
-!package-lock.json
-!npm-shrinkwrap.json
+# .easignore
+# start from .gitignore contents, then add more
+.expo
+coverage
+docs
+**/*.psd
+**/*.ai
+**/*.zip
+**/*.mp4
+**/*.mov
+android
+ios
