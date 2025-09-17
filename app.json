@@ -25,7 +25,8 @@
       "bundleIdentifier": "com.dominickbioc.boxxp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
-      }
+      },
+      "usesAppleSignIn": true,
     },
     "android": {
       "adaptiveIcon": {
@@ -39,7 +40,9 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "expo-build-properties",
+      "expo-apple-authentication"
     ],
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://okhbdsvzevhfqbeoclft.supabase.co",
