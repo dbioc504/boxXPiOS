@@ -5,7 +5,8 @@ import {colors} from '@/theme/theme';
 import {useCategory} from '@/lib/hooks/useCategory';
 import type {Category} from '@/types/common';
 import {skillsStyles} from './styles';
-import {CategoryEditModal} from "@/screens/Skills/CategoryEditModal";
+import {SkillsModal} from "@/screens/Skills/SkillsModal";
+import type { Mode }from '@/screens/Skills/SkillsModal'
 
 type Props = {
     category: Category;
@@ -18,7 +19,6 @@ export function CategoryCard(
     {
         category,
         title,
-        onEdit,
         userId = 'user-1',
     }: Props) {
     const {
@@ -29,25 +29,50 @@ export function CategoryCard(
         } = useCategory(userId, category);
 
     const [modalVisible, setModalVisible] = useState(false);
-    const isExternallyControlled = typeof onEdit === 'function';
-
-    const handleEditPress = () => {
-        if (isExternallyControlled) onEdit!();
-        else setModalVisible(true);
-    };
+    const [mode, setMode] = useState<Mode>('view');
 
     return (
                 <>
                     <View style={skillsStyles.categoryCard}>
                     {/* Header */}
                     <View style={skillsStyles.categoryHeaderRow}>
-                        <BodyText style={skillsStyles.categoryTitle}>{title}</BodyText>
+                        <BodyText 
+                            style={skillsStyles.categoryTitle}
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                        >
+                            {title}
+                        </BodyText>
 
-                        <Pressable onPress={handleEditPress} style={skillsStyles.categoryEditBtn} hitSlop={8}>
-                            <BodyText style={[skillsStyles.categoryTitle, {fontSize: 16}]}>
-                                EDIT
-                            </BodyText>
-                        </Pressable>
+                        {/* Edit Button */}
+                        <View style={skillsStyles.categoryHeaderActions}>
+                            <Pressable
+                                onPress={() => {
+                                    setMode('view');
+                                    setModalVisible(true);
+                                }}
+                                style={skillsStyles.categoryActionBtn}
+                                hitSlop={8}>
+                                <BodyText style={skillsStyles.categoryActionLabel}>
+                                    VIEW
+                                </BodyText>
+                            </Pressable>
+
+                            {/*  View Button */}
+                            <Pressable
+                                onPress={() => {
+                                    setMode('edit');
+                                    setModalVisible(true);
+                                }}
+                                style={skillsStyles.categoryActionBtn}
+                                hitSlop={8}
+                            >
+                                <BodyText style={skillsStyles.categoryActionLabel}>
+                                    EDIT
+                                </BodyText>
+                            </Pressable>`
+                        </View>
+                        
                     </View>
 
                     {/* Body */}
@@ -73,12 +98,14 @@ export function CategoryCard(
                         </View>
                     </View>
 
-                    <CategoryEditModal
+                    <SkillsModal
                         visible={modalVisible}
                         onClose={() => setModalVisible(false)}
                         category={category}
                         title={title}
                         userId={userId}
+                        mode={mode}
+                        onSwitchMode={setMode}
                     />
                 </>
     );

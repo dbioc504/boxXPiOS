@@ -30,20 +30,35 @@ export const skillsStyles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         marginBottom: 8,
+        minHeight: 40
     },
     categoryTitle: {
         color: colors.offWhite,
-        fontSize: 20,
+        fontSize: 16.5,
         fontFamily: fonts.body,
+        flex: 1
     },
-    categoryEditBtn: {
-        paddingHorizontal: 6,
-        paddingVertical: 4,
+    categoryHeaderActions: {
+      flexDirection: 'row',
+      gap: 8,
+      flexShrink: 0,
+      minWidth: 130,
+      justifyContent: 'flex-end',
+      alignItems: 'center'
+    },
+    categoryActionBtn: {
+        paddingVertical: 6,
+        paddingHorizontal: 5,
         borderRadius: 5,
-        borderWidth: 2,
+        borderWidth: 1,
         borderColor: colors.offWhite,
-        backgroundColor: colors.form,
-        marginVertical: 5,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.form
+    },
+    categoryActionLabel: {
+        fontSize: 12,
+        color: colors.offWhite
     },
     categoryBody: {
         minHeight: 120,
@@ -186,5 +201,59 @@ export const skillsStyles = StyleSheet.create({
     modalAddButtonText: {
         fontSize: 16,
         fontWeight: '600'
+    },
+    // View or Edit Toggle
+    modeContainer: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 8
+    },
+    modeBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: colors.categories,
+        borderRadius: 999,
+        padding: 4,
+        width: 220,
+        height: 36,
+        overflow: 'hidden'
+    },
+    modeThumb: {
+        position: 'absolute',
+        left: 4,
+        top: 4,
+        bottom: 4,
+        borderRadius: 999,
+        backgroundColor: colors.form,
+        width: 110
+    },
+    modeOption: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    modeLabel: {
+        fontSize: 12,
+        opacity: 0.7,
+        color: colors.offWhite
+    },
+    modeLabelActive: {
+        opacity: 1,
+        fontWeight: 600
+    },
+    // techniques in skills
+    techniqueToggleArea: {
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingTop: 8
+    },
+    techniqueFocusRow: {
+        backgroundColor: colors.select, borderRadius: 8
+    },
+    techniqueRowActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12
     }
 });

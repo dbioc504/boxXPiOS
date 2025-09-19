@@ -67,6 +67,8 @@ export const CATEGORIES: Category[] = [
     'pressure',
     'infighting'
 ]
+
+
 export const ACTIVITIES: Activity[] = [
     'jumprope',
     'shadowboxing',

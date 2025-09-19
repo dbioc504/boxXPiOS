@@ -5,13 +5,16 @@ import {useNavigation, useRoute} from "@react-navigation/native";
 import Logo from '../../assets/bxpLogo.svg'
 import {Ionicons} from "@expo/vector-icons";
 
-
 type Props = React.ComponentProps<typeof Text>;
+
 type HeaderProps = {
     title: string;
     forceMode?: 'home' | 'back';
     isModal?: boolean;
     onClose?: () => void;
+    canGoBack?: boolean;
+    onBack?: () => void;
+    rightSlot?: React.ReactNode;
 };
 
 export function T(props: Props) {
@@ -25,7 +28,7 @@ export function BodyText(props: Props) {
 const SIDE_WIDTH = 56;
 
 
-export function Header({ title, forceMode, onClose, isModal }: HeaderProps) {
+export function Header({ title, forceMode, onClose, isModal, rightSlot }: HeaderProps) {
     const nav = useNavigation<any>();
     const route = useRoute();
 
@@ -45,7 +48,7 @@ export function Header({ title, forceMode, onClose, isModal }: HeaderProps) {
     return (
         <View style={[styles.container, { paddingTop: 10 }]}>
             {/* LEFT SIDE: back button only on non-Home */}
-            <View style={[styles.side, { width: SIDE_WIDTH }]}>
+            <View style={[styles.side, { width: SIDE_WIDTH, alignItems: 'flex-start' }]}>
                 {   isModal ? (
                     <Pressable
                         onPress={handleClose}
@@ -111,7 +114,9 @@ export function Header({ title, forceMode, onClose, isModal }: HeaderProps) {
             </View>
 
             {/* RIGHT SIDE: invisible spacer to keep center truly centered */}
-            <View style={[styles.side, { width: SIDE_WIDTH }]} />
+            <View style={[styles.side, { width: SIDE_WIDTH, paddingRight: 20, alignItems: 'flex-start' }]} >
+                { rightSlot ?? null }
+            </View>
         </View>
     );
 }

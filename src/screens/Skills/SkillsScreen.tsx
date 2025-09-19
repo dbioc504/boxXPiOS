@@ -1,7 +1,8 @@
 import {Style, STYLES, STYLE_LABEL, STYLE_DESCRIPT, CATEGORY_LABEL} from "@/types/common";
 import {useUserStyle} from "@/lib/hooks/useUserStyle";
 import {useEffect, useState} from "react";
-import {Alert, Animated, LayoutAnimation, Modal, Pressable, SafeAreaView, View} from "react-native";
+import {Alert, Animated, LayoutAnimation, Modal, Pressable, View} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import {colors, sharedStyle, signInStyles} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
 import ScrollView = Animated.ScrollView;

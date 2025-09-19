@@ -18,7 +18,7 @@ export default function RootNavigator() {
         <NavigationContainer>
             <Stack.Navigator
                 screenOptions={
-                { headerShown: false, animation: "fade", animationDuration: 160 }}>
+                { headerShown: false,}}>
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="SignIn" component={SignInScreen} />
                 <Stack.Screen name="Skills" component={SkillsScreen} />
