@@ -1,6 +1,8 @@
 import {Category} from "@/types/common";
 import {Technique} from "@/types/technique";
 
+
+
 export type Style = 'outboxer' | 'boxer_puncher' | 'infighter';
 
 export interface TechniqueRow {
