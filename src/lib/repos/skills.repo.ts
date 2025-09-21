@@ -1,15 +1,10 @@
 import {Category} from "@/types/common";
 import {Technique} from "@/types/technique";
-
+import { TechniqueRow } from "@/types/validation";
 
 
 export type Style = 'outboxer' | 'boxer_puncher' | 'infighter';
 
-export interface TechniqueRow {
-    id: string;
-    title: string;
-    category: string;
-}
 
 export interface SkillsRepo {
     listUserTechniques:(userId: string, category: Category) => Promise<Technique[]>
@@ -19,7 +14,7 @@ export interface SkillsRepo {
 
     getUserStyle(userId: string): Promise<Style | null>;
     setUserStyle(userId: string, style: Style): Promise<void>;
-    listTechniquesByCategory(cat: string): Promise<TechniqueRow[]>;
+    listTechniquesByCategory: (cat: Category) => Promise<TechniqueRow[]>;
     getUserTechniques(userId: string, cat: string): Promise<string[]>
     setUserTechniques(userId: string, cat: string, ids: string[]): Promise<void>;
 }
