@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
-    SafeAreaView,
     View,
     Pressable,
     Text,
@@ -27,6 +26,7 @@ import { makeRedirectUri } from 'expo-auth-session';
 import * as QueryParams from 'expo-auth-session/build/QueryParams';
 import * as Linking from 'expo-linking';
 import { useAuth } from '@/lib/AuthProvider';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 type SignInNavProp = NativeStackNavigationProp<RootStackParamList, 'SignIn'>;
 

@@ -34,7 +34,7 @@ export const skillsStyles = StyleSheet.create({
     },
     categoryTitle: {
         color: colors.offWhite,
-        fontSize: 16.5,
+        fontSize: 20,
         fontFamily: fonts.body,
         flex: 1
     },
@@ -57,7 +57,7 @@ export const skillsStyles = StyleSheet.create({
         backgroundColor: colors.form
     },
     categoryActionLabel: {
-        fontSize: 12,
+        fontSize: 18,
         color: colors.offWhite
     },
     categoryBody: {
@@ -255,5 +255,28 @@ export const skillsStyles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12
+    },
+    // categoryBody
+    previewList: {
+        gap: 6,
+    },
+    previewItem: {
+        color: colors.offWhite,
+        fontSize: 14
+    },
+    previewMorePill: {
+        alignSelf: 'flex-start',
+        marginTop: 6,
+        borderWidth: 1,
+        borderColor: colors.offWhite,
+        borderRadius: 999,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        opacity: 0.8
+    },
+    previewMoreText: {
+        color: colors.offWhite,
+        fontSize: 12,
+        fontWeight: 600
     }
 });

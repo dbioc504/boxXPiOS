@@ -6,18 +6,15 @@ import {
     Pressable,
     ActionSheetIOS,
     StyleSheet,
-    Animated,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { BodyText, Header } from "@/theme/T";
 import { colors } from "@/theme/theme";
-import type { Category } from "@/types/common";
+import {Category, CATEGORY_LABEL} from "@/types/common";
 import { skillsStyles } from "@/screens/Skills/styles";
 import { TechniqueFormModal } from "@/screens/Skills/TechniqueFormModal";
 import { useCategoryTechniques } from "@/lib/hooks/useCategoryTechniques";
-
-export type Mode = "view" | "edit";
 
 type Props = {
     visible: boolean;
@@ -25,8 +22,7 @@ type Props = {
     category: Category;
     title: string;
     userId?: string;
-    mode: Mode;
-    onSwitchMode?: (m: Mode) => void;
+    onChanged?: () => void;
 };
 
 export function SkillsModal({
@@ -35,9 +31,8 @@ export function SkillsModal({
     category,
     title,
     userId = "user-1",
-    mode,
-    onSwitchMode,
-}: Props) {
+    onChanged
+    }: Props) {
     // CRUD hook: the list and the actions you call
     const { items, loading, saving, error, add, edit, remove } =
         useCategoryTechniques(userId, category);
@@ -46,14 +41,6 @@ export function SkillsModal({
     const [addOpen, setAddOpen] = React.useState(false);
     const [editOpen, setEditOpen] = React.useState(false);
     const [editing, setEditing] = React.useState<{ id: string; title: string } | null>(null);
-
-    // ----- Rows -----
-    // VIEW row: title only
-    const TechniqueRowView = ({ item }: { item: { id: string; title: string } }) => (
-        <View style={skillsStyles.modalListItem}>
-            <BodyText style={skillsStyles.modalListItemText}>{item.title}</BodyText>
-        </View>
-    );
 
     // EDIT row: title + pencil + trash
     const TechniqueRowEdit = ({ item }: { item: { id: string; title: string } }) => (
@@ -84,7 +71,10 @@ export function SkillsModal({
                                 userInterfaceStyle: "dark",
                             },
                             (i) => {
-                                if (i === 1) remove(item.id);
+                                if (i === 1) {
+                                    remove(item.id).then(() => onChanged?.());
+
+                                }
                             }
                         );
                     }}
@@ -98,7 +88,7 @@ export function SkillsModal({
     );
 
     const renderItem = ({ item }: { item: any }) =>
-        mode === "view" ? <TechniqueRowView item={item} /> : <TechniqueRowEdit item={item} />;
+        <TechniqueRowEdit item={item} />;
 
     // ----- Footer -----
     const renderFooter = () =>
@@ -110,31 +100,30 @@ export function SkillsModal({
             <TechniqueFormModal
                 visible={addOpen}
                 onClose={() => setAddOpen(false)}
-                submitLabel="Add"
+                submitLabel = 'Add'
                 onSubmit={async (title) => {
                     await add(title);
+                    onChanged?.();
                 }}
+                heading={`ADD TO ${CATEGORY_LABEL[category].toUpperCase()}`}
             />
 
             {/* Edit form (prefilled) */}
             <TechniqueFormModal
                 visible={editOpen}
-                onClose={() => setEditOpen(false)}
+                onClose={() => {setEditOpen(false); setEditing(null);}}
                 initialTitle={editing?.title ?? ""}
                 submitLabel="Save"
+                heading={`EDIT IN ${CATEGORY_LABEL[category].toUpperCase()}`}
                 onSubmit={async (title) => {
                     if (editing) await edit(editing.id, title);
+                    onChanged?.();
                 }}
             />
 
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
                 {/* Header */}
                 <Header title={title} isModal onClose={onClose} />
-
-                {/* Centered segmented toggle */}
-                <View style={localStyles.toggleArea}>
-                    <ModeToggle value={mode} onChange={onSwitchMode} />
-                </View>
 
                 {/* Body */}
                 <View style={skillsStyles.modalContainer}>
@@ -150,81 +139,27 @@ export function SkillsModal({
                             ItemSeparatorComponent={() => <View style={skillsStyles.modalListSeparator} />}
                             renderItem={renderItem}
                             ListFooterComponent={renderFooter()}
-                            // optional: ensure re-render when mode changes
-                            extraData={mode}
                         />
                     )}
                 </View>
 
                 {/* Sticky Add button — EDIT only */}
-                {mode === "edit" && (
-                    <View style={skillsStyles.modalBottomContainer}>
-                        <Pressable
-                            onPress={() => setAddOpen(true)}
-                            style={({ pressed }) => [
-                                skillsStyles.modalAddButton,
-                                { backgroundColor: pressed ? colors.pressedBorder : colors.form },
-                            ]}
-                        >
-                            <Ionicons name="add" size={24} color={colors.offWhite} style={skillsStyles.modalAddButtonIcon} />
-                            <BodyText style={skillsStyles.modalAddButtonText}>Add New Technique</BodyText>
-                        </Pressable>
-                    </View>
-                )}
+
+                <View style={skillsStyles.modalBottomContainer}>
+                    <Pressable
+                        onPress={() => setAddOpen(true)}
+                        style={({ pressed }) => [
+                            skillsStyles.modalAddButton,
+                            { backgroundColor: pressed ? colors.pressedBorder : colors.form },
+                        ]}
+                    >
+                        <Ionicons name="add" size={24} color={colors.offWhite} style={skillsStyles.modalAddButtonIcon} />
+                        <BodyText style={skillsStyles.modalAddButtonText}>Add New Technique</BodyText>
+                    </Pressable>
+                </View>
+
             </SafeAreaView>
         </Modal>
-    );
-}
-
-/* Segmented VIEW / EDIT toggle (self-contained styles) */
-function ModeToggle({
-                        value,
-                        onChange,
-                    }: {
-    value: Mode;
-    onChange?: (m: Mode) => void;
-}) {
-    const [w, setW] = React.useState(0);
-    const thumbX = React.useRef(new Animated.Value(0)).current;
-
-    React.useEffect(() => {
-        const to = value === "view" ? 0 : w / 2;
-        Animated.spring(thumbX, {
-            toValue: to,
-            useNativeDriver: true,
-            bounciness: 10,
-            speed: 16,
-        }).start();
-    }, [value, w]);
-
-    return (
-        <View
-            style={modeStyles.bar}
-            onLayout={(e) => setW(e.nativeEvent.layout.width - 8 /* padding L+R */)}
-        >
-            <Animated.View
-                pointerEvents="none"
-                style={[modeStyles.thumb, { transform: [{ translateX: thumbX }], width: "50%" }]}
-            />
-            <Pressable
-                style={modeStyles.option}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: value === "view" }}
-                onPress={() => onChange?.("view")}
-                hitSlop={8}
-            >
-                <BodyText style={[modeStyles.label, value === "view" && modeStyles.labelActive]}>VIEW</BodyText>
-            </Pressable>
-            <Pressable
-                style={modeStyles.option}
-                accessibilityRole="tab"
-                accessibilityState={{ selected: value === "edit" }}
-                onPress={() => onChange?.("edit")}
-                hitSlop={8}
-            >
-                <BodyText style={[modeStyles.label, value === "edit" && modeStyles.labelActive]}>EDIT</BodyText>
-            </Pressable>
-        </View>
     );
 }
 
@@ -233,26 +168,3 @@ const localStyles = StyleSheet.create({
     rowActions: { flexDirection: "row", alignItems: "center", gap: 12 },
 });
 
-const modeStyles = StyleSheet.create({
-    bar: {
-        flexDirection: "row",
-        alignItems: "center",
-        backgroundColor: colors.categories,
-        borderRadius: 999,
-        padding: 4,
-        width: 220,
-        height: 36,
-        overflow: "hidden",
-    },
-    thumb: {
-        position: "absolute",
-        left: 4,
-        top: 4,
-        bottom: 4,
-        borderRadius: 999,
-        backgroundColor: colors.form,
-    },
-    option: { flex: 1, alignItems: "center", justifyContent: "center" },
-    label: { fontSize: 12, opacity: 0.7, color: colors.offWhite },
-    labelActive: { opacity: 1, fontWeight: "600" },
-});

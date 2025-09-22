@@ -2,11 +2,10 @@ import React, {useState} from 'react';
 import {View, Pressable} from 'react-native';
 import {BodyText} from '@/theme/T';
 import {colors} from '@/theme/theme';
-import {useCategory} from '@/lib/hooks/useCategory';
 import type {Category} from '@/types/common';
 import {skillsStyles} from './styles';
 import {SkillsModal} from "@/screens/Skills/SkillsModal";
-import type { Mode }from '@/screens/Skills/SkillsModal'
+import {useCategoryTechniques} from "@/lib/hooks/useCategoryTechniques";
 
 type Props = {
     category: Category;
@@ -21,15 +20,15 @@ export function CategoryCard(
         title,
         userId = 'user-1',
     }: Props) {
-    const {
-        all,
-        selectedIds,
-        loading,
-        error,
-        } = useCategory(userId, category);
 
     const [modalVisible, setModalVisible] = useState(false);
-    const [mode, setMode] = useState<Mode>('view');
+    const { items, loading, error, refresh } = useCategoryTechniques(userId, category);
+    const PREVIEW_COUNT = 3;
+    const preview = React.useMemo(() => {
+        return items.slice(0, PREVIEW_COUNT);
+    }, [items]);
+
+    const more = Math.max(0, items.length - preview.length);
 
     return (
                 <>
@@ -46,22 +45,9 @@ export function CategoryCard(
 
                         {/* Edit Button */}
                         <View style={skillsStyles.categoryHeaderActions}>
-                            <Pressable
-                                onPress={() => {
-                                    setMode('view');
-                                    setModalVisible(true);
-                                }}
-                                style={skillsStyles.categoryActionBtn}
-                                hitSlop={8}>
-                                <BodyText style={skillsStyles.categoryActionLabel}>
-                                    VIEW
-                                </BodyText>
-                            </Pressable>
-
                             {/*  View Button */}
                             <Pressable
                                 onPress={() => {
-                                    setMode('edit');
                                     setModalVisible(true);
                                 }}
                                 style={skillsStyles.categoryActionBtn}
@@ -82,17 +68,29 @@ export function CategoryCard(
 
                             {/* View mode: show selected techniques only */}
                             {!loading && !error && (
-                                selectedIds.length ? (
-                                    selectedIds
-                                        .map(id => all.find(t => t.id === id))
-                                        .filter(Boolean)
-                                        .map(t => (
-                                            <BodyText key={t!.id} style={{fontSize: 14}}>
-                                                {t!.title}
-                                            </BodyText>
-                                        ))
+                                items.length === 0 ? (
+                                    <BodyText style={{ color: colors.offWhite, opacity: 0.8 }}>
+                                        No techniques yet - tap EDIT to add.
+                                    </BodyText>
                                 ) : (
-                                    <BodyText style={{color: colors.offWhite}}>(empty)</BodyText>
+                                    <View style={skillsStyles.previewList}>
+                                        {preview.map(t => (
+                                            <BodyText
+                                                key={t.id}
+                                                style={skillsStyles.previewItem}
+                                                numberOfLines={1}
+                                                ellipsizeMode='tail'
+                                            >
+                                                • {t.title}
+                                            </BodyText>
+                                        ))}
+
+                                        {more > 0 && (
+                                            <View style={skillsStyles.previewMorePill}>
+                                                <BodyText style={skillsStyles.previewMoreText}>+{more} more</BodyText>
+                                            </View>
+                                        )}
+                                    </View>
                                 )
                             )}
                         </View>
@@ -100,12 +98,11 @@ export function CategoryCard(
 
                     <SkillsModal
                         visible={modalVisible}
-                        onClose={() => setModalVisible(false)}
+                        onClose={() => {setModalVisible(false); refresh();}}
                         category={category}
                         title={title}
                         userId={userId}
-                        mode={mode}
-                        onSwitchMode={setMode}
+                        onChanged={refresh}
                     />
                 </>
     );

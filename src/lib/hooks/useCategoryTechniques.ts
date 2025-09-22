@@ -16,7 +16,7 @@ export function useCategoryTechniques(userId: string, category: Category) {
         setLoad(true); setError(null);
         try {
             const list: Technique[] = await skills.listUserTechniques(userId, category);
-            setItems(list);
+            setItems([...list]);
         } catch (e: any) {
             setError(e?.message ?? 'Failed to load');
         } finally {

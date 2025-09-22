@@ -10,6 +10,8 @@ type Props = {
     initialTitle?: string;
     onSubmit: (title: string) => Promise<void> | void;
     submitLabel?: string;
+    heading: string;
+    onChanged?: () => void;
 }
 
 export function TechniqueFormModal({
@@ -17,26 +19,32 @@ export function TechniqueFormModal({
     onClose,
     initialTitle = '',
     onSubmit,
-    submitLabel = 'Add'
+    submitLabel='Add',
+    heading,
 }: Props){
     const [title, setTitle] = React.useState(initialTitle);
     const [submitting, setSubmitting] = React.useState(false);
 
-    React.useEffect(() => { setTitle(initialTitle); }, [initialTitle]);
+    React.useEffect(() => {
+        if (visible) {
+            setTitle(initialTitle);
+        }
+    }, [visible, initialTitle]);
 
     const canSubmit = title.trim().length > 0 && !submitting;
 
     const handleSubmit = async () => {
         if (!canSubmit) return;
         setSubmitting(true);
-        try { await onSubmit(title.trim()); onClose();}
+        try { await onSubmit(title.trim()); setTitle(''); onClose();}
         finally { setSubmitting(false); }
     };
 
     return (
-        <Modal visible={visible} onRequestClose={onClose} animationType='slide' presentationStyle='pageSheet'>
+        <Modal visible={visible} onRequestClose={onClose} animationType='slide' presentationStyle='formSheet'>
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-                <Header title={`${submitLabel.toUpperCase()} TECHNIQUE`} isModal onClose={onClose}/>
+                <Header title={heading}/>
+
                 <View style={styles.container}>
                     <BodyText style={styles.label}>
                         Title
@@ -44,7 +52,7 @@ export function TechniqueFormModal({
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
-                        placeholder='e.g. Slip outside + counter jab'
+                        placeholder='e.g. Cut off the ring/ Shuffle and jab/ Catch and shoot'
                         placeholderTextColor='#999'
                         autoFocus
                         style={styles.input}
@@ -56,7 +64,8 @@ export function TechniqueFormModal({
                         disabled={!canSubmit}
                         style={({ pressed }) => [
                             styles.primary,
-                            { opacity: canSubmit ? (pressed ? 0.8 : 1) : 0.5 }
+                            { opacity: canSubmit ? (pressed ? 0.8 : 1) : 0.5 },
+                            { backgroundColor: pressed ? colors.pressedBorder : colors.text }
                         ]}
                     >
                         <BodyText style={styles.primaryText}>{submitLabel}</BodyText>
@@ -86,7 +95,7 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         paddingVertical: 14,
         alignItems: 'center',
-        backgroundColor: colors.form
+        backgroundColor: colors.text
     },
     primaryText: { fontWeight: 600 }
 })

@@ -63,20 +63,14 @@ export function makeMockSkillsRepo(): SkillsRepo {
         },
 
         async updateUserTechnique(userId: string, id: string, patch: { title?: string }): Promise<void> {
-            // Find the technique in any category for this user and patch it
             for (const [k, arr] of userTechObjects.entries()) {
                 if (!k.startsWith(`${userId}:`)) continue;
-                const i = arr.findIndex((t) => t.id === id);
-                if (i >= 0) {
-                    arr[i] = {
-                        ...arr[i],
-                        ...(patch.title ? { title: patch.title } : {}),
-                    };
-                    userTechObjects.set(k, arr);
-                    return;
-                }
+                const next = arr.map(t =>
+                    t.id === id ? { ...t, ...(patch.title ? { title: patch.title } : {}) } : t
+                );
+                userTechObjects.set(k, next);
+                return;
             }
-            // no-op if not found
         },
 
         async deleteUserTechnique(userId: string, id: string): Promise<void> {
