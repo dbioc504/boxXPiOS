@@ -34,7 +34,7 @@ export const skillsStyles = StyleSheet.create({
     },
     categoryTitle: {
         color: colors.offWhite,
-        fontSize: 20,
+        fontSize: 18,
         fontFamily: fonts.body,
         flex: 1
     },
@@ -42,7 +42,7 @@ export const skillsStyles = StyleSheet.create({
       flexDirection: 'row',
       gap: 8,
       flexShrink: 0,
-      minWidth: 130,
+      minWidth: 40,
       justifyContent: 'flex-end',
       alignItems: 'center'
     },
@@ -57,7 +57,7 @@ export const skillsStyles = StyleSheet.create({
         backgroundColor: colors.form
     },
     categoryActionLabel: {
-        fontSize: 18,
+        fontSize: 16,
         color: colors.offWhite
     },
     categoryBody: {

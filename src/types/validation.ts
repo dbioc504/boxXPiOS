@@ -15,11 +15,19 @@ export const zAnyId = z.union([zUuidV7, zLocalId]);
 export const zStyle = z.enum(['outboxer', 'boxer_puncher', 'infighter']);
 
 export const zCategory = z.enum([
-    'mid_long_range',
+    // outboxer
+    'long_range_boxing',
+    'footwork',
+    'defense',
+    // boxer-puncher
     'counterpunching',
-    'angles_footwork',
+    'speed_and_power',
+    'placement_timing',
+    // infighter
     'pressure',
-    'infighting',
+    'placement',
+    'work_rate',
+
 ]);
 
 export const zActivity = z.enum([
@@ -73,9 +81,9 @@ export const zMovement = z.union([zPunch, zBodyPunch, zDefense]);
 
 /** style to allowed categories */
 export const STYLE_TO_CATEGORIES: Record<z.infer<typeof zStyle>, z.infer<typeof zCategory>[]> = {
-    outboxer: ['mid_long_range', 'counterpunching', 'angles_footwork'],
-    boxer_puncher: ['mid_long_range', 'infighting', 'counterpunching'],
-    infighter: ['pressure', 'infighting', 'counterpunching'],
+    outboxer: ['long_range_boxing', 'footwork', 'defense'],
+    boxer_puncher: ['counterpunching', 'speed_and_power', 'placement_timing'],
+    infighter: ['pressure', 'placement', 'work_rate'],
 };
 
 /** cross field rule */

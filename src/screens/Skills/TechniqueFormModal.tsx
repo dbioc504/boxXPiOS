@@ -43,7 +43,7 @@ export function TechniqueFormModal({
     return (
         <Modal visible={visible} onRequestClose={onClose} animationType='slide' presentationStyle='formSheet'>
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-                <Header title={heading}/>
+                <Header title={heading} isModal={true}/>
 
                 <View style={styles.container}>
                     <BodyText style={styles.label}>

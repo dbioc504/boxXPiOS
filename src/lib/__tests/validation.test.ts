@@ -60,7 +60,7 @@ describe('Validation Schemas', () => {
     });
 
     test('Category must match style', () => {
-        const valid   = { style: 'outboxer', category: 'angles_footwork' };
+        const valid   = { style: 'outboxer', category: 'defense' };
         const invalid = { style: 'outboxer', category: 'pressure' };
 
         expect(() => zCategoryForStyle.parse(valid)).not.toThrow();

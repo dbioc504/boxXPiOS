@@ -19,18 +19,29 @@ export const STYLE_DESCRIPT: Record<Style, string> = {
 }
 
 export type Category =
-    | 'mid_long_range'
+    // outboxing
+    | 'long_range_boxing'
+    | 'footwork'
+    | 'defense'
+    // boxer-puncher
     | 'counterpunching'
-    | 'angles_footwork'
+    | 'speed_and_power'
+    | 'placement_timing'
+    // infighter
     | 'pressure'
-    | 'infighting';
+    | 'placement'
+    | 'work_rate'
 
 export const CATEGORY_LABEL: Record<Category, string> = {
-    mid_long_range: 'Mid/Long Range',
+    long_range_boxing: 'Long Range Boxing',
     counterpunching: 'Counterpunching',
-    angles_footwork: 'Angles/Footwork',
+    footwork: 'Footwork',
+    defense: 'Defense',
+    speed_and_power: 'Speed and Power',
+    placement: 'Placement',
+    placement_timing: 'Placement and Timing',
     pressure: 'Pressure',
-    infighting: 'Infighting'
+    work_rate: 'Work Rate'
 }
 
 export type Activity =
@@ -60,14 +71,6 @@ export const ACTIVITY_LABEL: Record<Activity, string> = {
 
 // Canonical order arrays for iteration/use
 export const STYLES: Style[] = ['outboxer', 'boxer_puncher', 'infighter']
-export const CATEGORIES: Category[] = [
-    'mid_long_range',
-    'counterpunching',
-    'angles_footwork',
-    'pressure',
-    'infighting'
-]
-
 
 export const ACTIVITIES: Activity[] = [
     'jumprope',

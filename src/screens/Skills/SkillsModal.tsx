@@ -150,7 +150,7 @@ export function SkillsModal({
                         onPress={() => setAddOpen(true)}
                         style={({ pressed }) => [
                             skillsStyles.modalAddButton,
-                            { backgroundColor: pressed ? colors.pressedBorder : colors.form },
+                            { backgroundColor: pressed ? colors.pressedBorder : colors.text },
                         ]}
                     >
                         <Ionicons name="add" size={24} color={colors.offWhite} style={skillsStyles.modalAddButtonIcon} />

@@ -12,18 +12,20 @@ function makeUuidV7(seed: number): string {
 const rawTechniques = [
     {
         id: makeUuidV7(1),
-        title: 'Cut off the ring with 2-3x jabs, rocking chair, straight punch flurries',
-        category: 'pressure',
+        title: 'Use your footwork and flick your jab out with speed to measure how long you can keep ' +
+            'your opponent at bay. Once comfortable and in your range while out of opponent\'s range,' +
+            'shoot the straight down the pipe',
+        category: 'long_range_boxing',
     },
     {
         id: makeUuidV7(2),
-        title: '4-6 piece catch combos in the same speed as punch combos end with tick tick boom',
-        category: 'counterpunching'
+        title: 'Shuffle in circles around opponent away from power hand. Avoid corners and ropes. ',
+        category: 'footwork'
     },
     {
         id: makeUuidV7(3),
         title: 'find a rhythm with smooth and small head movements in between exchanges and assaults',
-        category: 'mid_long_range'
+        category: 'defense'
     },
 ] as const;
 
@@ -46,7 +48,7 @@ const rawCombos = [
     {
         id: makeUuidV7(12),
         name: 'rope trap',
-        category: 'infighting',
+        category: 'work_rate',
         steps: ['stab', 'right_shovel_hook', 'left_shovel_hook', 'right_hook', 'left_hook','roll_right',
         'straight', 'left_hook', 'straight', 'roll_right']
     }
