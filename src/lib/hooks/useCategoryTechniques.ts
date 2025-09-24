@@ -1,55 +1,55 @@
-import { useEffect, useState, useCallback } from 'react';
+// example: src/hooks/useCategoryTechniques.ts
+import { useEffect, useState, useCallback } from "react";
 import { useRepos } from "@/lib/providers/RepoProvider";
-import type { Category } from '@/types/common';
-import type { Technique } from '@/types/technique';
+import { useAuth } from "@/lib/AuthProvider";
+import type { Category } from "@/types/common";
+import type { Technique } from "@/types/technique";
 
-export function useCategoryTechniques(userId: string, category: Category) {
-    const repo = useRepos();
-    const skills = (repo as any).skills ?? repo;
+export function useCategoryTechniques(category: Category) {
+    const { skills } = useRepos();
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
 
     const [items, setItems] = useState<Technique[]>([]);
-    const [loading, setLoad] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     const refresh = useCallback(async () => {
-        setLoad(true); setError(null);
-        try {
-            const list: Technique[] = await skills.listUserTechniques(userId, category);
-            setItems([...list]);
-        } catch (e: any) {
-            setError(e?.message ?? 'Failed to load');
-        } finally {
-            setLoad(false);
-        }
+        if (!userId) return;
+        const rows = await skills.listUserTechniques(userId, category);
+        setItems(rows);
     }, [skills, userId, category]);
 
-    useEffect(() => { refresh(); }, [refresh]);
+    useEffect(() => {
+        setLoading(true);
+        refresh().finally(() => setLoading(false));
+    }, [refresh]);
 
-    const add = useCallback(async (title: string) => {
-        setSaving(true);
-        try {
-            const created = await repo.skills.createUserTechnique(userId, category, title);
+    const add = useCallback(
+        async (title: string) => {
+            if (!userId) return;
+            const created = await skills.createUserTechnique(userId, category, title);
             setItems(prev => [created, ...prev]);
-            return created;
-        } finally { setSaving(false); }
-    }, [skills, userId, category]);
+        },
+        [skills, userId, category]
+    );
 
-    const edit = useCallback(async (id: string, title: string) => {
-        setSaving(true);
-        try {
+    const edit = useCallback(
+        async (id: string, title: string) => {
+            if (!userId) return;
             await skills.updateUserTechnique(userId, id, { title });
-            setItems(prev => prev.map(t => t.id === id ? { ...t, title } : t));
-        } finally { setSaving(false); }
-    }, [skills, userId]);
+            setItems(prev => prev.map(t => (t.id === id ? { ...t, title } : t)));
+        },
+        [skills, userId]
+    );
 
-    const remove = useCallback(async (id: string) => {
-        setSaving(true);
-        try {
+    const remove = useCallback(
+        async (id: string) => {
+            if (!userId) return;
             await skills.deleteUserTechnique(userId, id);
             setItems(prev => prev.filter(t => t.id !== id));
-        } finally { setSaving(false); }
-    }, [skills, userId]);
+        },
+        [skills, userId]
+    );
 
-    return { items, loading, saving, error, add, edit, remove, refresh };
+    return { items, loading, refresh, add, edit, remove };
 }

@@ -66,7 +66,6 @@ export function CategoryCard(
                             {loading && <BodyText style={{opacity: 0.6}}>(loading...)</BodyText>}
                             {error && <BodyText style={{color: 'red'}}>{error}</BodyText>}
 
-                            {/* View mode: show selected techniques only */}
                             {!loading && !error && (
                                 items.length === 0 ? (
                                     <BodyText style={{ color: colors.offWhite, opacity: 0.8 }}>
@@ -78,8 +77,6 @@ export function CategoryCard(
                                             <BodyText
                                                 key={t.id}
                                                 style={skillsStyles.previewItem}
-                                                numberOfLines={1}
-                                                ellipsizeMode='tail'
                                             >
                                                 • {t.title}
                                             </BodyText>

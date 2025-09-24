@@ -96,16 +96,17 @@ export function SkillsModal({
 
     return (
         <Modal animationType="slide" visible={visible} presentationStyle="pageSheet" onRequestClose={onClose}>
-            {/* Add form (free-text like Reminders) */}
+
+            {/* Add form */}
             <TechniqueFormModal
                 visible={addOpen}
-                onClose={() => setAddOpen(false)}
-                submitLabel = 'Add'
+                onClose={() => {setAddOpen(false);}}
+                submitLabel='ADD'
+                heading={`ADD TO IN ${CATEGORY_LABEL[category].toUpperCase()}`}
                 onSubmit={async (title) => {
                     await add(title);
-                    onChanged?.();
+                    onChanged();
                 }}
-                heading={`ADD TO ${CATEGORY_LABEL[category].toUpperCase()}`}
             />
 
             {/* Edit form (prefilled) */}

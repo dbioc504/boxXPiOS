@@ -22,12 +22,16 @@ export function TechniqueFormModal({
     submitLabel='Add',
     heading,
 }: Props){
+    const MIN_INPUT_HEIGHT = 44;
+    const MAX_INPUT_HEIGHT = 160;
+    const [inputH, setInput] = React.useState(MIN_INPUT_HEIGHT);
     const [title, setTitle] = React.useState(initialTitle);
     const [submitting, setSubmitting] = React.useState(false);
 
     React.useEffect(() => {
         if (visible) {
             setTitle(initialTitle);
+            setInput(MIN_INPUT_HEIGHT);
         }
     }, [visible, initialTitle]);
 
@@ -43,21 +47,24 @@ export function TechniqueFormModal({
     return (
         <Modal visible={visible} onRequestClose={onClose} animationType='slide' presentationStyle='formSheet'>
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-                <Header title={heading} isModal={true}/>
+                <Header title={heading} isModal={true} onClose={onClose}/>
 
                 <View style={styles.container}>
-                    <BodyText style={styles.label}>
-                        Title
-                    </BodyText>
                     <TextInput
                         value={title}
                         onChangeText={setTitle}
                         placeholder='e.g. Cut off the ring/ Shuffle and jab/ Catch and shoot'
                         placeholderTextColor='#999'
                         autoFocus
+                        multiline
                         style={styles.input}
                         returnKeyType='done'
                         onSubmitEditing={handleSubmit}
+                        onContentSizeChange={(e) => {
+                            const h = Math.ceil(e.nativeEvent.contentSize.height);
+                            setInput(Math.min(MAX_INPUT_HEIGHT, Math.max(MIN_INPUT_HEIGHT, h)));
+                        }}
+                        scrollEnabled={inputH >= MAX_INPUT_HEIGHT}
                     />
                     <Pressable
                         onPress={handleSubmit}

@@ -1,19 +1,23 @@
-import React, { createContext, useContext, useMemo } from "react";
-import type { SkillsRepo } from "@/lib/repos/skills.repo";
-import  { makeMockSkillsRepo } from "@/lib/repos/skills.repo.mock";
+import React, { createContext, useContext, useMemo } from 'react';
+import type { SkillsRepo } from '@/lib/repos/skills.repo';
+import { makeMockSkillsRepo } from "@/lib/repos/skills.repo.mock";
+import { supabaseSkillsRepo } from "@/lib/repos/skills.repo.supabase";
 
-type ReposShape = {
-    skills: ReturnType<typeof makeMockSkillsRepo>;
-};
+type RepoCtxValue = { skills: SkillsRepo };
 
-const RepoCtx = createContext<{ skills: SkillsRepo } | null>(null);
+const RepoCtx = createContext<RepoCtxValue | undefined>(undefined);
 
 export function RepoProvider({ children }: { children: React.ReactNode }) {
-    const value = useMemo<ReposShape>(() => {
-        return { skills: makeMockSkillsRepo() }
-    }, [])
+    const useSupabase =
+        (process.env.EXPO_PUBLIC_USE_SUPABASE ?? 'false').toLowerCase() === 'true';
 
-    return <RepoCtx.Provider value={value}>{children}</RepoCtx.Provider>;
+    const skills = useMemo<SkillsRepo>(() => {
+        return useSupabase ? supabaseSkillsRepo : makeMockSkillsRepo();
+    }, [useSupabase]);
+
+    const value = useMemo(() => ({ skills }), [skills]);
+
+    return <RepoCtx.Provider value={value}>{children}</RepoCtx.Provider>
 }
 
 export function useRepos() {

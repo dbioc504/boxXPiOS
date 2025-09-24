@@ -4,5 +4,4 @@ export type Technique = {
     id: Id;
     title: string;
     category: Category;
-
 }

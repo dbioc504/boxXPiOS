@@ -10,15 +10,18 @@ export type RootStackParamList = {
     Skills: undefined
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const NAV_ID = 'Rootstack' as const;
+
+const Stack = createNativeStackNavigator<RootStackParamList, typeof NAV_ID>();
 
 export default function RootNavigator() {
-    // @ts-ignore
     return(
         <NavigationContainer>
             <Stack.Navigator
+                id={NAV_ID}
                 screenOptions={
-                { headerShown: false,}}>
+                { headerShown: false,}}
+            >
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="SignIn" component={SignInScreen} />
                 <Stack.Screen name="Skills" component={SkillsScreen} />

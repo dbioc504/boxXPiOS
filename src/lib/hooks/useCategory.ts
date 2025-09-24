@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRepos } from '@/lib/providers/RepoProvider'
 import type { Category, Id } from "@/types/common";
-import type { TechniqueRow } from "@/lib/repos/skills.repo";
+import type { TechniqueRow } from "@/types/validation";
 
 type State = {
     all: TechniqueRow[];
