@@ -1,4 +1,4 @@
-import {Style, STYLES, STYLE_LABEL, STYLE_DESCRIPT, CATEGORY_LABEL} from "@/types/common";
+import {Style, STYLES, STYLE_LABEL, CATEGORY_LABEL} from "@/types/common";
 import {useUserStyle} from "@/lib/hooks/useUserStyle";
 import {useEffect, useState} from "react";
 import {Alert, Animated, LayoutAnimation, Modal, Pressable, View} from "react-native";
@@ -10,6 +10,7 @@ import {ExpandableSection} from "@/screens/Skills/ExpandableSection";
 import {skillsStyles} from "@/screens/Skills/styles";
 import {STYLE_TO_CATEGORIES} from "@/types/validation";
 import {CategoryCard} from "@/screens/Skills/CategoryCard";
+import StyleDescriptionBlock from '@/screens/Skills/StyleDescriptionBlock';
 
 export default function SkillsScreen() {
     const { style: originalStyle, setStyle } = useUserStyle('user-1');
@@ -91,7 +92,7 @@ export default function SkillsScreen() {
                                 expanded={activePanel === `style:${s}`}
                                 onToggle={handleToggle}
                             >
-                                <BodyText style={skillsStyles.expandableText}>{STYLE_DESCRIPT[s]}</BodyText>
+                                <StyleDescriptionBlock styleKey={s}/>
                             </ExpandableSection>
                         ))}
 
