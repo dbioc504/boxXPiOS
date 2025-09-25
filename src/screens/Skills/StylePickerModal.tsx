@@ -32,7 +32,36 @@ export default function StylePickerModal({ visible, onClose }: Props) {
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
                 <ScrollView>
                     <Header title='STYLE' isModal onClose={onClose}/>
-                    <View style={{flex: 1}}>
+                    <View style={[{flex: 1}]}>
+                        <ExpandableSection
+                            id="memoir"
+                            title="Author's Memoir"
+                            isStyleCard={false}
+                            expanded={active === 'memoir'}
+                            onToggle={(id) => setActive(prev => (prev === id ? null : id))}
+                        >
+                            <View style={{ gap: 8 }}>
+                                <BodyText style={skillsStyles.expandableText}>
+                                    A boxer's style is not necessarily "selected" like the app suggests... Several
+                                    factors
+                                    determine a fighter's style: physique, abilities, personality, even your soul (if
+                                    you
+                                    believe in that type of thing). To be honest, you don't even truly "choose" your
+                                    style
+                                    yourself. It's almost as if it's determined for you at birth. A good coach should be
+                                    able to tell your style, and if you don't have a coach, find one. Immediately. If
+                                    you
+                                    absolutely can't, ask somebody at your gym who's significantly more experienced than
+                                    you.
+                                </BodyText>
+                                <View style={{alignItems: 'center'}}>
+                                    <BodyText style={skillsStyles.expandableText}>Hone your skills.</BodyText>
+                                    <BodyText style={skillsStyles.expandableText}>Master your craft.</BodyText>
+                                    <BodyText style={skillsStyles.expandableText}>Embody your style.</BodyText>
+                                </View>
+                            </View>    
+                        </ExpandableSection>
+
                         {STYLES.map(s => (
                             <ExpandableSection
                                 key={s}
