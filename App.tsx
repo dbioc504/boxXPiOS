@@ -7,7 +7,7 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 import {StatusBar} from 'expo-status-bar';
 import {AuthProvider} from "@/lib/AuthProvider";
 import {RepoProvider} from '@/lib/providers/RepoProvider'
-import {StyleProvider} from "@/lib/storage/StyleProvider";
+import {StyleProvider} from "@/lib/providers/StyleProvider";
 
 export default function App() {
 

@@ -1,160 +1,62 @@
-import {Style, STYLES, STYLE_LABEL, CATEGORY_LABEL} from "@/types/common";
-import {useUserStyle} from "@/lib/hooks/useUserStyle";
-import {useEffect, useState} from "react";
-import {Alert, Animated, LayoutAnimation, Modal, Pressable, View} from "react-native";
+import { useState } from "react";
+import {View, Pressable, ScrollView} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import {colors, sharedStyle, signInStyles} from "@/theme/theme";
-import {BodyText, Header} from "@/theme/T";
-import ScrollView = Animated.ScrollView;
-import {ExpandableSection} from "@/screens/Skills/ExpandableSection";
-import {skillsStyles} from "@/screens/Skills/styles";
-import {STYLE_TO_CATEGORIES} from "@/types/validation";
-import {CategoryCard} from "@/screens/Skills/CategoryCard";
-import StyleDescriptionBlock from '@/screens/Skills/StyleDescriptionBlock';
+import { BodyText, Header } from "@/theme/T";
+import { colors } from "@/theme/theme";
+import { signInStyles, sharedStyle } from "@/theme/theme";
+import { CATEGORY_LABEL, STYLE_LABEL } from "@/types/common";
+import { STYLE_TO_CATEGORIES } from "@/types/validation";
+import { CategoryCard } from "@/screens/Skills/CategoryCard";
+import StylePickerModal from "@/screens/Skills/StylePickerModal";
+import { useStyle } from "@/lib/providers/StyleProvider";
 
 export default function SkillsScreen() {
-    const { style: originalStyle, setStyle } = useUserStyle('user-1');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [selectedStyle, setSelectedStyle] = useState<Style | null>(originalStyle);
-    const [activePanel, setActivePanel] = useState<string | null>(null);
+    const { ready, style } = useStyle();
+    const [pickerOpen, setPickerOpen] = useState(false);
 
-    useEffect(() => {
-        if (modalVisible) {
-            setSelectedStyle(originalStyle ?? null);
-            setActivePanel(originalStyle ? `style:${originalStyle}` : 'memoir');
-        }
-    }, [modalVisible, originalStyle]);
+    if (!ready) return null;
 
-
-    const handleSave = () => {
-        if (!selectedStyle) return;
-
-        const commit = () => {
-            setStyle(selectedStyle);
-            setModalVisible(false);
-        };
-
-        if (originalStyle && selectedStyle !== originalStyle) {
-            Alert.alert(
-                'Change style',
-                'Changing your style will reset your skills for the new style.',
-                [
-                    { text: 'Cancel', style: 'cancel' },
-                    { text: 'Change', style: 'destructive', onPress: commit }
-                ]
-            );
-        } else {
-            commit();
-        }
-    };
-
-    const handleToggle = (id: string) => {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-        setActivePanel(prev => (prev === id ? null : id));
-    }
-
-    const displayStyle = originalStyle
-        ? STYLE_LABEL[originalStyle].toUpperCase()
-        : '(none)';
+    const display = style ? STYLE_LABEL[style].toUpperCase() : '(none)';
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
-            <Modal animationType='slide' visible={modalVisible}
-               presentationStyle='pageSheet' onRequestClose={() => setModalVisible(false)}>
-
-                <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-                    <Header title="STYLE" isModal onClose={() => setModalVisible(false)}/>
-
-                    <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-                        <ExpandableSection id="memoir" title="Author's Memoir" isStyleCard={false}
-                             onToggle={handleToggle} expanded={activePanel === 'memoir'}
-                        >
-                            <BodyText style={skillsStyles.expandableText}>
-                                A boxer's style is not necessarily "selected" like the app suggests...
-                                Several factors determine a fighter's style: physique, abilities, personality, even
-                                your soul (if you believe in that type of thing). To be honest you don't even truly
-                                "select" your style yourself. It's almost as if it's determined for you at birth. A good
-                                coach should be able to tell your style, and if you don't have a coach, find one.
-                                Immediately. If you absolutely can't, ask somebody at your boxing gym with significantly
-                                more experience than you. Hone your skills. Master your craft. Embody your style.
-                            </BodyText>
-                        </ExpandableSection>
-
-                        {STYLES.map((s) => (
-                            <ExpandableSection
-                                key={s}
-                                id={`style:${s}`}
-                                title={STYLE_LABEL[s]}
-                                isStyleCard={true}
-                                value={s}
-                                selected={selectedStyle}
-                                onSelect={setSelectedStyle}
-                                expanded={activePanel === `style:${s}`}
-                                onToggle={handleToggle}
-                            >
-                                <StyleDescriptionBlock styleKey={s}/>
-                            </ExpandableSection>
-                        ))}
-
-                        <Pressable
-                            onPress={handleSave}
-                            disabled={!selectedStyle || selectedStyle === originalStyle}
-                            style={({ pressed }) => [
-                                skillsStyles.saveBtn,
-                                {
-                                    backgroundColor:
-                                        !selectedStyle || selectedStyle === originalStyle
-                                            ? '#666'
-                                            : pressed
-                                                ? colors.selected
-                                                : colors.select ,
-                                },
-                            ]}
-                        >
-                            <BodyText style={skillsStyles.saveBtnText}>Save</BodyText>
-                        </Pressable>
-
-                    </ScrollView>
-                </SafeAreaView>
-            </Modal>
-
+            <StylePickerModal visible={pickerOpen} onClose={() => setPickerOpen(false)}/>
             <ScrollView>
                 <Header title='SKILLS'/>
-
-                <View style={{ alignItems: 'center' }}>
-                    <Pressable style={({ pressed }) =>  [
-                        skillsStyles.styleSelector,
-                        {
-                            alignSelf: 'center', paddingHorizontal: 12,
-                            borderColor: pressed ? colors.form : colors.offWhite,
-                        }
-                    ]}
-                              onPress={() => setModalVisible(true)}>
-
-                        {({ pressed }) => (
-                            <BodyText style={[
-                                skillsStyles.styleSelectorText,
-                                { color: pressed ? colors.form : colors.offWhite }]} >
-                                STYLE: {displayStyle}
+                <View style={[{alignItems: 'center', marginBottom: 30}]}>
+                    <Pressable
+                        onPress={() => setPickerOpen(true)}
+                        style={({pressed}) => [
+                            {
+                                alignSelf: 'center',
+                                paddingHorizontal: 10,
+                                borderWidth: 0.5,
+                                borderRadius: 5,
+                                paddingVertical: 8,
+                                borderColor: pressed ? colors.form : colors.offWhite
+                            }
+                        ]}
+                    >
+                        {({pressed}) => (
+                            <BodyText style={[{color: pressed ? colors.form : colors.offWhite, fontSize: 20}]}>
+                                STYLE: {display}
                             </BodyText>
                         )}
-
-
                     </Pressable>
                 </View>
 
-                <View style={[signInStyles.buttonGroup, { paddingHorizontal: 20 }]}>
-                    {originalStyle ? (
-                        STYLE_TO_CATEGORIES[originalStyle].map(
-                        (cat) => <CategoryCard key={cat} title={CATEGORY_LABEL[cat].toUpperCase()} category={cat} />)
+                <View style={[signInStyles.buttonGroup, {paddingHorizontal: 20}]}>
+                    {style ? (
+                        STYLE_TO_CATEGORIES[style].map(cat => (
+                            <CategoryCard key={cat} category={cat} title={CATEGORY_LABEL[cat].toUpperCase()}/>
+                        ))
                     ) : (
-                     <BodyText style={{ textAlign: 'center', color: colors.offWhite }}>
-                         Select a style to see categories
-                     </BodyText>
+                        <BodyText style={{textAlign: 'center', color: colors.offWhite}}>
+                            Select a style to see categories
+                        </BodyText>
                     )}
                 </View>
-
             </ScrollView>
         </SafeAreaView>
-    );
+    )
 }

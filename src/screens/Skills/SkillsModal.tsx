@@ -21,7 +21,6 @@ type Props = {
     onClose: () => void;
     category: Category;
     title: string;
-    userId?: string;
     onChanged?: () => void;
 };
 
@@ -30,12 +29,11 @@ export function SkillsModal({
     onClose,
     category,
     title,
-    userId = "user-1",
     onChanged
     }: Props) {
     // CRUD hook: the list and the actions you call
-    const { items, loading, saving, error, add, edit, remove } =
-        useCategoryTechniques(userId, category);
+    const { items, loading, add, edit, remove } =
+        useCategoryTechniques(category);
 
     // Small UI state for add/edit sheets
     const [addOpen, setAddOpen] = React.useState(false);
@@ -90,10 +88,6 @@ export function SkillsModal({
     const renderItem = ({ item }: { item: any }) =>
         <TechniqueRowEdit item={item} />;
 
-    // ----- Footer -----
-    const renderFooter = () =>
-        saving ? <BodyText style={skillsStyles.modalSavingText}>Saving...</BodyText> : null;
-
     return (
         <Modal animationType="slide" visible={visible} presentationStyle="pageSheet" onRequestClose={onClose}>
 
@@ -129,9 +123,8 @@ export function SkillsModal({
                 {/* Body */}
                 <View style={skillsStyles.modalContainer}>
                     {loading && <BodyText style={skillsStyles.modalLoadingText}>Loading...</BodyText>}
-                    {error && <BodyText style={skillsStyles.modalErrorText}>{error}</BodyText>}
 
-                    {!loading && !error && (
+                    {!loading && (
                         <FlatList
                             data={items}
                             keyExtractor={(item) => item.id}
@@ -139,7 +132,6 @@ export function SkillsModal({
                             contentContainerStyle={skillsStyles.modalListContent}
                             ItemSeparatorComponent={() => <View style={skillsStyles.modalListSeparator} />}
                             renderItem={renderItem}
-                            ListFooterComponent={renderFooter()}
                         />
                     )}
                 </View>
