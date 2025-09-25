@@ -259,6 +259,7 @@ export const skillsStyles = StyleSheet.create({
     // categoryBody
     previewList: {
         gap: 6,
+        marginBottom: 0
     },
     previewItem: {
         color: colors.offWhite,
@@ -270,9 +271,11 @@ export const skillsStyles = StyleSheet.create({
         borderWidth: 1,
         borderColor: colors.offWhite,
         borderRadius: 999,
+        paddingVertical: 4,
         paddingHorizontal: 8,
-        paddingVertical: 2,
-        opacity: 0.8
+        opacity: 0.8,
+        alignItems: 'center',
+        justifyContent: 'center'
     },
     previewMoreText: {
         color: colors.offWhite,

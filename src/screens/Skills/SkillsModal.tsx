@@ -146,7 +146,7 @@ export function SkillsModal({
                             { backgroundColor: pressed ? colors.pressedBorder : colors.text },
                         ]}
                     >
-                        <Ionicons name="add" size={24} color={colors.offWhite} style={skillsStyles.modalAddButtonIcon} />
+                        <Ionicons name="add" size={24} style={skillsStyles.modalAddButtonIcon} />
                         <BodyText style={skillsStyles.modalAddButtonText}>Add New Technique</BodyText>
                     </Pressable>
                 </View>
