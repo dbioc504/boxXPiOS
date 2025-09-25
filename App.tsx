@@ -7,6 +7,7 @@ import {SafeAreaProvider} from "react-native-safe-area-context";
 import {StatusBar} from 'expo-status-bar';
 import {AuthProvider} from "@/lib/AuthProvider";
 import {RepoProvider} from '@/lib/providers/RepoProvider'
+import {StyleProvider} from "@/lib/storage/StyleProvider";
 
 export default function App() {
 
@@ -26,12 +27,14 @@ export default function App() {
     return (
         <AuthProvider>
             <RepoProvider>
-                <ThemeProvider>
-                    <StatusBar style="light"/>
-                    <SafeAreaProvider>
-                        <RootNavigator/>
-                    </SafeAreaProvider>
-                </ThemeProvider>
+                <StyleProvider>
+                    <ThemeProvider>
+                        <StatusBar style="light"/>
+                        <SafeAreaProvider>
+                            <RootNavigator/>
+                        </SafeAreaProvider>
+                    </ThemeProvider>
+                </StyleProvider>
             </RepoProvider>
         </AuthProvider>
     );
