@@ -36,8 +36,8 @@ export function useCategoryTechniques(category: Category) {
     const edit = useCallback(
         async (id: string, title: string) => {
             if (!userId) return;
-            await skills.updateUserTechnique(userId, id, { title });
-            setItems(prev => prev.map(t => (t.id === id ? { ...t, title } : t)));
+            const updated = await skills.updateUserTechnique(userId, id, { title });
+            setItems(prev => prev.map(t => (t.id === id ? updated : t)));
         },
         [skills, userId]
     );

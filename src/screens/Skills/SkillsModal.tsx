@@ -96,10 +96,10 @@ export function SkillsModal({
                 visible={addOpen}
                 onClose={() => {setAddOpen(false);}}
                 submitLabel='ADD'
-                heading={`ADD TO IN ${CATEGORY_LABEL[category].toUpperCase()}`}
+                heading={`ADD TO ${CATEGORY_LABEL[category].toUpperCase()}`}
                 onSubmit={async (title) => {
                     await add(title);
-                    onChanged();
+                    onChanged?.();
                 }}
             />
 
@@ -108,7 +108,7 @@ export function SkillsModal({
                 visible={editOpen}
                 onClose={() => {setEditOpen(false); setEditing(null);}}
                 initialTitle={editing?.title ?? ""}
-                submitLabel="Save"
+                submitLabel="SAVE"
                 heading={`EDIT IN ${CATEGORY_LABEL[category].toUpperCase()}`}
                 onSubmit={async (title) => {
                     if (editing) await edit(editing.id, title);

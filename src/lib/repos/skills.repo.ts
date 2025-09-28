@@ -8,7 +8,7 @@ export type Style = 'outboxer' | 'boxer_puncher' | 'infighter';
 export interface SkillsRepo {
     listUserTechniques:(userId: string, category: Category) => Promise<Technique[]>
     createUserTechnique: (userId: string, category: Category, title: string) => Promise<Technique>
-    updateUserTechnique: (userId: string, id: string, patch: { title?: string }) => Promise<void>;
+    updateUserTechnique: (userId: string, id: string, patch: { title?: string }) => Promise<Technique>;
     deleteUserTechnique: (userId: string, id: string) => Promise<void>;
 
     getUserStyle(userId: string): Promise<Style | null>;

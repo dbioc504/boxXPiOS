@@ -38,19 +38,21 @@ export const supabaseSkillsRepo: SkillsRepo = {
     },
 
     async updateUserTechnique(
-        category: Category,
+        userId: string,
         id: string,
         patch: { title?: string }
-    ): Promise<void>{
+    ): Promise<Technique> {
         const { data, error } = await supabase
             .from('user_techniques')
             .update({ title: patch.title })
             .eq('id', id)
-            .eq('category', category)
+            .eq('user_id', userId)
             .select('id, title, category')
             .single();
 
         if (error) throw error;
+
+        return { id: data.id, title: data.title, category: data.category as Category };
     },
 
     async deleteUserTechnique(

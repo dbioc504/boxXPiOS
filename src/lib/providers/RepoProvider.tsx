@@ -2,8 +2,16 @@ import React, { createContext, useContext, useMemo } from 'react';
 import type { SkillsRepo } from '@/lib/repos/skills.repo';
 import { makeMockSkillsRepo } from "@/lib/repos/skills.repo.mock";
 import { supabaseSkillsRepo } from "@/lib/repos/skills.repo.supabase";
+import {CombosRepo} from "@/lib/repos/combos.repo";
+import {useAuth} from "@/lib/AuthProvider";
+import {combine} from "zustand/middleware/combine";
+import {supabaseCombosRepo} from "@/lib/repos/combos.repo.supabase";
+import {makeMockCombosRepo} from "@/lib/repos/combos.repo.mock";
 
-type RepoCtxValue = { skills: SkillsRepo };
+type RepoCtxValue = {
+    skills: SkillsRepo;
+    combos: CombosRepo;
+};
 
 const RepoCtx = createContext<RepoCtxValue | undefined>(undefined);
 
@@ -11,11 +19,19 @@ export function RepoProvider({ children }: { children: React.ReactNode }) {
     const useSupabase =
         (process.env.EXPO_PUBLIC_USE_SUPABASE ?? 'false').toLowerCase() === 'true';
 
+    const { user } = useAuth();
+
     const skills = useMemo<SkillsRepo>(() => {
         return useSupabase ? supabaseSkillsRepo : makeMockSkillsRepo();
     }, [useSupabase]);
 
-    const value = useMemo(() => ({ skills }), [skills]);
+    const combos = useMemo<CombosRepo>(() => {
+        return useSupabase
+            ? supabaseCombosRepo
+            : makeMockCombosRepo();
+    }, [useSupabase]);
+
+    const value = useMemo(() => ({ skills, combos }), [skills, combos]);
 
     return <RepoCtx.Provider value={value}>{children}</RepoCtx.Provider>
 }
