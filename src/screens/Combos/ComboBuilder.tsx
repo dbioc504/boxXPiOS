@@ -21,7 +21,7 @@ type Props = {
 const SLOT_H = 48;
 const MOVE_THRESHOLD = 4;
 
-export default function ComboBuilder({ steps, insertAt }: Props) {
+export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
     // --- measure timeline rect (page coordinates) ---
     const timelineRef = useRef<View | null>(null);
     const [timelineRect, setRect] = useState<{ y: number; h: number }>({ y: 0, h: 0 });
@@ -73,7 +73,9 @@ export default function ComboBuilder({ steps, insertAt }: Props) {
 
     // keep latest insertAt to avoid stale closure in cached responders
     const insertAtRef = useRef(insertAt);
+    const moveToRef = useRef(moveTo);
     useEffect(() => { insertAtRef.current = insertAt; }, [insertAt]);
+    useEffect(() => { moveToRef.current = moveTo; }, [moveTo]);
 
     // --- cache a PanResponder per movement so props stay stable ---
     const respondersRef = useRef<Map<Movement, PanResponderInstance>>(new Map());
@@ -128,6 +130,62 @@ export default function ComboBuilder({ steps, insertAt }: Props) {
         (m: Movement) => getResponder(m).panHandlers as Record<string, unknown>,
         [getResponder]
     );
+
+    // drag to reorder
+    const draggingFromRef = useRef<number | null>(null);
+    const rowResponders = useRef<Map<string, PanResponderInstance>>(new Map());
+
+    const getRowResponder = useCallback(
+        (i: number, m: Movement): PanResponderInstance => {
+            const key = `${m}-${i}`;
+            const cached = rowResponders.current.get(key);
+            if (cached) return cached;
+
+            const r = PanResponder.create({
+                onStartShouldSetPanResponder: () => false,
+                onMoveShouldSetPanResponder: (_e, g) =>
+                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+
+                onPanResponderGrant: (_e, g) => {
+                    draggingFromRef.current - i;
+                    setDragging(m);
+                    ghostX.setValue((g.moveX ?? 0) - 24);
+                    ghostY.setValue((g.moveY ?? 0) - 24);
+                    updateIndex(g.moveY ?? 0);
+                },
+                onPanResponderMove: (_evt, g) => {
+                    ghostX.setValue((g.moveX ?? 0) - 24);
+                    ghostY.setValue((g.moveY ?? 0) - 24);
+                    updateIndex(g.moveY ?? 0);
+                },
+                onPanResponderRelease: async (_e, g) => {
+                    const from = draggingFromRef.current ?? i;
+                    const dropY = g.moveY ?? 0;
+                    const idx = insideTimeline(dropY) ? nearestSlot(dropY): -1;
+
+                    setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
+
+                    if (idx >= 0) {
+                        let to = idx;
+                        if (to > from) to = to - 1;
+                        if (to !== from && to >= 0 && to < steps.length) {
+                            await moveToRef.current(from, to);
+                        }
+                    }
+                    draggingFromRef.current = null;
+                },
+                onPanResponderTerminate: () => {
+                    setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
+                    draggingFromRef.current = null;
+                },
+            });
+
+            rowResponders.current.set(key, r);
+            return r;
+        },
+        [ghostX, ghostY, nearestSlot, updateIndex, steps.length]
+    );
+    // drag to reorder
 
     return (
         <View style={S.root}>

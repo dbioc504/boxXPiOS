@@ -1,5 +1,6 @@
 import React from 'react';
-import {Button, View, StyleSheet, SafeAreaView, Pressable} from 'react-native';
+import {Button, View, StyleSheet, Pressable} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context'
 import {colors, sharedStyle, signInStyles} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
 import {useNavigation} from "@react-navigation/native";
@@ -23,7 +24,7 @@ export default function HomeScreen() {
             <View style={[signInStyles.buttonGroup, {rowGap: 20}, {marginBottom: 20}]}>
 
                 <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
-                <MainButton label="COMBOS" onPress={() => {}}/>
+                <MainButton label="COMBOS" onPress={() => nav.navigate('Combos')}/>
                 <MainButton label="MECHANICS" onPress={() => {}}/>
                 <MainButton label="WORKOUTS" onPress={() => {}}/>
                 <MainButton label="TIMER" onPress={() => {}}/>
