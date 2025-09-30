@@ -62,7 +62,7 @@ export function makeMockSkillsRepo(): SkillsRepo {
             return t;
         },
 
-        async updateUserTechnique(userId: string, id: string, patch: { title?: string }): Promise<void> {
+        async updateUserTechnique(userId: string, id: string, patch: { title?: string }): Promise<Technique> {
             for (const [k, arr] of userTechObjects.entries()) {
                 if (!k.startsWith(`${userId}:`)) continue;
                 const next = arr.map(t =>
