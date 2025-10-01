@@ -5,6 +5,8 @@ import { BodyText, Header } from "@/theme/T";
 import ComboBuilder from "@/screens/Combos/ComboBuilder";
 import { mockCombosRepo } from "@/lib/repos/combos.repo.mock";
 import { useComboBuilder } from "@/lib/hooks/useComboBuilder";
+import {SafeAreaView} from "react-native-safe-area-context";
+import {sharedStyle} from "@/theme/theme";
 
 const USER_ID = "mock-user-1";
 
@@ -42,10 +44,10 @@ function ComboScreenInner({ userId, comboId }: { userId: string; comboId: string
     });
 
     return (
-        <View style={{ flex: 1 }}>
-            <Header title="Combos" />
+        <SafeAreaView style={sharedStyle.safeArea}>
+            <Header title="COMBOS" />
             <ComboBuilder steps={steps} insertAt={insertAt} moveTo={moveTo} />
             {loading ? null : null}
-        </View>
+        </SafeAreaView>
     );
 }

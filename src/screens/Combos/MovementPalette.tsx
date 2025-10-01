@@ -1,70 +1,82 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
-import { View, Text, FlatList, Pressable, NativeScrollEvent,
-            NativeSyntheticEvent, LayoutChangeEvent, StyleSheet } from "react-native";
+import React, {useCallback, useMemo, useRef, useState} from "react";
+import {
+    View, Text, FlatList, Pressable,
+    NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, StyleSheet,
+} from "react-native";
 import { PUNCHES, BODY_PUNCHES, DEFENSES, MOVEMENT_LABEL, type Movement } from "@/types/common";
 
 const GROUPS = [
-    { key: 'punches', title: 'Punches', items: PUNCHES as Movement[] },
-    { key: 'body', title: 'Body', items: BODY_PUNCHES as Movement[] },
-    { key: 'defense', title: 'Defense', items: DEFENSES as Movement[] },
+    { key: 'punches', title: 'PUNCHES', items: PUNCHES as Movement[] },
+    { key: 'body',    title: 'BODY',    items: BODY_PUNCHES as Movement[] },
+    { key: 'defense', title: 'DEFENSE', items: DEFENSES as Movement[] }
 ] as const;
 
 type Props = {
-    getPanHandlers? : (m: Movement) => Record<string, unknown>;
+    getPanHandlers?: (m: Movement) => Record<string, unknown>;
     onPressChip?: (m: Movement) => void;
-    rows?: number;
+    baseRows?: number;
+    maxRowsAuto?: number;
     chipMinWidth?: number;
     chipGap?: number;
     contentPadding?: number;
+    dragActive?: boolean;
 };
 
 export default function MovementPalette({
     getPanHandlers,
     onPressChip,
-    rows = 3,
+    baseRows = 3,
+    maxRowsAuto = 5,
     chipMinWidth = 96,
     chipGap = 8,
-    contentPadding = 12
+    contentPadding = 12,
+    dragActive = false,
 }: Props) {
     const [activeGroup, setActiveGroup] = useState(0);
     const [panelWidth, setPanelWidth] = useState(0);
-    const pagesListRef = useRef<FlatList<Movement[]> | null>(null);
+    const listRef = useRef<FlatList<Movement[]> | null>(null);
     const [pageIndex, setPageIndex] = useState(0);
 
     const onPanelLayout = (e: LayoutChangeEvent) => {
         setPanelWidth(Math.floor(e.nativeEvent.layout.width));
     };
 
-    const columns = useMemo(() => {
-        if (panelWidth <= 0) return 1;
-        const usable = panelWidth - contentPadding * 2;
-        const per = chipMinWidth + chipGap;
-        return Math.max(1, Math.floor((usable + chipGap) / per));
-    }, [panelWidth, chipMinWidth, chipGap, contentPadding]);
+    const usableW = Math.max(0, panelWidth - contentPadding * 2);
 
-    const chipWidth = useMemo(() => {
-        if (panelWidth <= 0) return chipMinWidth;
-        const usable = panelWidth - contentPadding * 2 - chipGap * (columns - 1);
-        return Math.floor(usable / columns);
-    }, [panelWidth, columns, chipGap, contentPadding, chipMinWidth]);
-
-    const perPage = Math.max(1, rows * columns);
-
-    const chunk = (arr: Movement[], size: number) => {
-        const out: Movement[][] = [];
-        for (let i=0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
-        return out;
-    }
-
-    const pages = useMemo(() => {
+    const { pages, columns, rowsForGroup, chipWidth } = useMemo(() => {
         const items = GROUPS[activeGroup].items;
-        return chunk(items, perPage);
-    }, [activeGroup, perPage]);
+        if (usableW <= 0) {
+            return { pages: [items], columns: 1, rowsForGroup: baseRows, chipWidth: chipMinWidth };
+        }
 
-    const goToPage = useCallback((idx: number) =>{
-        setPageIndex(idx);
-        pagesListRef.current?.scrollToIndex({ index: idx, animated: true });
-    }, []);
+        const minColumns = Math.max(1, Math.floor((usableW + chipGap) / (chipMinWidth + chipGap)));
+        let columns = minColumns;
+
+        const neededRows = Math.ceil(items.length / columns);
+
+        let rowsForGroup = baseRows;
+        let singlePage = false;
+
+        if (items.length <= columns * baseRows) {
+            rowsForGroup = baseRows; singlePage = true;
+        } else if (neededRows <= maxRowsAuto) {
+            rowsForGroup = neededRows; singlePage = true;
+        } else {
+            rowsForGroup = baseRows; singlePage = false;
+        }
+
+        const chipWidth = Math.floor((usableW - chipGap * (columns - 1)) / columns);
+        const perPage = columns * rowsForGroup;
+
+        const chunk = (arr: Movement[], size: number) => {
+            const out: Movement[][] = [];
+            for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+            return out;
+        };
+        const pages = singlePage ? [items] : chunk(items, perPage);
+
+        return { pages, columns, rowsForGroup, chipWidth };
+    }, [activeGroup, usableW, baseRows, chipMinWidth, chipGap, maxRowsAuto]);
 
     const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
         const x = e.nativeEvent.contentOffset.x;
@@ -73,6 +85,11 @@ export default function MovementPalette({
         if (idx !== pageIndex) setPageIndex(idx);
     };
 
+    const goToPage = useCallback((idx: number) => {
+        setPageIndex(idx);
+        listRef.current?.scrollToIndex({ index: idx, animated: true });
+    }, []);
+
     const onTabPress = (i: number) => {
         setActiveGroup(i);
         setPageIndex(0);
@@ -80,32 +97,31 @@ export default function MovementPalette({
     };
 
     const renderPage = ({ item }: { item: Movement[] }) => (
-        <View style={[styles.page, { width: panelWidth, paddingHorizontal: contentPadding }]}>
-            <View style={[styles.grid, { gap: chipGap }]}>
+        <View style={[S.page, { width: panelWidth, paddingHorizontal: contentPadding }]}>
+            <View style={[S.grid, { gap: chipGap }]}>
                 {item.map((m) => {
-                    const pan = getPanHandlers ? getPanHandlers(m): {};
+                    const pan = getPanHandlers ? getPanHandlers(m) : {};
                     return (
-                        <Pressable
+                        <View
                             key={m}
                             {...pan}
-                            onPress={onPressChip ? () => onPressChip(m): undefined}
-                            accessibilityRole='button'
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            style={[S.chip, { width: chipWidth}]}
+                            accessibilityRole="button"
                             accessibilityLabel={MOVEMENT_LABEL[m]}
-                            hitSlop={8}
-                            style={[styles.chip, { width: chipWidth }]}
                         >
-                            <Text style={styles.chipText}>{MOVEMENT_LABEL[m]}</Text>
-                        </Pressable>
+                            <Text style={S.chipText}>{MOVEMENT_LABEL[m]}</Text>
+                        </View>
                     );
                 })}
             </View>
         </View>
-    )
+    );
 
     return (
-        <View onLayout={onPanelLayout} style={styles.container}>
-            {/*  Tabs  */}
-            <View style={styles.tabs}>
+        <View onLayout={onPanelLayout} style={S.container}>
+            {/* Tabs */}
+            <View style={S.tabs}>
                 {GROUPS.map((g, i) => {
                     const active = i === activeGroup;
                     return (
@@ -113,64 +129,64 @@ export default function MovementPalette({
                             key={g.key}
                             onPress={() => onTabPress(i)}
                             accessibilityRole='button'
-                            style={[styles.tab, active && styles.tabActive]}
+                            style={[S.tab, active && S.tabActive]}
                         >
-                            <Text style={[styles.tabText, active && styles.tabTextActive]}>{g.title}</Text>
+                            <Text style={[S.tabText, active && S.tabTextActive]}>{g.title}</Text>
                         </Pressable>
                     );
                 })}
             </View>
 
-            {/*  Horizontal pages with no inner scroll  */}
-            <FlatList
-                ref={pagesListRef}
-                data={pages}
-                keyExtractor={(_, i) => `page-${i}`}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                renderItem={renderPage}
-                onMomentumScrollEnd={onMomentumEnd}
-                getItemLayout={(_, index) => ({ length: panelWidth, offset: panelWidth * index, index })}
-            >
-            </FlatList>
+            {/* Only render pages after width is known, so getItemLayout uses real sizes */}
+            {panelWidth > 0 && (
+                <FlatList
+                    ref={listRef}
+                    data={pages}
+                    keyExtractor={(_, i) => `page-${i}`}
+                    horizontal
+                    pagingEnabled
+                    scrollEnabled={!dragActive && pages.length > 1}
+                    showsHorizontalScrollIndicator={false}
+                    renderItem={renderPage}
+                    onMomentumScrollEnd={onMomentumEnd}
+                    getItemLayout={(_, index) => ({ length: panelWidth, offset: panelWidth * index, index })}
+                    scrollEventThrottle={16}
+                />
+            )}
+
         </View>
-
-
-    )
+    );
 }
 
-const styles = StyleSheet.create({
-    container: { width: '100%' },
+const S = StyleSheet.create({
+    container: { width: "100%" },
     tabs: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
+        flexDirection: "row",
+        alignItems: "center",
         paddingHorizontal: 12,
-        paddingBottom: 8
+        paddingBottom: 8,
+        justifyContent: 'center'
     },
     tab: {
+        marginRight: 8,
         paddingVertical: 8,
         paddingHorizontal: 12,
         borderRadius: 12,
-        backgroundColor: '#2a2a2a',
+        backgroundColor: "#2a2a2a",
     },
-    tabActive: {
-        backgroundColor: '#4b6cff'
-    },
-    tabText: { color: '#ddd', fontSize: 14 },
-    tabTextActive: { color: '#fff', fontWeight: '600' },
+    tabActive: { backgroundColor: "#4b6cff" },
+    tabText: { color: "#ddd", fontSize: 14 },
+    tabTextActive: { color: "#fff", fontWeight: "600" },
     page: { paddingTop: 4, paddingBottom: 8 },
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap'
-    },
+    grid: { flexDirection: "row", flexWrap: "wrap" },
     chip: {
+        minHeight: 44,
         marginBottom: 8,
         borderRadius: 16,
         paddingVertical: 10,
         paddingHorizontal: 12,
-        backgroundColor: '#1f2937'
+        backgroundColor: "#1f2937",
+        justifyContent: "center",
     },
-    chipText: { color: '#fff', fontSize: 14 }
-})
+    chipText: { color: "#fff", fontSize: 16 },
+});

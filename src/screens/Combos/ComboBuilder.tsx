@@ -6,6 +6,7 @@ import {
     type PanResponderInstance,
     View,
     StyleSheet,
+    Pressable,
 } from "react-native";
 import { BodyText } from "@/theme/T";
 import MovementPalette from "@/screens/Combos/MovementPalette";
@@ -19,7 +20,7 @@ type Props = {
 };
 
 const SLOT_H = 48;
-const MOVE_THRESHOLD = 4;
+const MOVE_THRESHOLD = 2;
 
 export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
     // --- measure timeline rect (page coordinates) ---
@@ -87,15 +88,19 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
             const r = PanResponder.create({
                 // Let the palette's FlatList handle horizontal swipe unless the user clearly moves
-                onStartShouldSetPanResponder: () => false,
+                onStartShouldSetPanResponder: () => true,
+                onStartShouldSetPanResponderCapture: () => true,
                 onMoveShouldSetPanResponder: (_e, g) =>
+                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+                onMoveShouldSetPanResponderCapture: (_e, g) =>
                     Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
 
                 onPanResponderGrant: (_e, g) => {
                     setDragging(m);
                     // Center the ghost roughly under the finger; keep offsets consistent
-                    ghostX.setValue((g.moveX ?? 0) - 24);
-                    ghostY.setValue((g.moveY ?? 0) - 24);
+                    ghostX.setValue((g.x0 ?? 0) - 24);
+                    ghostY.setValue((g.y0 ?? 0) - 24);
+                    console.log('grant palette');
                 },
 
                 onPanResponderMove: (_evt, g) => {
@@ -142,16 +147,20 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
             if (cached) return cached;
 
             const r = PanResponder.create({
-                onStartShouldSetPanResponder: () => false,
+                onStartShouldSetPanResponder: () => true,
+                onStartShouldSetPanResponderCapture: () => true,
                 onMoveShouldSetPanResponder: (_e, g) =>
+                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+                onMoveShouldSetPanResponderCapture: (_e, g) =>
                     Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
 
                 onPanResponderGrant: (_e, g) => {
-                    draggingFromRef.current - i;
+                    draggingFromRef.current = i;
                     setDragging(m);
                     ghostX.setValue((g.moveX ?? 0) - 24);
                     ghostY.setValue((g.moveY ?? 0) - 24);
                     updateIndex(g.moveY ?? 0);
+                    console.log(' grant row');
                 },
                 onPanResponderMove: (_evt, g) => {
                     ghostX.setValue((g.moveX ?? 0) - 24);
@@ -194,10 +203,11 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
                 getPanHandlers={getPanHandlers}
                 // onPressChip: optional — keep empty to avoid accidental taps during drag
                 onPressChip={undefined}
-                rows={3}
+                baseRows={3}
                 chipMinWidth={96}
                 chipGap={8}
                 contentPadding={12}
+                dragActive={!!dragging}
             />
 
             {/* 2) Timeline drop zone */}
@@ -209,11 +219,22 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
                 accessibilityRole="adjustable"
                 accessibilityLabel="Combo timeline. Drag here to add. Hover between moves to insert."
             >
-                {steps.map((m, i) => (
-                    <View key={`${m}-${i}`} style={[S.row, { height: SLOT_H }]}>
-                        <BodyText>{MOVEMENT_LABEL[m]}</BodyText>
-                    </View>
-                ))}
+                {steps.map((m, i) => {
+                    const r = getRowResponder(i, m);
+                    const lifted = dragging && (draggingFromRef.current === i);
+                    return (
+                        <Pressable
+                            key={`${m}-${i}`}
+                            {...r.panHandlers}
+                            style={[S.row, { height: SLOT_H, opacity: lifted ? 0.3 : 1 }]}
+                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Move ${MOVEMENT_LABEL[m]}`}
+                        >
+                            <BodyText>{MOVEMENT_LABEL[m]}</BodyText>
+                        </Pressable>
+                    );
+                })}
 
                 {insertIndex >= 0 && (
                     <View pointerEvents="none" style={[S.cursor, { top: insertIndex * SLOT_H }]} />
