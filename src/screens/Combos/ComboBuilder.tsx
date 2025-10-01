@@ -1,4 +1,3 @@
-// src/screens/Combos/ComboBuilder.tsx
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
     Animated,
@@ -6,242 +5,266 @@ import {
     type PanResponderInstance,
     View,
     StyleSheet,
-    Pressable,
+    Text,
 } from "react-native";
 import { BodyText } from "@/theme/T";
 import MovementPalette from "@/screens/Combos/MovementPalette";
 import { Movement, MOVEMENT_LABEL } from "@/types/common";
+import { CHIP_W, CHIP_H, GAP_X, GAP_Y, TIMELINE_PAD, INSERT_TOL, calCols } from "./ui";
 
 type Props = {
-    palette?: Movement[];
     steps: Movement[];
     insertAt: (m: Movement, at: number) => Promise<void>;
     moveTo: (from: number, to: number) => Promise<void>;
 };
 
-const SLOT_H = 48;
 const MOVE_THRESHOLD = 2;
 
 export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
-    // --- measure timeline rect (page coordinates) ---
+    // timeline measure
     const timelineRef = useRef<View | null>(null);
-    const [timelineRect, setRect] = useState<{ y: number; h: number }>({ y: 0, h: 0 });
+    const [tlRect, setTlRect] = useState<{ left: number; top: number; width: number; height: number; cols: number }>({
+        left: 0, top: 0, width: 0, height: 0, cols: 1,
+    });
 
     const measureTimeline = () => {
-        // Use requestAnimationFrame to ensure layout is settled before measure
         requestAnimationFrame(() => {
-            timelineRef.current?.measure?.((_x, _y, _w, h, _px, py) => {
-                setRect({ y: py ?? 0, h: h ?? 0 });
+            timelineRef.current?.measure?.((x, y, w, h, px, py) => {
+                const left = (px ?? 0) + TIMELINE_PAD;
+                const top  = (py ?? 0) + TIMELINE_PAD;
+                const innerW = (w ?? 0) - TIMELINE_PAD * 2;
+                const cols = calCols(w ?? 0);
+                setTlRect({ left, top, width: innerW, height: (h ?? 0) - TIMELINE_PAD * 2, cols });
             });
         });
     };
 
-    // --- slot math ---
-    const insideTimeline = (y: number) => y >= timelineRect.y && y <= timelineRect.y + timelineRect.h;
+    // --- point -> index (left->right, top->down)
+    const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
-    const nearestSlot = useCallback(
-        (y: number) => {
-            let idx = steps.length; // default: append to end if anywhere inside body
-            if (insideTimeline(y)) {
-                const mids = Array.from({ length: steps.length + 1 }, (_, i) => timelineRect.y + i * SLOT_H + SLOT_H / 2);
-                let best = 0;
-                let dist = Infinity;
-                for (let i = 0; i < mids.length; i++) {
-                    const d = Math.abs(mids[i] - y);
-                    if (d < dist) { dist = d; best = i; }
-                }
-                idx = best;
-            }
-            return idx;
-        },
-        [steps.length, timelineRect.y, timelineRect.h]
-    );
+    const pointToIndex = useCallback((pageX: number, pageY: number) => {
+        const { left, top, width, cols } = tlRect;
+        if (width <= 0 || cols <= 0) return -1;
 
-    // --- drag state ---
+        // Overscan a bit so near-misses still count
+        const overscan = 12;
+        if (pageX < left - overscan || pageX > left + width + overscan) return -1;
+
+        const lx = clamp(pageX - left, 0, width);
+        const ly = Math.max(0, pageY - top);
+
+        const row = Math.max(0, Math.floor(ly / (CHIP_H + GAP_Y)));
+        // slightly biased to centers so it feels sticky
+        const col = clamp(Math.floor((lx + GAP_X / 2) / (CHIP_W + GAP_X)), 0, cols - 1);
+
+        let idx = row * cols + col;
+        // limit: you can insert at most at steps.length (append)
+        if (idx > steps.length) idx = steps.length;
+        return idx;
+    }, [tlRect, steps.length]);
+
+    // --- drag state (ghost + insert cursor)
     const ghostX = useRef(new Animated.Value(0)).current;
     const ghostY = useRef(new Animated.Value(0)).current;
     const [dragging, setDragging] = useState<Movement | null>(null);
     const [insertIndex, setInsertIndex] = useState(-1);
     const lastIndexRef = useRef(-1);
 
-    const updateIndex = useCallback((y: number) => {
-        const next = nearestSlot(y);
-        if (next !== lastIndexRef.current) {
-            lastIndexRef.current = next;
-            setInsertIndex(next);
-        }
-    }, [nearestSlot]);
+    // keep finger-to-chip offset so ghost follows the finger exactly
+    const touchOffset = useRef({ x: CHIP_W / 2, y: CHIP_H / 2 });
 
-    // keep latest insertAt to avoid stale closure in cached responders
+    // rAF throttle for index updates (smooth, no jitter)
+    const rafRef = useRef<number | null>(null);
+    const scheduleIndexUpdate = (pageX: number, pageY: number) => {
+        if (rafRef.current != null) return;
+        const px = pageX, py = pageY;
+        rafRef.current = requestAnimationFrame(() => {
+            rafRef.current = null;
+            const idx = pointToIndex(px, py);
+            // small "tolerance" — only change when we move past centers by INSERT_TOL
+            if (idx !== lastIndexRef.current) {
+                lastIndexRef.current = idx;
+                setInsertIndex(idx);
+            }
+        });
+    };
+
+    // keep latest callbacks
     const insertAtRef = useRef(insertAt);
     const moveToRef = useRef(moveTo);
     useEffect(() => { insertAtRef.current = insertAt; }, [insertAt]);
     useEffect(() => { moveToRef.current = moveTo; }, [moveTo]);
 
-    // --- cache a PanResponder per movement so props stay stable ---
-    const respondersRef = useRef<Map<Movement, PanResponderInstance>>(new Map());
+    // --- PanResponders
 
-    const getResponder = useCallback(
-        (m: Movement): PanResponderInstance => {
-            const cached = respondersRef.current.get(m);
-            if (cached) return cached;
+    // chips from PALETTE -> timeline
+    const paletteResponders = useRef<Map<Movement, PanResponderInstance>>(new Map());
+    const getPaletteResponder = useCallback((m: Movement): PanResponderInstance => {
+        const cached = paletteResponders.current.get(m);
+        if (cached) return cached;
 
-            const r = PanResponder.create({
-                // Let the palette's FlatList handle horizontal swipe unless the user clearly moves
-                onStartShouldSetPanResponder: () => true,
-                onStartShouldSetPanResponderCapture: () => true,
-                onMoveShouldSetPanResponder: (_e, g) =>
-                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
-                onMoveShouldSetPanResponderCapture: (_e, g) =>
-                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+        const r = PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponderCapture: () => true,
+            onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+            onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
 
-                onPanResponderGrant: (_e, g) => {
-                    setDragging(m);
-                    // Center the ghost roughly under the finger; keep offsets consistent
-                    ghostX.setValue((g.x0 ?? 0) - 24);
-                    ghostY.setValue((g.y0 ?? 0) - 24);
-                    console.log('grant palette');
-                },
+            onPanResponderGrant: (evt, _g) => {
+                const n = (evt as any).nativeEvent;
+                touchOffset.current = { x: n.locationX ?? CHIP_W / 2, y: n.locationY ?? CHIP_H / 2 };
+                setDragging(m);
+                ghostX.setValue((n.pageX ?? 0) - touchOffset.current.x);
+                ghostY.setValue((n.pageY ?? 0) - touchOffset.current.y);
+            },
+            onPanResponderMove: (evt, _g) => {
+                const n = (evt as any).nativeEvent;
+                const px = n.pageX ?? 0, py = n.pageY ?? 0;
+                ghostX.setValue(px - touchOffset.current.x);
+                ghostY.setValue(py - touchOffset.current.y);
+                scheduleIndexUpdate(px, py);
+            },
+            onPanResponderRelease: async (evt, _g) => {
+                const n = (evt as any).nativeEvent;
+                const idx = pointToIndex(n.pageX ?? 0, n.pageY ?? 0);
+                setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
+                if (idx >= 0) await insertAtRef.current(m, idx);
+            },
+            onPanResponderTerminate: () => {
+                setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
+            },
+        });
 
-                onPanResponderMove: (_evt, g) => {
-                    // Simple & reliable for MVP; can swap to Animated.event later
-                    ghostX.setValue((g.moveX ?? 0) - 24);
-                    ghostY.setValue((g.moveY ?? 0) - 24);
-                    updateIndex(g.moveY ?? 0);
-                },
-
-                onPanResponderRelease: async (_e, g) => {
-                    const idx = insideTimeline(g.moveY ?? 0) ? nearestSlot(g.moveY ?? 0) : -1;
-                    setDragging(null);
-                    setInsertIndex(-1);
-                    lastIndexRef.current = -1;
-                    if (idx >= 0) await insertAtRef.current(m, idx);
-                },
-
-                onPanResponderTerminate: () => {
-                    setDragging(null);
-                    setInsertIndex(-1);
-                    lastIndexRef.current = -1;
-                },
-            });
-
-            respondersRef.current.set(m, r);
-            return r;
-        },
-        [ghostX, ghostY, nearestSlot, updateIndex]
-    );
+        paletteResponders.current.set(m, r);
+        return r;
+    }, [ghostX, ghostY, pointToIndex]);
 
     const getPanHandlers = useCallback(
-        (m: Movement) => getResponder(m).panHandlers as Record<string, unknown>,
-        [getResponder]
+        (m: Movement) => getPaletteResponder(m).panHandlers as Record<string, unknown>,
+        [getPaletteResponder]
     );
 
-    // drag to reorder
-    const draggingFromRef = useRef<number | null>(null);
-    const rowResponders = useRef<Map<string, PanResponderInstance>>(new Map());
+    // chips from TIMELINE -> reorder
+    const timelineResponders = useRef<Map<string, PanResponderInstance>>(new Map());
+    const fromIndexRef = useRef<number | null>(null);
 
-    const getRowResponder = useCallback(
-        (i: number, m: Movement): PanResponderInstance => {
-            const key = `${m}-${i}`;
-            const cached = rowResponders.current.get(key);
-            if (cached) return cached;
+    const getTimelineResponder = useCallback((i: number, m: Movement): PanResponderInstance => {
+        const key = `${m}-${i}`;
+        const cached = timelineResponders.current.get(key);
+        if (cached) return cached;
 
-            const r = PanResponder.create({
-                onStartShouldSetPanResponder: () => true,
-                onStartShouldSetPanResponderCapture: () => true,
-                onMoveShouldSetPanResponder: (_e, g) =>
-                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
-                onMoveShouldSetPanResponderCapture: (_e, g) =>
-                    Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+        const r = PanResponder.create({
+            onStartShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponderCapture: () => true,
+            onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
+            onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
 
-                onPanResponderGrant: (_e, g) => {
-                    draggingFromRef.current = i;
-                    setDragging(m);
-                    ghostX.setValue((g.moveX ?? 0) - 24);
-                    ghostY.setValue((g.moveY ?? 0) - 24);
-                    updateIndex(g.moveY ?? 0);
-                    console.log(' grant row');
-                },
-                onPanResponderMove: (_evt, g) => {
-                    ghostX.setValue((g.moveX ?? 0) - 24);
-                    ghostY.setValue((g.moveY ?? 0) - 24);
-                    updateIndex(g.moveY ?? 0);
-                },
-                onPanResponderRelease: async (_e, g) => {
-                    const from = draggingFromRef.current ?? i;
-                    const dropY = g.moveY ?? 0;
-                    const idx = insideTimeline(dropY) ? nearestSlot(dropY): -1;
+            onPanResponderGrant: (evt, _g) => {
+                const n = (evt as any).nativeEvent;
+                fromIndexRef.current = i;
+                touchOffset.current = { x: n.locationX ?? CHIP_W / 2, y: n.locationY ?? CHIP_H / 2 };
+                setDragging(m);
+                ghostX.setValue((n.pageX ?? 0) - touchOffset.current.x);
+                ghostY.setValue((n.pageY ?? 0) - touchOffset.current.y);
+            },
+            onPanResponderMove: (evt, _g) => {
+                const n = (evt as any).nativeEvent;
+                const px = n.pageX ?? 0, py = n.pageY ?? 0;
+                ghostX.setValue(px - touchOffset.current.x);
+                ghostY.setValue(py - touchOffset.current.y);
+                scheduleIndexUpdate(px, py);
+            },
+            onPanResponderRelease: async (evt, _g) => {
+                const n = (evt as any).nativeEvent;
+                const toIdx = pointToIndex(n.pageX ?? 0, n.pageY ?? 0);
+                const from = fromIndexRef.current ?? i;
+                setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1; fromIndexRef.current = null;
 
-                    setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
-
-                    if (idx >= 0) {
-                        let to = idx;
-                        if (to > from) to = to - 1;
-                        if (to !== from && to >= 0 && to < steps.length) {
-                            await moveToRef.current(from, to);
-                        }
+                if (toIdx >= 0) {
+                    let to = toIdx;
+                    if (to > from) to = to - 1; // account for the vacated slot when moving forward
+                    if (to !== from && to >= 0 && to <= steps.length - 1) {
+                        await moveToRef.current(from, to);
                     }
-                    draggingFromRef.current = null;
-                },
-                onPanResponderTerminate: () => {
-                    setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
-                    draggingFromRef.current = null;
-                },
-            });
+                }
+            },
+            onPanResponderTerminate: () => {
+                setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1; fromIndexRef.current = null;
+            },
+        });
 
-            rowResponders.current.set(key, r);
-            return r;
-        },
-        [ghostX, ghostY, nearestSlot, updateIndex, steps.length]
-    );
-    // drag to reorder
+        timelineResponders.current.set(key, r);
+        return r;
+    }, [ghostX, ghostY, pointToIndex, steps.length]);
+
+    // --- render
+
+    // Build the visual list with a placeholder chip at insertIndex
+    const renderWithPlaceholder: Array<{ kind: "ph" } | { kind: "mv"; m: Movement; i: number }> = [];
+    steps.forEach((m, i) => {
+        if (insertIndex === i) renderWithPlaceholder.push({ kind: "ph" });
+        renderWithPlaceholder.push({ kind: "mv", m, i });
+    });
+    if (insertIndex === steps.length) renderWithPlaceholder.push({ kind: "ph" });
 
     return (
         <View style={S.root}>
-            {/* 1) Swipable palette with wrapped chips and NO vertical scroll */}
+            {/* 1) Palette */}
             <MovementPalette
                 getPanHandlers={getPanHandlers}
-                // onPressChip: optional — keep empty to avoid accidental taps during drag
-                onPressChip={undefined}
-                baseRows={3}
-                chipMinWidth={96}
-                chipGap={8}
-                contentPadding={12}
                 dragActive={!!dragging}
             />
 
-            {/* 2) Timeline drop zone */}
+            {/* 2) Timeline (left->right, wrap) */}
             <View
                 ref={timelineRef}
                 onLayout={measureTimeline}
                 collapsable={false}
                 style={S.timeline}
                 accessibilityRole="adjustable"
-                accessibilityLabel="Combo timeline. Drag here to add. Hover between moves to insert."
+                accessibilityLabel="Combo timeline. Drag here to add. Drag chips to reorder."
             >
-                {steps.map((m, i) => {
-                    const r = getRowResponder(i, m);
-                    const lifted = dragging && (draggingFromRef.current === i);
-                    return (
-                        <Pressable
-                            key={`${m}-${i}`}
-                            {...r.panHandlers}
-                            style={[S.row, { height: SLOT_H, opacity: lifted ? 0.3 : 1 }]}
-                            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-                            accessibilityRole="button"
-                            accessibilityLabel={`Move ${MOVEMENT_LABEL[m]}`}
-                        >
-                            <BodyText>{MOVEMENT_LABEL[m]}</BodyText>
-                        </Pressable>
-                    );
-                })}
+                <Text style={S.sectionTitle}>YOUR COMBO:</Text>
 
-                {insertIndex >= 0 && (
-                    <View pointerEvents="none" style={[S.cursor, { top: insertIndex * SLOT_H }]} />
-                )}
+                <View style={S.grid}>
+                    {renderWithPlaceholder.map((item, idx) => {
+                        if (item.kind === "ph") {
+                            return (
+                                <View
+                                    key={`ph-${idx}`}
+                                    style={[
+                                        S.placeholder,
+                                        { width: CHIP_W, height: CHIP_H, marginRight: GAP_X, marginBottom: GAP_Y },
+                                    ]}
+                                    pointerEvents="none"
+                                />
+                            );
+                        } else {
+                            const { m, i } = item;
+                            const r = getTimelineResponder(i, m);
+                            return (
+                                <View
+                                    key={`${m}-${i}-${idx}`}
+                                    {...r.panHandlers}
+                                    style={[
+                                        S.chip,
+                                        {
+                                            width: CHIP_W, height: CHIP_H,
+                                            marginRight: GAP_X, marginBottom: GAP_Y,
+                                            opacity: dragging && fromIndexRef.current === i ? 0.35 : 1,
+                                        },
+                                    ]}
+                                    accessibilityLabel={`Move ${MOVEMENT_LABEL[m]}`}
+                                    accessible
+                                >
+                                    <BodyText>{MOVEMENT_LABEL[m]}</BodyText>
+                                </View>
+                            );
+                        }
+                    })}
+                </View>
             </View>
 
-            {/* 3) Floating ghost (never steals touches) */}
+            {/* 3) Floating ghost */}
             {dragging && (
                 <Animated.View
                     pointerEvents="none"
@@ -261,28 +284,44 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
 const S = StyleSheet.create({
     root: { flex: 1 },
+    sectionTitle: {
+        color: "#cbd5e1",
+        marginBottom: 8,
+        fontWeight: "700",
+    },
     timeline: {
         marginTop: 16,
-        padding: 12,
+        padding: TIMELINE_PAD,
         borderWidth: 1,
         borderRadius: 12,
+        borderColor: "#334155",
+        backgroundColor: "rgba(17, 24, 39, 0.5)",
     },
-    row: {
+    grid: { flexDirection: "row", flexWrap: "wrap" },
+    chip: {
+        borderRadius: 18,
+        paddingHorizontal: 12,
         justifyContent: "center",
-        borderRadius: 10,
-        marginBottom: 4,
+        backgroundColor: "#1f2937",
     },
-    cursor: {
-        position: "absolute",
-        left: 12,
-        right: 12,
-        height: 2,
-        backgroundColor: "#fff",
+    placeholder: {
+        borderRadius: 18,
+        borderWidth: 2,
+        borderStyle: "dashed",
+        borderColor: "#94a3b8",
+        backgroundColor: "rgba(148,163,184,0.15)",
     },
     ghost: {
-        paddingVertical: 10,
-        paddingHorizontal: 14,
+        width: CHIP_W,
+        height: CHIP_H,
         borderRadius: 18,
-        backgroundColor: "#ccf",
+        paddingHorizontal: 12,
+        justifyContent: "center",
+        backgroundColor: "#475569",
+        shadowColor: "#000",
+        shadowOpacity: 0.25,
+        shadowRadius: 8,
+        shadowOffset: { width: 0, height: 4 },
+        transform: [{ scale: 1.03 }],
     },
 });
