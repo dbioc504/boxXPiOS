@@ -1,63 +1,73 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Movement } from '@/types/common'
-import type { CombosRepo, StepDto } from "@/lib/repos/combos.repo";
+// src/hooks/useComboBuilder.ts
+import { useEffect, useMemo, useState, useCallback } from "react";
+import { useAuth } from "@/lib/AuthProvider";
+import { Movement } from "@/types/common";
+import { ComboLL, llFromArray, llToArray, llInsertAt, llMove, llRemoveAt } from "@/types/comboLL";
+import { CombosRepo, ComboId } from "@/lib/repos/combos.repo";
+import { mockCombosRepo } from "@/lib/repos/combos.repo.mock";
 
-type Opts = {
-    userId: string;
-    comboId: string;
-    repo: CombosRepo;
+type Options = {
+    userId?: string;
+    comboId?: ComboId;
+    repo?: CombosRepo;
 };
 
-export function useComboBuilder({ userId, comboId, repo }: Opts) {
-    const [rows, setRows] = useState<StepDto[]>([]);
-    const [loading, setLoading] = useState(true);
+export function useComboBuilder(opts: Options = {}) {
+    const { user } = useAuth();
+    const userId = user?.id ?? "demo";
+    const repo = opts.repo ?? mockCombosRepo;
 
-    const refresh = useCallback(async () => {
-        const list = await repo.listSteps(userId, comboId);
-        setRows(list.sort((a,b)=>a.position-b.position));
-    }, [repo, userId, comboId]);
+    const [comboId, setComboId] = useState<ComboId | null>(opts.comboId ?? null);
+    const [ll, setLL] = useState<ComboLL>(() => llFromArray([]));
+    const steps = useMemo(() => llToArray(ll).moves, [ll]);
 
-    useEffect(() => { setLoading(true); refresh().finally(() => setLoading(false)); }, [refresh]);
+    // load if comboId provided
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            if (!comboId) return;
+            const res = await repo.getCombo(userId, comboId);
+            if (mounted && res) {
+                setLL(llFromArray(res.steps));
+            }
+        })();
+        return () => { mounted = false; };
+    }, [comboId, repo, userId]);
 
-    const steps: Movement[] = useMemo(() => rows.map(r=>r.movement), [rows]);
+    const setFromArray = useCallback((arr: Movement[]) => setLL(llFromArray(arr)), []);
 
-    const insertAt = useCallback(async (movement: Movement, at: number) => {
-        setRows(prev => {
-            const next = prev.slice();
-            const newRow: StepDto = {
-                id: `temp-${Date.now()}`,
-                comboId,
-                position: Math.max(0, Math.min(at, prev.length)),
-                movement
-            };
-            next.splice(newRow.position, 0, newRow);
-            return next.map((r,i) => ({...r, position: i}));
-        });
-        await repo.insertStep(userId, comboId, movement, at);
-        await refresh();
-    }, [repo, userId, comboId, refresh]);
+    const append = useCallback((m: Movement) => {
+        setLL(prev => llInsertAt(prev, m, llToArray(prev).moves.length));
+    }, []);
 
-    const moveTo = useCallback(async (from: number, to: number) => {
-        if (from === to) return;
-        const current = rows[from];
-        if (!current) return;
-        setRows(prev => {
-            const next = prev.slice();
-            const [m] = next.splice(from, 1);
-            next.splice(to, 0, m);
-            return next.map((r, i) => ({...r,position: i}));
-        });
-        await repo.moveStep(userId, comboId, current.id, to);
-        await refresh();
-    }, [repo, userId, comboId, rows, refresh]);
+    const insertAt = useCallback((m: Movement, index: number) => {
+        setLL(prev => llInsertAt(prev, m, index));
+    }, []);
 
-    const removeAt = useCallback(async (index: number) => {
-        const current = rows[index];
-        if (!current) return;
-        setRows(prev => prev.filter((_, i) => i !== index).map((r,i) => ({...r, position: i})));
-        await repo.deleteStep(userId, comboId, current.id);
-        await refresh();
-    }, [repo, userId, comboId, rows, refresh]);
+    const move = useCallback((from: number, to: number) => {
+        setLL(prev => llMove(prev, from, to));
+    }, []);
 
-    return { steps, loading, refresh, insertAt, moveTo, removeAt };
+    const removeAt = useCallback((index: number) => {
+        setLL(prev => llRemoveAt(prev, index));
+    }, []);
+
+    const replaceAll = useCallback((arr: Movement[]) => setFromArray(arr), [setFromArray]);
+
+    const save = useCallback(async () => {
+        if (!comboId) {
+            // create a new combo on first save
+            const meta = await repo.createCombo(userId, { name: "New Combo" }, steps);
+            setComboId(meta.id);
+            return;
+        }
+        await repo.saveSteps(userId, comboId, steps);
+    }, [comboId, repo, steps, userId]);
+
+    return {
+        comboId, setComboId,
+        steps,
+        append, insertAt, move, removeAt, replaceAll,
+        save,
+    };
 }

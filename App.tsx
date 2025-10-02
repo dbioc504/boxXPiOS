@@ -8,6 +8,7 @@ import {StatusBar} from 'expo-status-bar';
 import {AuthProvider} from "@/lib/AuthProvider";
 import {RepoProvider} from '@/lib/providers/RepoProvider'
 import {StyleProvider} from "@/lib/providers/StyleProvider";
+import {GestureHandlerRootView} from "react-native-gesture-handler";
 
 export default function App() {
 
@@ -25,17 +26,19 @@ export default function App() {
     }
 
     return (
-        <AuthProvider>
-            <RepoProvider>
-                <StyleProvider>
-                    <ThemeProvider>
-                        <StatusBar style="light"/>
-                        <SafeAreaProvider>
-                            <RootNavigator/>
-                        </SafeAreaProvider>
-                    </ThemeProvider>
-                </StyleProvider>
-            </RepoProvider>
-        </AuthProvider>
+        <GestureHandlerRootView>
+            <AuthProvider>
+                <RepoProvider>
+                    <StyleProvider>
+                        <ThemeProvider>
+                            <StatusBar style="light"/>
+                            <SafeAreaProvider>
+                                <RootNavigator/>
+                            </SafeAreaProvider>
+                        </ThemeProvider>
+                    </StyleProvider>
+                </RepoProvider>
+            </AuthProvider>
+        </GestureHandlerRootView>
     );
 }

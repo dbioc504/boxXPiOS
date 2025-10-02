@@ -1,11 +1,10 @@
-// src/screens/Combos/MovementPalette.tsx
 import React, {useCallback, useMemo, useRef, useState} from "react";
 import {
-    View, Text, FlatList, LayoutChangeEvent,
-    NativeSyntheticEvent, NativeScrollEvent, StyleSheet,
+    View, Text, FlatList, Pressable,
+    NativeSyntheticEvent, NativeScrollEvent, LayoutChangeEvent, StyleSheet,
 } from "react-native";
+import { Draggable } from "@mgcrea/react-native-dnd";
 import { PUNCHES, BODY_PUNCHES, DEFENSES, MOVEMENT_LABEL, type Movement } from "@/types/common";
-import { CHIP_H, GAP_X, GAP_Y } from "./ui"; // we compute width per-device
 
 const GROUPS = [
     { key: 'punches', title: 'PUNCHES', items: PUNCHES as Movement[] },
@@ -14,22 +13,21 @@ const GROUPS = [
 ] as const;
 
 type Props = {
-    getPanHandlers?: (m: Movement) => Record<string, unknown>;
     onPressChip?: (m: Movement) => void;
-    /** Force a specific number of columns (default 3) */
-    columns?: number;
     baseRows?: number;
     maxRowsAuto?: number;
+    chipMinWidth?: number;
+    chipGap?: number;
     contentPadding?: number;
     dragActive?: boolean;
 };
 
 export default function MovementPalette({
-                                            getPanHandlers,
                                             onPressChip,
-                                            columns = 3,           // <- force 3 columns
                                             baseRows = 3,
                                             maxRowsAuto = 5,
+                                            chipMinWidth = 96,
+                                            chipGap = 8,
                                             contentPadding = 12,
                                             dragActive = false,
                                         }: Props) {
@@ -44,34 +42,34 @@ export default function MovementPalette({
 
     const usableW = Math.max(0, panelWidth - contentPadding * 2);
 
-    const { pages, cols, rowsForGroup, chipW } = useMemo(() => {
+    const { pages, columns, rowsForGroup, chipWidth } = useMemo(() => {
         const items = GROUPS[activeGroup].items;
+        if (usableW <= 0) {
+            return { pages: [items], columns: 1, rowsForGroup: baseRows, chipWidth: chipMinWidth };
+        }
+        const minColumns = Math.max(1, Math.floor((usableW + chipGap) / (chipMinWidth + chipGap)));
+        const columns = minColumns;
 
-        const cols = Math.max(1, Math.floor(columns));
+        const neededRows = Math.ceil(items.length / columns);
+        let rowsForGroup = baseRows;
+        let singlePage = false;
 
-        const chipW = cols > 0
-            ? Math.floor((usableW - GAP_X * (cols - 1)) / cols)
-            : usableW;
+        if (items.length <= columns * baseRows) { rowsForGroup = baseRows; singlePage = true; }
+        else if (neededRows <= maxRowsAuto) { rowsForGroup = neededRows; singlePage = true; }
+        else { rowsForGroup = baseRows; singlePage = false; }
 
-        const neededRows = cols > 0 ? Math.ceil(items.length / cols) : 1;
-
-        let rows = baseRows;
-        let single = false;
-        if (items.length <= cols * baseRows) { rows = baseRows; single = true; }
-        else if (neededRows <= maxRowsAuto) { rows = neededRows; single = true; }
-        else { rows = baseRows; single = false; }
-
-        const perPage = Math.max(1, cols * rows);
+        const chipWidth = Math.floor((usableW - chipGap * (columns - 1)) / columns);
+        const perPage = columns * rowsForGroup;
 
         const chunk = (arr: Movement[], size: number) => {
             const out: Movement[][] = [];
             for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
             return out;
         };
+        const pages = singlePage ? [items] : chunk(items, perPage);
 
-        const pages = single ? [items] : chunk(items, perPage);
-        return { pages, cols, rowsForGroup: rows, chipW };
-    }, [activeGroup, usableW, baseRows, maxRowsAuto, columns]);
+        return { pages, columns, rowsForGroup, chipWidth };
+    }, [activeGroup, usableW, baseRows, chipMinWidth, chipGap, maxRowsAuto]);
 
     const onMomentumEnd = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
         const x = e.nativeEvent.contentOffset.x;
@@ -91,71 +89,49 @@ export default function MovementPalette({
         requestAnimationFrame(() => goToPage(0));
     };
 
-    const renderGrid = (items: Movement[]) => (
-        <View style={S.grid}>
-            {items.map((m, i) => {
-                const pan = getPanHandlers ? getPanHandlers(m) : {};
-                const isLastCol = ((i + 1) % cols === 0);
-                return (
-                    <View
-                        key={`${m}-${i}`}
-                        {...pan}
-                        style={[
-                            S.chip,
-                            {
-                                width: chipW,
-                                height: CHIP_H,
-                                marginRight: isLastCol ? 0 : GAP_X,
-                                marginBottom: GAP_Y,
-                            },
-                        ]}
-                        accessibilityLabel={MOVEMENT_LABEL[m]}
-                        accessible
-                    >
-                        <Text style={S.chipText}>{MOVEMENT_LABEL[m]}</Text>
-                    </View>
-                );
-            })}
-        </View>
-    );
-
     const renderPage = ({ item }: { item: Movement[] }) => (
         <View style={[S.page, { width: panelWidth, paddingHorizontal: contentPadding }]}>
-            {renderGrid(item)}
+            <View style={[S.grid, { gap: chipGap }]}>
+                {item.map((m) => (
+                    <Draggable
+                        key={`pal-${m}`}
+                        id={`pal-${m}`}
+                        data={{ movement: m }}
+                        style={[S.chip, { width: chipWidth }]}
+                    >
+                        <Pressable
+                            onPress={onPressChip ? () => onPressChip(m) : undefined}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            style={{ flex: 1, justifyContent: "center" }}
+                            accessibilityRole="button"
+                            accessibilityLabel={MOVEMENT_LABEL[m]}
+                        >
+                            <Text style={S.chipText}>{MOVEMENT_LABEL[m]}</Text>
+                        </Pressable>
+                    </Draggable>
+                ))}
+            </View>
         </View>
     );
 
     return (
-        <View
-            onLayout={onPanelLayout}
-            collapsable={false}
-            style={[S.container, { alignSelf: "stretch" }]}
-        >
-            {/* Tabs */}
+        <View onLayout={onPanelLayout} style={S.container}>
             <View style={S.tabs}>
                 {GROUPS.map((g, i) => {
                     const active = i === activeGroup;
                     return (
-                        <View key={g.key} style={[S.tab, active && S.tabActive]}>
-                            <Text
-                                onPress={() => onTabPress(i)}
-                                style={[S.tabText, active && S.tabTextActive]}
-                            >
-                                {g.title}
-                            </Text>
-                        </View>
+                        <Pressable
+                            key={g.key}
+                            onPress={() => onTabPress(i)}
+                            accessibilityRole='button'
+                            style={[S.tab, active && S.tabActive]}
+                        >
+                            <Text style={[S.tabText, active && S.tabTextActive]}>{g.title}</Text>
+                        </Pressable>
                     );
                 })}
             </View>
 
-            {/* Fallback grid before width is known */}
-            {panelWidth === 0 && (
-                <View style={[S.page, { paddingHorizontal: contentPadding }]}>
-                    {renderGrid(GROUPS[activeGroup].items)}
-                </View>
-            )}
-
-            {/* Paged once width known */}
             {panelWidth > 0 && (
                 <FlatList
                     ref={listRef}
@@ -167,11 +143,7 @@ export default function MovementPalette({
                     showsHorizontalScrollIndicator={false}
                     renderItem={renderPage}
                     onMomentumScrollEnd={onMomentumEnd}
-                    getItemLayout={(_, index) => ({
-                        length: panelWidth,
-                        offset: panelWidth * index,
-                        index,
-                    })}
+                    getItemLayout={(_, index) => ({ length: panelWidth, offset: panelWidth * index, index })}
                     scrollEventThrottle={16}
                 />
             )}
@@ -181,7 +153,7 @@ export default function MovementPalette({
 
 const S = StyleSheet.create({
     container: { width: "100%" },
-    tabs: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingBottom: 8, justifyContent: 'center' },
+    tabs: { flexDirection: "row", alignItems: "center", paddingHorizontal: 12, paddingBottom: 8 },
     tab: { marginRight: 8, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: "#2a2a2a" },
     tabActive: { backgroundColor: "#4b6cff" },
     tabText: { color: "#ddd", fontSize: 14 },
@@ -189,11 +161,12 @@ const S = StyleSheet.create({
     page: { paddingTop: 4, paddingBottom: 8 },
     grid: { flexDirection: "row", flexWrap: "wrap" },
     chip: {
+        minHeight: 44,
+        marginBottom: 8,
         borderRadius: 16,
         paddingHorizontal: 12,
-        paddingVertical: 2,
-        justifyContent: "center",
         backgroundColor: "#1f2937",
+        justifyContent: "center",
     },
-    chipText: { color: "#fff", fontSize: 13.3 },
+    chipText: { color: "#fff", fontSize: 16 },
 });

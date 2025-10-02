@@ -6,6 +6,7 @@ import {
     View,
     StyleSheet,
     Text,
+    Dimensions,
 } from "react-native";
 import { BodyText } from "@/theme/T";
 import MovementPalette from "@/screens/Combos/MovementPalette";
@@ -20,47 +21,85 @@ type Props = {
 
 const MOVE_THRESHOLD = 2;
 
+// Toggle this on to see detailed logs
+const DEBUG = true;
+const dlog = (...args: any[]) => { if (__DEV__ && DEBUG) console.log("[ComboBuilder]", ...args); };
+
 export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
-    // timeline measure
+    // timeline measure (page coords)
     const timelineRef = useRef<View | null>(null);
     const [tlRect, setTlRect] = useState<{ left: number; top: number; width: number; height: number; cols: number }>({
         left: 0, top: 0, width: 0, height: 0, cols: 1,
     });
 
-    const measureTimeline = () => {
+    const measureTimeline = useCallback(() => {
         requestAnimationFrame(() => {
-            timelineRef.current?.measure?.((x, y, w, h, px, py) => {
-                const left = (px ?? 0) + TIMELINE_PAD;
-                const top  = (py ?? 0) + TIMELINE_PAD;
-                const innerW = (w ?? 0) - TIMELINE_PAD * 2;
-                const cols = calCols(w ?? 0);
-                setTlRect({ left, top, width: innerW, height: (h ?? 0) - TIMELINE_PAD * 2, cols });
+            // Use measureInWindow for reliable page coords on both iOS/Android
+            timelineRef.current?.measureInWindow?.((px, py, w, h) => {
+                const fullW = w ?? 0;
+                const fullH = h ?? 0;
+                const innerLeft = (px ?? 0) + TIMELINE_PAD;
+                const innerTop  = (py ?? 0) + TIMELINE_PAD;
+                const innerW = Math.max(0, fullW - TIMELINE_PAD * 2);
+                const innerH = Math.max(0, fullH - TIMELINE_PAD * 2);
+                const cols = calCols(fullW);
+                const rect = { left: innerLeft, top: innerTop, width: innerW, height: innerH, cols };
+                setTlRect(rect);
+                dlog("measured tlRect:", rect);
             });
         });
-    };
+    }, []);
 
-    // --- point -> index (left->right, top->down)
+    // Re-measure on layout, on steps change, and on orientation/size change
+    useEffect(() => { measureTimeline(); }, [measureTimeline]);
+    useEffect(() => { measureTimeline(); }, [steps.length, measureTimeline]);
+    useEffect(() => {
+        const sub = Dimensions.addEventListener("change", measureTimeline);
+        return () => sub.remove();
+    }, [measureTimeline]);
+
     const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
 
+    const inTimeline = useCallback((pageX: number, pageY: number) => {
+        const ov = 12;
+        const { left, top, width, height } = tlRect;
+        const inside =
+            pageX >= left - ov &&
+            pageX <= left + width + ov &&
+            pageY >= top - ov &&
+            pageY <= top + height + ov;
+        return inside;
+    }, [tlRect]);
+
+    // Map finger to candidate index (L->R, T->B), but we’ll default to END unless near a cell center
     const pointToIndex = useCallback((pageX: number, pageY: number) => {
         const { left, top, width, cols } = tlRect;
         if (width <= 0 || cols <= 0) return -1;
-
-        // Overscan a bit so near-misses still count
-        const overscan = 12;
-        if (pageX < left - overscan || pageX > left + width + overscan) return -1;
 
         const lx = clamp(pageX - left, 0, width);
         const ly = Math.max(0, pageY - top);
 
         const row = Math.max(0, Math.floor(ly / (CHIP_H + GAP_Y)));
-        // slightly biased to centers so it feels sticky
         const col = clamp(Math.floor((lx + GAP_X / 2) / (CHIP_W + GAP_X)), 0, cols - 1);
 
         let idx = row * cols + col;
-        // limit: you can insert at most at steps.length (append)
         if (idx > steps.length) idx = steps.length;
-        return idx;
+
+        // Center of that cell
+        const cx = col * (CHIP_W + GAP_X) + CHIP_W / 2;
+        const cy = row * (CHIP_H + GAP_Y) + CHIP_H / 2;
+
+        // Only accept the candidate if finger is reasonably near its center; else we append
+        const near =
+            Math.abs(lx - cx) <= (CHIP_W / 2 + INSERT_TOL) &&
+            Math.abs(ly - cy) <= (CHIP_H / 2 + INSERT_TOL);
+
+        const finalIdx = near ? idx : steps.length;
+
+        dlog("pointToIndex",
+            { pageX, pageY, lx, ly, row, col, idx, near, finalIdx, cols, width });
+
+        return finalIdx;
     }, [tlRect, steps.length]);
 
     // --- drag state (ghost + insert cursor)
@@ -70,18 +109,24 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
     const [insertIndex, setInsertIndex] = useState(-1);
     const lastIndexRef = useRef(-1);
 
-    // keep finger-to-chip offset so ghost follows the finger exactly
+    // finger-to-chip offset so ghost sits under finger (we’ll start centered)
     const touchOffset = useRef({ x: CHIP_W / 2, y: CHIP_H / 2 });
 
-    // rAF throttle for index updates (smooth, no jitter)
+    // rAF throttle for index updates
     const rafRef = useRef<number | null>(null);
     const scheduleIndexUpdate = (pageX: number, pageY: number) => {
         if (rafRef.current != null) return;
-        const px = pageX, py = pageY;
         rafRef.current = requestAnimationFrame(() => {
             rafRef.current = null;
-            const idx = pointToIndex(px, py);
-            // small "tolerance" — only change when we move past centers by INSERT_TOL
+            if (!inTimeline(pageX, pageY)) {
+                // show end placeholder if outside (feels like “ready to append”)
+                if (lastIndexRef.current !== steps.length) {
+                    lastIndexRef.current = steps.length;
+                    setInsertIndex(steps.length);
+                }
+                return;
+            }
+            const idx = pointToIndex(pageX, pageY);
             if (idx !== lastIndexRef.current) {
                 lastIndexRef.current = idx;
                 setInsertIndex(idx);
@@ -97,7 +142,7 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
     // --- PanResponders
 
-    // chips from PALETTE -> timeline
+    // PALETTE -> timeline
     const paletteResponders = useRef<Map<Movement, PanResponderInstance>>(new Map());
     const getPaletteResponder = useCallback((m: Movement): PanResponderInstance => {
         const cached = paletteResponders.current.get(m);
@@ -109,25 +154,30 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
             onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
             onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
 
-            onPanResponderGrant: (evt, _g) => {
-                const n = (evt as any).nativeEvent;
-                touchOffset.current = { x: n.locationX ?? CHIP_W / 2, y: n.locationY ?? CHIP_H / 2 };
+            onPanResponderGrant: (_evt, g) => {
+                // Use gesture page coords; anchor ghost under finger
+                touchOffset.current = { x: CHIP_W / 2, y: CHIP_H / 2 };
                 setDragging(m);
-                ghostX.setValue((n.pageX ?? 0) - touchOffset.current.x);
-                ghostY.setValue((n.pageY ?? 0) - touchOffset.current.y);
+                lastIndexRef.current = steps.length;
+                setInsertIndex(steps.length);
+                ghostX.setValue((g.x0 ?? 0) - touchOffset.current.x);
+                ghostY.setValue((g.y0 ?? 0) - touchOffset.current.y);
+                dlog("grant palette", { x0: g.x0, y0: g.y0 });
             },
-            onPanResponderMove: (evt, _g) => {
-                const n = (evt as any).nativeEvent;
-                const px = n.pageX ?? 0, py = n.pageY ?? 0;
-                ghostX.setValue(px - touchOffset.current.x);
-                ghostY.setValue(py - touchOffset.current.y);
-                scheduleIndexUpdate(px, py);
+            onPanResponderMove: (_evt, g) => {
+                ghostX.setValue((g.moveX ?? 0) - touchOffset.current.x);
+                ghostY.setValue((g.moveY ?? 0) - touchOffset.current.y);
+                scheduleIndexUpdate(g.moveX ?? 0, g.moveY ?? 0);
             },
-            onPanResponderRelease: async (evt, _g) => {
-                const n = (evt as any).nativeEvent;
-                const idx = pointToIndex(n.pageX ?? 0, n.pageY ?? 0);
+            onPanResponderRelease: (_evt, g) => {
+                const px = g.moveX ?? g.x0 ?? 0;
+                const py = g.moveY ?? g.y0 ?? 0;
+                const inside = inTimeline(px, py);
+                const idx = inside ? pointToIndex(px, py) : -1;
+                dlog("release palette", { px, py, inside, idx });
+
                 setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
-                if (idx >= 0) await insertAtRef.current(m, idx);
+                if (idx >= 0) insertAtRef.current(m, idx);
             },
             onPanResponderTerminate: () => {
                 setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1;
@@ -136,14 +186,14 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
         paletteResponders.current.set(m, r);
         return r;
-    }, [ghostX, ghostY, pointToIndex]);
+    }, [inTimeline, pointToIndex, ghostX, ghostY, steps.length]);
 
     const getPanHandlers = useCallback(
         (m: Movement) => getPaletteResponder(m).panHandlers as Record<string, unknown>,
         [getPaletteResponder]
     );
 
-    // chips from TIMELINE -> reorder
+    // TIMELINE -> reorder
     const timelineResponders = useRef<Map<string, PanResponderInstance>>(new Map());
     const fromIndexRef = useRef<number | null>(null);
 
@@ -158,32 +208,36 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
             onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
             onMoveShouldSetPanResponderCapture: (_e, g) => Math.abs(g.dx) > MOVE_THRESHOLD || Math.abs(g.dy) > MOVE_THRESHOLD,
 
-            onPanResponderGrant: (evt, _g) => {
-                const n = (evt as any).nativeEvent;
+            onPanResponderGrant: (_evt, g) => {
                 fromIndexRef.current = i;
-                touchOffset.current = { x: n.locationX ?? CHIP_W / 2, y: n.locationY ?? CHIP_H / 2 };
+                touchOffset.current = { x: CHIP_W / 2, y: CHIP_H / 2 };
                 setDragging(m);
-                ghostX.setValue((n.pageX ?? 0) - touchOffset.current.x);
-                ghostY.setValue((n.pageY ?? 0) - touchOffset.current.y);
+                lastIndexRef.current = steps.length;
+                setInsertIndex(steps.length);
+                ghostX.setValue((g.x0 ?? 0) - touchOffset.current.x);
+                ghostY.setValue((g.y0 ?? 0) - touchOffset.current.y);
+                dlog("grant row", { x0: g.x0, y0: g.y0, from: i });
             },
-            onPanResponderMove: (evt, _g) => {
-                const n = (evt as any).nativeEvent;
-                const px = n.pageX ?? 0, py = n.pageY ?? 0;
-                ghostX.setValue(px - touchOffset.current.x);
-                ghostY.setValue(py - touchOffset.current.y);
-                scheduleIndexUpdate(px, py);
+            onPanResponderMove: (_evt, g) => {
+                ghostX.setValue((g.moveX ?? 0) - touchOffset.current.x);
+                ghostY.setValue((g.moveY ?? 0) - touchOffset.current.y);
+                scheduleIndexUpdate(g.moveX ?? 0, g.moveY ?? 0);
             },
-            onPanResponderRelease: async (evt, _g) => {
-                const n = (evt as any).nativeEvent;
-                const toIdx = pointToIndex(n.pageX ?? 0, n.pageY ?? 0);
+            onPanResponderRelease: (_evt, g) => {
+                const px = g.moveX ?? g.x0 ?? 0;
+                const py = g.moveY ?? g.y0 ?? 0;
+                const inside = inTimeline(px, py);
+                const toIdx = inside ? pointToIndex(px, py) : -1;
                 const from = fromIndexRef.current ?? i;
+                dlog("release row", { px, py, inside, toIdx, from });
+
                 setDragging(null); setInsertIndex(-1); lastIndexRef.current = -1; fromIndexRef.current = null;
 
                 if (toIdx >= 0) {
                     let to = toIdx;
-                    if (to > from) to = to - 1; // account for the vacated slot when moving forward
+                    if (to > from) to = to - 1;
                     if (to !== from && to >= 0 && to <= steps.length - 1) {
-                        await moveToRef.current(from, to);
+                        moveToRef.current(from, to);
                     }
                 }
             },
@@ -194,11 +248,9 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
         timelineResponders.current.set(key, r);
         return r;
-    }, [ghostX, ghostY, pointToIndex, steps.length]);
+    }, [inTimeline, pointToIndex, ghostX, ghostY, steps.length]);
 
-    // --- render
-
-    // Build the visual list with a placeholder chip at insertIndex
+    // Render list with placeholder at insertIndex
     const renderWithPlaceholder: Array<{ kind: "ph" } | { kind: "mv"; m: Movement; i: number }> = [];
     steps.forEach((m, i) => {
         if (insertIndex === i) renderWithPlaceholder.push({ kind: "ph" });
@@ -208,13 +260,8 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
     return (
         <View style={S.root}>
-            {/* 1) Palette */}
-            <MovementPalette
-                getPanHandlers={getPanHandlers}
-                dragActive={!!dragging}
-            />
+            <MovementPalette getPanHandlers={getPanHandlers} dragActive={!!dragging} />
 
-            {/* 2) Timeline (left->right, wrap) */}
             <View
                 ref={timelineRef}
                 onLayout={measureTimeline}
@@ -248,9 +295,11 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
                                     style={[
                                         S.chip,
                                         {
-                                            width: CHIP_W, height: CHIP_H,
-                                            marginRight: GAP_X, marginBottom: GAP_Y,
-                                            opacity: dragging && fromIndexRef.current === i ? 0.35 : 1,
+                                            width: CHIP_W,
+                                            height: CHIP_H,
+                                            marginRight: GAP_X,
+                                            marginBottom: GAP_Y,
+                                            opacity: dragging && (i === (fromIndexRef.current ?? -1)) ? 0.35 : 1,
                                         },
                                     ]}
                                     accessibilityLabel={`Move ${MOVEMENT_LABEL[m]}`}
@@ -264,14 +313,10 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
                 </View>
             </View>
 
-            {/* 3) Floating ghost */}
             {dragging && (
                 <Animated.View
                     pointerEvents="none"
-                    style={{
-                        position: "absolute",
-                        transform: [{ translateX: ghostX }, { translateY: ghostY }],
-                    }}
+                    style={{ position: "absolute", transform: [{ translateX: ghostX }, { translateY: ghostY }] }}
                 >
                     <View style={S.ghost}>
                         <BodyText>{MOVEMENT_LABEL[dragging]}</BodyText>
@@ -284,11 +329,7 @@ export default function ComboBuilder({ steps, insertAt, moveTo }: Props) {
 
 const S = StyleSheet.create({
     root: { flex: 1 },
-    sectionTitle: {
-        color: "#cbd5e1",
-        marginBottom: 8,
-        fontWeight: "700",
-    },
+    sectionTitle: { color: "#cbd5e1", marginBottom: 8, fontWeight: "700" },
     timeline: {
         marginTop: 16,
         padding: TIMELINE_PAD,
