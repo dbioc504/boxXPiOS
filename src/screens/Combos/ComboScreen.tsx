@@ -1,82 +1,53 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { View, ActivityIndicator } from "react-native";
+// src/screens/Combos/ComboScreen.tsx (only the inner component shown)
+import React, { useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Header } from "@/theme/T";
-import { sharedStyle } from "@/theme/theme";
-
 import { DndProvider, type DndProviderProps } from "@mgcrea/react-native-dnd";
-import { runOnJS } from "react-native-reanimated";
-
-import MovementPalette from "@/screens/Combos/MovementPalette";
-import ComboTimelineGrid from "@/screens/Combos/ComboTimelineGrid";
-
-import { mockCombosRepo } from "@/lib/repos/combos.repo.mock";
-import { useComboBuilder } from "@/lib/hooks/useComboBuilder"; // accepts { userId?, comboId?, repo? }
-
-const USER_ID = "mock-user-1";
+import type { Movement } from "@/types/common";
+import { sharedStyle } from "@/theme/theme";
+import {MovementPalette} from "@/screens/Combos/MovementPalette";
+import {TimelineSlots} from "@/screens/Combos/TimelineSlots";
+import { scheduleOnRN} from "react-native-worklets";
+import {ScrollView, View, Text} from "react-native";
 
 export default function ComboScreen() {
-    const [comboId, setComboId] = useState<string | null>(null);
-    const [loading, setLoading] = useState(true);
+    const [steps, setSteps] = useState<Movement[]>([]);
 
-    useEffect(() => {
-        let mounted = true;
-        (async () => {
-            try {
-                const mine = await mockCombosRepo.listCombos(USER_ID);
-                if (!mounted) return;
-                if (mine.length > 0) setComboId(mine[0].id);
-                else {
-                    const created = await mockCombosRepo.createCombo(USER_ID, { name: "My First Combo" }, []);
-                    if (!mounted) return;
-                    setComboId(created.id);
-                }
-            } finally {
-                if (mounted) setLoading(false);
-            }
-        })();
-        return () => { mounted = false; };
-    }, []);
-
-    if (loading || !comboId) {
-        return (
-            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                <ActivityIndicator />
-            </View>
-        );
-    }
-
-    return <ComboScreenInner userId={USER_ID} comboId={comboId} />;
-}
-
-function ComboScreenInner({ userId, comboId }: { userId: string; comboId: string }) {
-    const { steps, append, replaceAll } = useComboBuilder({ userId, comboId, repo: mockCombosRepo });
-
-    // Called by the DnD provider (runs on UI thread), so jump back to JS with runOnJS
-    const onDragEnd = useCallback<DndProviderProps["onDragEnd"]>(({ active, over }) => {
-        "worklet";
-        if (!over) return;
-        if (over.id === "timeline-drop") {
-            const payload = active.data?.value as { movement?: string } | undefined;
-            if (payload?.movement) {
-                runOnJS(append)(payload.movement as any); // Movement is a string union
-            }
-        }
-    }, [append]);
+    const handleInsert = (mv: Movement, idx: number) => {
+        setSteps(prev => {
+            const next = [...prev];
+            const clamped = Math.max(0, Math.min(idx, next.length));
+            next.splice(clamped, 0, mv);
+            return next;
+        });
+    };
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
-            <Header title="COMBOS" />
-            <DndProvider onDragEnd={onDragEnd}>
-                <MovementPalette
-                    // tap-to-add still works:
-                    onPressChip={append}
-                />
-                <ComboTimelineGrid
-                    steps={steps}
-                    onReorder={(next) => replaceAll(next)}
-                />
-            </DndProvider>
+            <ScrollView>
+                <Header title={'COMBOS'}/>
+                <DndProvider
+                    onDragEnd={({ active, over }) => {
+                        'worklet';
+                        if (!over) return;
+                        const idx = over?.data?.value?.index;
+                        const mv = active?.data?.value?.movement;
+                        if (typeof idx === 'number' && mv) {
+                            scheduleOnRN(handleInsert, mv, idx);
+                        }
+                    }}
+                >
+                    <MovementPalette />
+                    <TimelineSlots count={steps.length + 1} onInsert={() => {}}/>
+                    <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, paddingBottom: 12 }}>
+                        {steps.map((m, i) => (
+                            <View key={`${m}-${i}`} style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: "#334155", marginRight: 6, marginBottom: 6 }}>
+                                <Text style={{ color: "white" }}>{m}</Text>
+                            </View>
+                        ))}
+                    </View>
+                </DndProvider>
+            </ScrollView>
         </SafeAreaView>
     );
 }

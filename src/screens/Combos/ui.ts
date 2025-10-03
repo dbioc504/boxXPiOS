@@ -1,5 +1,5 @@
-export const CHIP_W = 108;
-export const CHIP_H = 48;
-export const GAP_X = 8;
-export const GAP_Y = 8;
-export const TIMELINE_PAD = 16;
+// src/screens/Combos/ui.ts
+export const CHIP_W = 108;      // fixed width for grid/palette chips
+export const CHIP_H = 44;       // fixed height for grid/palette chips
+export const GAP_X  = 8;        // horizontal gap
+export const GAP_Y  = 8;        // vertical gap
