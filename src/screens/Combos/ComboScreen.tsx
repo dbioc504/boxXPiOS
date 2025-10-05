@@ -1,26 +1,17 @@
 // src/screens/Combos/ComboScreen.tsx (only the inner component shown)
-import React, { useState } from "react";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { Header } from "@/theme/T";
-import { DndProvider, type DndProviderProps } from "@mgcrea/react-native-dnd";
-import type { Movement } from "@/types/common";
-import { sharedStyle } from "@/theme/theme";
+import React from "react";
+import {SafeAreaView} from "react-native-safe-area-context";
+import {Header} from "@/theme/T";
+import {DndProvider} from "@mgcrea/react-native-dnd";
+import {sharedStyle} from "@/theme/theme";
 import {MovementPalette} from "@/screens/Combos/MovementPalette";
 import {TimelineSlots} from "@/screens/Combos/TimelineSlots";
-import { scheduleOnRN} from "react-native-worklets";
-import {ScrollView, View, Text} from "react-native";
+import {scheduleOnRN} from "react-native-worklets";
+import {ScrollView} from "react-native";
+import {useComboBuilder} from "@/lib/hooks/useComboBuilder";
 
 export default function ComboScreen() {
-    const [steps, setSteps] = useState<Movement[]>([]);
-
-    const handleInsert = (mv: Movement, idx: number) => {
-        setSteps(prev => {
-            const next = [...prev];
-            const clamped = Math.max(0, Math.min(idx, next.length));
-            next.splice(clamped, 0, mv);
-            return next;
-        });
-    };
+    const { steps, insertAt, move } = useComboBuilder();
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -29,23 +20,24 @@ export default function ComboScreen() {
                 <DndProvider
                     onDragEnd={({ active, over }) => {
                         'worklet';
-                        if (!over) return;
-                        const idx = over?.data?.value?.index;
-                        const mv = active?.data?.value?.movement;
-                        if (typeof idx === 'number' && mv) {
-                            scheduleOnRN(handleInsert, mv, idx);
+                        if (!over || !active) return;
+                        const overData = (over as any).data?.value ?? (over as any).data;
+                        const activeData = (active as any).data?.value ?? (active as any).data;
+
+                        const dropIndex = overData?.index as number | undefined;
+                        const fromIndex = activeData?.fromIndex as number | undefined;
+                        const movement = activeData?.movement;
+                        if (typeof dropIndex === 'number') {
+                            if (typeof fromIndex === 'number') {
+                                scheduleOnRN(move, fromIndex, dropIndex);
+                            } else if (movement) {
+                                scheduleOnRN(insertAt, movement, dropIndex);
+                            }
                         }
                     }}
                 >
-                    <MovementPalette />
-                    <TimelineSlots count={steps.length + 1} onInsert={() => {}}/>
-                    <View style={{ flexDirection: "row", flexWrap: "wrap", paddingHorizontal: 12, paddingBottom: 12 }}>
-                        {steps.map((m, i) => (
-                            <View key={`${m}-${i}`} style={{ paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: "#334155", marginRight: 6, marginBottom: 6 }}>
-                                <Text style={{ color: "white" }}>{m}</Text>
-                            </View>
-                        ))}
-                    </View>
+                    <MovementPalette onPressChip={(m) => insertAt(m, steps.length)}></MovementPalette>
+                    <TimelineSlots steps={steps}/>
                 </DndProvider>
             </ScrollView>
         </SafeAreaView>
