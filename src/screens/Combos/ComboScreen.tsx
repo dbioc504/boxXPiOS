@@ -36,7 +36,9 @@ export default function ComboScreen() {
                         }
                     }}
                 >
-                    <MovementPalette onPressChip={(m) => insertAt(m, steps.length)}></MovementPalette>
+                    <MovementPalette
+                        onPressChip={(m) => insertAt(m, steps.length)}
+                    />
                     <TimelineSlots steps={steps}/>
                 </DndProvider>
             </ScrollView>

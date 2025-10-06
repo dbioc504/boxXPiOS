@@ -11,7 +11,13 @@ export type TimelineSlotsProps = {
 export function TimelineSlots({ steps }: TimelineSlotsProps) {
     return (
         <View style={{ padding: 12 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap' }}>
+            <View style={{ justifyContent: 'center' }}>
+                <Text style={S.slotsTitle}>YOUR COMBO:</Text>
+            </View>
+
+            <View style={S.comboView}>
+
+                
                 {Array.from({ length: steps.length + 1 }).map((_, i) => (
                     <React.Fragment key={`seg-${i}`}>
                         <Droppable id={`slot-${i}`} data={{ index: i }}>
@@ -20,7 +26,7 @@ export function TimelineSlots({ steps }: TimelineSlotsProps) {
                                 accessible
                                 accessibilityLabel={`Insert at ${i}`}
                             >
-                                <Text style={{ color: colors.offWhite }}>-</Text>
+                                <Text style={S.chainLink}>+</Text>
                             </View>
                         </Droppable>
 
@@ -31,7 +37,7 @@ export function TimelineSlots({ steps }: TimelineSlotsProps) {
                                     accessible
                                     accessibilityLabel={`Move ${steps[i]}`}
                                 >
-                                    <Text style={{ color: colors.offWhite }}>{MOVEMENT_LABEL[steps[i]]}</Text>
+                                    <Text style={{ color: colors.background, fontWeight: '600' }}>{MOVEMENT_LABEL[steps[i]]}</Text>
                                 </View>
                             </Draggable>
                         )}
@@ -44,13 +50,7 @@ export function TimelineSlots({ steps }: TimelineSlotsProps) {
 
 const S = StyleSheet.create({
     dropSlots: {
-        width: 40,
-        height: 40,
-        borderRadius: 8,
-        marginRight: 8,
-        backgroundColor: '#0f172a22',
-        borderWidth: 1,
-        borderColor: '#334155',
+        margin: 8,
         justifyContent: 'center',
         alignItems: 'center'
     },
@@ -58,7 +58,25 @@ const S = StyleSheet.create({
         paddingVertical: 6,
         paddingHorizontal: 10,
         borderRadius: 10,
-        backgroundColor: '#334155',
-        marginRight: 8
+        backgroundColor: '#8e8af7',
+    },
+    comboView: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        borderWidth: .5,
+        borderRadius: 15,
+        borderColor: colors.offWhite,
+        padding: 8
+    },
+    slotsTitle: {
+        fontSize: 20,
+        fontFamily: 'DMSansBold',
+        color: colors.offWhite,
+    },
+    chainLink: {
+        color: colors.offWhite,
+        fontWeight: '600',
+        fontSize: 20
     }
 })
