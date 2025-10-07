@@ -1,82 +1,106 @@
-import  React from 'react';
+import React from 'react';
 import {View, StyleSheet, Text} from "react-native";
-import {Draggable, Droppable} from "@mgcrea/react-native-dnd";
 import {Movement, MOVEMENT_LABEL} from "@/types/common";
 import {colors} from "@/theme/theme";
+import {DnDDraggable, DnDDroppable} from "@/screens/Combos/DnDPrimitives";
 
-export type TimelineSlotsProps = {
+type TimelineSlotsProps = {
     steps: Movement[];
-}
+    dragActive?: boolean
+};
 
-export function TimelineSlots({ steps }: TimelineSlotsProps) {
+export function TimelineSlots({ steps, dragActive = false }: TimelineSlotsProps){
     return (
-        <View style={{ padding: 12 }}>
-            <View style={{ justifyContent: 'center' }}>
-                <Text style={S.slotsTitle}>YOUR COMBO:</Text>
-            </View>
+        <DnDDroppable
+            id='timeline-container'
+            data={{ index: steps.length }}
+            animatedStyleWorklet={(s, isOver) => {
+                'worklet';
+                return { ...s, borderWidth: 1, borderRadius: 12, borderColor: isOver ? '#4b6cff' : 'transparent' };
+            }}
+        >
+            <View style={S.wrap}>
+                {dragActive && <View pointerEvents='none' style={S.overlay}/>}
 
-            <View style={S.comboView}>
+                <View style={{ justifyContent: 'center' }}>
+                    <Text style={S.slotsTitle}>YOUR COMBO:</Text>
+                </View>
 
-                
-                {Array.from({ length: steps.length + 1 }).map((_, i) => (
-                    <React.Fragment key={`seg-${i}`}>
-                        <Droppable id={`slot-${i}`} data={{ index: i }}>
-                            <View
-                                style={S.dropSlots}
-                                accessible
-                                accessibilityLabel={`Insert at ${i}`}
+                <View style={S.comboView}>
+                    {Array.from({ length: steps.length + 1 }).map((_, i) => (
+                        <React.Fragment key={`seg-${i}`}>
+                            <DnDDroppable
+                                id={`slot-${i}`}
+                                data={{ index: i }}
+                                animatedStyleWorklet={(s, isOver) => {
+                                    'worklet';
+                                    return {
+                                        ...s,
+                                        backgroundColor: isOver ? 'rgba(80,140,255,0.25)' : 'rgba(15,23,42,0.13)',
+                                        borderColor: isOver ? '#4b6cff' : '#334155',
+                                        borderWidth: 1,
+                                        borderRadius: 10,
+                                    };
+                                }}
                             >
-                                <Text style={S.chainLink}>+</Text>
-                            </View>
-                        </Droppable>
-
-                        {i < steps.length && (
-                            <Draggable id={`step-${i}`} data={{ fromIndex: i }}>
-                                <View
-                                    style={S.sortableDrag}
-                                    accessible
-                                    accessibilityLabel={`Move ${steps[i]}`}
-                                >
-                                    <Text style={{ color: colors.background, fontWeight: '600' }}>{MOVEMENT_LABEL[steps[i]]}</Text>
+                                <View style={S.linkSlot} accessible accessibilityLabel={`Insert at ${i}`}>
+                                    <Text style={S.chainLink}>+</Text>
                                 </View>
-                            </Draggable>
-                        )}
-                    </React.Fragment>
-                ))}
+                            </DnDDroppable>
+
+                            {i < steps.length && (
+                                <DnDDraggable
+                                    id={`step-${i}`}
+                                    data={{ fromIndex: i }}
+                                    animatedStyleWorklet={(s, isActive) => {
+                                        'worklet';
+                                        return { ...s, zIndex: isActive ? 999 : 0, transform: [{ scale: isActive ? 1.02 : 1 }] };
+                                    }}
+                                >
+                                    <View style={S.chip} accessible accessibilityLabel={`Move ${steps[i]}`}>
+                                        <Text style={S.chipText}>{MOVEMENT_LABEL[steps[i]]}</Text>
+                                    </View>
+                                </DnDDraggable>
+                            )}
+                        </React.Fragment>
+                    ))}
+                </View>
             </View>
-        </View>
+        </DnDDroppable>
     )
 }
 
 const S = StyleSheet.create({
-    dropSlots: {
-        margin: 8,
-        justifyContent: 'center',
-        alignItems: 'center'
+    wrap: {
+        padding: 12,
+        borderRadius: 12,
+        overflow: 'hidden'
     },
-    sortableDrag: {
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        borderRadius: 10,
-        backgroundColor: '#8e8af7',
-    },
+    overlay: {...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(75,108,255,0.06)'},
     comboView: {
         flexDirection: 'row',
         alignItems: 'center',
         flexWrap: 'wrap',
-        borderWidth: .5,
+        borderWidth: 0.5,
         borderRadius: 15,
         borderColor: colors.offWhite,
         padding: 8
     },
-    slotsTitle: {
-        fontSize: 20,
-        fontFamily: 'DMSansBold',
-        color: colors.offWhite,
+    linkSlot: {
+        width: 44,
+        height: 44,
+        borderRadius: 10,
+        margin: 8,
+        justifyContent: 'center',
+        alignItems: 'center'
     },
-    chainLink: {
-        color: colors.offWhite,
-        fontWeight: '600',
-        fontSize: 20
-    }
-})
+    chip: {
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        backgroundColor: '#8e8af7'
+    },
+    chipText: {color: colors.background, fontWeight: '600'},
+    slotsTitle: {fontSize: 20, fontFamily: 'DMSansBold', color: colors.offWhite},
+    chainLink: {color: colors.offWhite, fontWeight: '600', fontSize: 20},
+});

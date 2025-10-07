@@ -1,9 +1,9 @@
 // MovementPalette.tsx
 import React, {useState} from "react";
 import {Pressable, StyleSheet, Text, View} from "react-native";
-import {Draggable} from "@mgcrea/react-native-dnd";
 import {BODY_PUNCHES, DEFENSES, type Movement, MOVEMENT_LABEL, PUNCHES} from "@/types/common";
 import {CHIP_H, CHIP_W} from "@/screens/Combos/ui";
+import {DnDDraggable} from "@/screens/Combos/DnDPrimitives";
 
 const GROUPS = [
     { key: "punches", title: "PUNCHES", items: PUNCHES as Movement[] },
@@ -36,7 +36,19 @@ export function MovementPalette({ onPressChip }: MovementPaletteProps) {
 
                 <View style={S.grid}>
                     {page.items.map((m) => (
-                        <Draggable key={m} id={`mv-${m}`} data={{ movement: m }}>
+                        <DnDDraggable
+                            key={m}
+                            id={`mv-${m}`}
+                            data={{ movement: m }}
+                            animatedStyleWorklet={(s, isActive) => {
+                                'worklet';
+                                return {
+                                    ...s,
+                                    zIndex: isActive ? 999 : 0,
+                                    transform: [{ scale: isActive ? 1.02 : 1 }]
+                                };
+                            }}
+                        >
                             <Pressable
                                 onPress={() => onPressChip?.(m)}
                                 style={S.chip}
@@ -45,7 +57,7 @@ export function MovementPalette({ onPressChip }: MovementPaletteProps) {
                             >
                                 <Text style={S.chipText}>{MOVEMENT_LABEL[m]}</Text>
                             </Pressable>
-                        </Draggable>
+                        </DnDDraggable>
                     ))}
                 </View>
             </View>
