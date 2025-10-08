@@ -1,106 +1,53 @@
-import React from 'react';
-import {View, StyleSheet, Text} from "react-native";
-import {Movement, MOVEMENT_LABEL} from "@/types/common";
-import {colors} from "@/theme/theme";
-import {DnDDraggable, DnDDroppable} from "@/screens/Combos/DnDPrimitives";
+// TimelineSlots.tsx
+import React from "react";
+import { View, Text, StyleSheet } from "react-native";
+import { Droppable } from "@/screens/Combos/DndComponents/Droppable";
+import { Draggable } from "@/screens/Combos/DndComponents/Draggable";
+import type { Movement } from "@/types/common";
+import { MOVEMENT_LABEL } from "@/types/common";
 
-type TimelineSlotsProps = {
+type Props = {
     steps: Movement[];
-    dragActive?: boolean
 };
 
-export function TimelineSlots({ steps, dragActive = false }: TimelineSlotsProps){
+export function TimelineSlots({ steps }: Props) {
     return (
-        <DnDDroppable
-            id='timeline-container'
-            data={{ index: steps.length }}
-            animatedStyleWorklet={(s, isOver) => {
-                'worklet';
-                return { ...s, borderWidth: 1, borderRadius: 12, borderColor: isOver ? '#4b6cff' : 'transparent' };
-            }}
-        >
-            <View style={S.wrap}>
-                {dragActive && <View pointerEvents='none' style={S.overlay}/>}
+        <View style={S.wrap}>
+            <Text style={S.title}>YOUR COMBO</Text>
+            <View style={S.row}>
+                {Array.from({ length: steps.length + 1 }).map((_, i) => (
+                    <React.Fragment key={`frag-${i}`}>
+                        {/* slot-i: insert point */}
+                        <Droppable
+                            id={`slot-${i}`}
+                            style={S.slot}
+                            overBorderColor="#4b6cff"
+                            idleBorderColor="#334155"
+                            overBg="rgba(75,108,255,0.25)"
+                            idleBg="rgba(15,23,42,0.13)"
+                        >
+                            <Text style={S.slotPlus}>+</Text>
+                        </Droppable>
 
-                <View style={{ justifyContent: 'center' }}>
-                    <Text style={S.slotsTitle}>YOUR COMBO:</Text>
-                </View>
-
-                <View style={S.comboView}>
-                    {Array.from({ length: steps.length + 1 }).map((_, i) => (
-                        <React.Fragment key={`seg-${i}`}>
-                            <DnDDroppable
-                                id={`slot-${i}`}
-                                data={{ index: i }}
-                                animatedStyleWorklet={(s, isOver) => {
-                                    'worklet';
-                                    return {
-                                        ...s,
-                                        backgroundColor: isOver ? 'rgba(80,140,255,0.25)' : 'rgba(15,23,42,0.13)',
-                                        borderColor: isOver ? '#4b6cff' : '#334155',
-                                        borderWidth: 1,
-                                        borderRadius: 10,
-                                    };
-                                }}
-                            >
-                                <View style={S.linkSlot} accessible accessibilityLabel={`Insert at ${i}`}>
-                                    <Text style={S.chainLink}>+</Text>
-                                </View>
-                            </DnDDroppable>
-
-                            {i < steps.length && (
-                                <DnDDraggable
-                                    id={`step-${i}`}
-                                    data={{ fromIndex: i }}
-                                    animatedStyleWorklet={(s, isActive) => {
-                                        'worklet';
-                                        return { ...s, zIndex: isActive ? 999 : 0, transform: [{ scale: isActive ? 1.02 : 1 }] };
-                                    }}
-                                >
-                                    <View style={S.chip} accessible accessibilityLabel={`Move ${steps[i]}`}>
-                                        <Text style={S.chipText}>{MOVEMENT_LABEL[steps[i]]}</Text>
-                                    </View>
-                                </DnDDraggable>
-                            )}
-                        </React.Fragment>
-                    ))}
-                </View>
+                        {/* chip-i: actual step (if exists) */}
+                        {i < steps.length && (
+                            <Draggable id={`chip-${i}`} style={S.chip}>
+                                <Text style={S.chipText}>{MOVEMENT_LABEL[steps[i]]}</Text>
+                            </Draggable>
+                        )}
+                    </React.Fragment>
+                ))}
             </View>
-        </DnDDroppable>
-    )
+        </View>
+    );
 }
 
 const S = StyleSheet.create({
-    wrap: {
-        padding: 12,
-        borderRadius: 12,
-        overflow: 'hidden'
-    },
-    overlay: {...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(75,108,255,0.06)'},
-    comboView: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        borderWidth: 0.5,
-        borderRadius: 15,
-        borderColor: colors.offWhite,
-        padding: 8
-    },
-    linkSlot: {
-        width: 44,
-        height: 44,
-        borderRadius: 10,
-        margin: 8,
-        justifyContent: 'center',
-        alignItems: 'center'
-    },
-    chip: {
-        paddingVertical: 6,
-        paddingHorizontal: 10,
-        borderRadius: 10,
-        backgroundColor: '#8e8af7'
-    },
-    chipText: {color: colors.background, fontWeight: '600'},
-    slotsTitle: {fontSize: 20, fontFamily: 'DMSansBold', color: colors.offWhite},
-    chainLink: {color: colors.offWhite, fontWeight: '600', fontSize: 20},
+    wrap: { padding: 12, gap: 12 },
+    title: { fontSize: 16, fontWeight: "700", color: "#eef" },
+    row: { flexDirection: "row", flexWrap: "wrap", alignItems: "center", gap: 8 },
+    slot: { width: 44, height: 44, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+    slotPlus: { color: "#cbd5e1", fontSize: 20, fontWeight: "700" },
+    chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: "#8e8af7" },
+    chipText: { color: "#0b0b2a", fontWeight: "600" },
 });

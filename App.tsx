@@ -10,6 +10,8 @@ import {RepoProvider} from '@/lib/providers/RepoProvider'
 import {StyleProvider} from "@/lib/providers/StyleProvider";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 
+
+
 export default function App() {
 
     const [fontsLoaded] = useFonts({
@@ -24,6 +26,8 @@ export default function App() {
     if (!fontsLoaded) {
         return null;
     }
+
+
 
     return (
         <GestureHandlerRootView>
