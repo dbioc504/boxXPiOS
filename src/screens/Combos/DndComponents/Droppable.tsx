@@ -1,6 +1,6 @@
 // Droppable.tsx (replace your component body with this version)
 import React, {useEffect, useRef} from "react";
-import {View, type ViewProps, Dimensions} from "react-native";
+import {Dimensions, View, type ViewProps} from "react-native";
 import Animated, {useAnimatedStyle, useSharedValue} from "react-native-reanimated";
 import {useDnd} from "./DndProvider";
 
@@ -11,6 +11,7 @@ type Props = ViewProps & {
     idleBorderColor?: string;
     overBg?: string;
     idleBg?: string;
+    edgeOnly?: boolean;
 };
 
 export function Droppable({
@@ -21,10 +22,13 @@ export function Droppable({
     idleBorderColor = "transparent",
     overBg = "rgba(75,108,255,0.25)",
     idleBg = "#0b0b2a",
+    edgeOnly = false,
     ...rest
 }: Props) {
-    const { rects, overId, dragActive } = useDnd();
+    const { rects, overId, dragActive, activeDragId } = useDnd();
     const ref = useRef<View>(null);
+    const edgeSV = useSharedValue(edgeOnly);
+    useEffect(() => { edgeSV.value = edgeOnly }, [edgeOnly]);
 
     // Mirror id into a shared value so the worklet compares SV→SV
     const myId = useSharedValue(id);
@@ -63,15 +67,14 @@ export function Droppable({
     }, [id]);
 
     useEffect(() => {
-        // while dragging, refresh ~15fps so rects stay accurate if rows wrap
         let timer: any = null;
         let running = true;
 
         const loop = () => {
             if (!running) return;
-            // read SV in effect (OK)
             if (dragActive.value === 1) measure();
-            timer = setTimeout(loop, 66); // ~15fps
+            const delay = dragActive.value === 1 ? 16 : 66;
+            timer = setTimeout(loop, delay); // ~15fps
         };
 
         loop();
@@ -80,10 +83,13 @@ export function Droppable({
 
     const aStyle = useAnimatedStyle(() => {
         const isOver = overId.value === id;
+        const chipDrag = !!activeDragId.value && activeDragId.value.startsWith("chip-");
+        const canReact = chipDrag ? edgeSV.value === true : true;
+
         return {
             borderWidth: 2,
-            borderColor: isOver ? "#4b6cff" : "#334155",
-            backgroundColor: isOver ? "rgba(75,108,255,0.25)" : "rgba(15,23,42,0.13)",
+            borderColor: isOver && canReact ? "#4b6cff" : "#334155",
+            backgroundColor: isOver && canReact?  "rgba(75,108,255,0.25)" : "rgba(15,23,42,0.13)",
             borderRadius: 12,
         };
     });

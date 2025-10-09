@@ -1,44 +1,88 @@
-import React, { useRef } from "react";
-import { type LayoutChangeEvent, View, type ViewProps } from "react-native";
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { type Rect, useDnd } from "./DndProvider";
+import React, {useEffect, useRef} from "react";
+import {View, type ViewProps} from "react-native";
+import Animated, {useAnimatedStyle, useSharedValue, withSpring} from "react-native-reanimated";
+import {Gesture, GestureDetector} from "react-native-gesture-handler";
+import {type Rect, useDnd} from "./DndProvider";
 
 type Props = ViewProps & {
     id: string;
-    // kept for API compatibility; not used in zero-bridge mode
     onDrop?: (dragId: string, overId: string | null) => void;
     children: React.ReactNode;
 };
 
-function hit(
+function hitByCenter(
     rects: Record<string, Rect> | null | undefined,
-    x: number,
-    y: number,
-    w: number,
-    h: number
+    cx: number,
+    cy: number,
+    excludeId: string | null
 ): string | null {
     "worklet";
+    if (!rects) return null;
 
-    if (!rects || !Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) return null;
-
-    const cx = x + w / 2;
-    const cy = y + h / 2;
+    const SLOT_PAD = 12;
+    const CHIP_PAD = 6;
 
     for (const key in rects) {
+        if (!key.startsWith('chip-')) continue;
+        if (excludeId && key === excludeId) continue;
+
         const r = rects[key];
         if (!r) continue;
-        const { x: rx, y: ry, width: rw, height: rh } = r;
-        if (!Number.isFinite(rx) || !Number.isFinite(ry) || !Number.isFinite(rw) || !Number.isFinite(rh) || rw <= 0 || rh <= 0) {
-            continue;
+
+        const rx0 = r.x - CHIP_PAD;
+        const ry0 = r.y - CHIP_PAD;
+        const rw2 = r.width + CHIP_PAD * 2;
+        const rh2 = r.height + CHIP_PAD * 2;
+        if (
+            Number.isFinite(rx0) && Number.isFinite(ry0) &&
+            Number.isFinite(rw2) && Number.isFinite(rh2) &&
+            rw2 > 0 && rh2 > 0 &&
+            cx >= rx0 && cx <= rx0 + rw2 &&
+            cy >= ry0 && cy <= ry0 + rh2
+        ) {
+            return key;
         }
-        if (cx >= rx && cx <= rx + rw && cy >= ry && cy <= ry + rh) return key;
+    }
+
+    for (const key in rects) {
+        if (!key.startsWith("slot-")) continue;
+
+        const r = rects[key];
+        if (!r) continue;
+
+        const pad = SLOT_PAD;
+        const rx0 = r.x - pad;
+        const ry0 = r.y - pad;
+        const rw2 = r.width + pad * 2;
+        const rh2 = r.height + pad * 2;
+
+        if (
+            Number.isFinite(rx0) && Number.isFinite(ry0) &&
+            Number.isFinite(rw2) && Number.isFinite(rh2) &&
+            rw2 > 0 && rh2 > 0 &&
+            cx >= rx0 && cx <= rx0 + rw2 &&
+            cy >= ry0 && cy <= ry0 + rh2
+        ) {
+            return key;
+        }
     }
     return null;
 }
 
-export function Draggable({ id, style, children, ...rest }: Props) {
-    const { rects, overId, dropDragId, dropOverId, dropSeq, dragActive } = useDnd();
+export function Draggable({id, style, children, ...rest}: Props) {
+    const {
+        rects, overId, dropDragId, dropOverId, dropSeq, dragActive,
+        activeDragId, dragFromIndex, hoverChipId, hoverSlotId
+    } = useDnd();
+
+    useEffect(() => {
+        return () => {
+            // remove my rect on unmount to avoid stale hits
+            const map = { ...rects.value };
+            delete map[id];
+            rects.value = map;
+        };
+    }, [id, rects]);
 
     // measure the wrapper's absolute (window) position once it's laid out
     const ref = useRef<View>(null);
@@ -54,30 +98,47 @@ export function Draggable({ id, style, children, ...rest }: Props) {
     const w = useSharedValue(0);
     const h = useSharedValue(0);
 
-    const onLayout = (e: LayoutChangeEvent) => {
-        const { width, height } = e.nativeEvent.layout;
-        w.value = width;
-        h.value = height;
-
-        // measureInWindow after layout to get absolute origin of the wrapper
+    const onLayout = () => {
         setTimeout(() => {
-            // @ts-ignore measureInWindow is available on native views
-            ref.current?.measureInWindow?.((x: number, y: number) => {
-                if (Number.isFinite(x) && Number.isFinite(y)) {
-                    winX0.value = x;
-                    winY0.value = y;
+            ref.current?.measureInWindow?.((x,y,w0,h0) => {
+                if ([x,y,w0,h0].every(Number.isFinite)) {
+                    winX0.value = x; winY0.value = y;
+                    w.value = w0; h.value = h0;
                     measured.value = 1;
+                    rects.value = { ...rects.value, [id]: { x, y, width: w0, height: h0 } };
                 }
             });
         }, 0);
+
+        // bonus: re-measure once more after layout settles (wraps)
+        setTimeout(() => {
+            ref.current?.measureInWindow?.((x,y,w0,h0) => {
+                if ([x,y,w0,h0].every(Number.isFinite)) {
+                    rects.value = { ...rects.value, [id]: { x, y, width: w0, height: h0 } };
+                }
+            });
+        }, 50);
     };
 
+
     const pan = Gesture.Pan()
+        .activateAfterLongPress(30)
+        .minDistance(1)
         .onStart(() => {
             startX.value = tx.value;
             startY.value = ty.value;
             overId.value = null;
             dragActive.value = 1;
+
+            activeDragId.value = id;
+            if (id.startsWith("chip-")) {
+                const n = Number(id.slice(5));
+                dragFromIndex.value = Number.isFinite(n) ? n : null;
+            } else {
+                dragFromIndex.value = null;
+            }
+            hoverChipId.value = null;
+            hoverSlotId.value = null;
         })
         .onUpdate((g) => {
             // update translation
@@ -85,45 +146,65 @@ export function Draggable({ id, style, children, ...rest }: Props) {
             ty.value = startY.value + g.translationY;
 
             // need size + initial window coords before hit-testing
-            if (measured.value === 0 || w.value <= 0 || h.value <= 0) return;
+            if (measured.value === 0) return;
 
             // convert to WINDOW coordinates (match Droppable rects)
-            const winX = winX0.value + tx.value;
-            const winY = winY0.value + ty.value;
-
-            let over: string | null;
-            try {
-                over = hit(rects.value, winX, winY, w.value, h.value);
-            } catch {
-                over = null;
-            }
+            const fingerBiasY = 6;
+            const cx = g.absoluteX;
+            const cy = g.absoluteY + fingerBiasY;
+            const over = hitByCenter(rects.value, cx, cy, id);
             overId.value = over ?? null;
+
+            if (id.startsWith("chip-")) {
+                if (over && over.startsWith("chip-")) {
+                    hoverChipId.value = over;
+                    hoverSlotId.value = null;
+                } else if (over && over.startsWith("slot-")) {
+                    hoverChipId.value = null;
+                    hoverSlotId.value = over;
+                } else {
+                    hoverChipId.value = null;
+                    hoverSlotId.value = null;
+                }
+            }
         })
         .onEnd(() => {
-            // publish drop event via shared values (zero-bridge)
+            // choose best target at release time
+            let target = hoverChipId.value ?? hoverSlotId.value ?? overId.value ?? null;
+
+            // never treat self as a target (no-op)
+            if (target === id) target = null;
+
             dropDragId.value = id;
-            dropOverId.value = overId.value;
+            dropOverId.value = target;
             dropSeq.value = dropSeq.value + 1;
 
             // reset visuals
             tx.value = withSpring(0);
             ty.value = withSpring(0);
             overId.value = null;
+
+            hoverChipId.value = null;
+            hoverSlotId.value = null;
+            activeDragId.value = null;
+            dragFromIndex.value = null;
             dragActive.value = 0;
         });
 
     const aStyle = useAnimatedStyle(() => ({
         transform: [
-            { translateX: tx.value },
-            { translateY: ty.value },
+            {translateX: tx.value},
+            {translateY: ty.value},
         ] as const,
     }));
 
     return (
         <GestureDetector gesture={pan}>
-            <View ref={ref} onLayout={onLayout} collapsable={false} {...rest}>
-                <Animated.View style={[style, aStyle]}>{children}</Animated.View>
-            </View>
+            <Animated.View
+                ref={ref} style={[style, aStyle]} onLayout={onLayout}
+                collapsable={false} {...rest}>
+                {children}
+            </Animated.View>
         </GestureDetector>
     );
 }

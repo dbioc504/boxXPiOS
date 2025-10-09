@@ -11,6 +11,11 @@ type Ctx = {
     dropOverId: SharedValue<string | null>;
     dropSeq: SharedValue<number>;
     dragActive: SharedValue<number>;
+
+    activeDragId: SharedValue<string | null>;
+    dragFromIndex: SharedValue<number | null>;
+    hoverChipId: SharedValue<string | null>;
+    hoverSlotId: SharedValue<string | null>;
 };
 
 const DndCtx = createContext<Ctx | null>(null);
@@ -23,8 +28,16 @@ export function DndProvider({ children }: PropsWithChildren) {
     const dropSeq = useSharedValue(0);
     const dragActive = useSharedValue(0);
 
+    const activeDragId = useSharedValue<string | null>(null);
+    const dragFromIndex = useSharedValue<number | null>(null);
+    const hoverChipId = useSharedValue<string | null>(null);
+    const hoverSlotId = useSharedValue<string | null>(null);
+
     const value = useMemo(
-        () => ({ rects, overId, dropDragId, dropOverId, dropSeq, dragActive }),
+        () => ({
+            rects, overId, dropDragId, dropOverId, dropSeq, dragActive,
+            activeDragId, dragFromIndex, hoverChipId, hoverSlotId
+        }),
         []
     );
 

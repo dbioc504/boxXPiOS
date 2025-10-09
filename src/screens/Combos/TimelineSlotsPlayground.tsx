@@ -14,14 +14,35 @@ function move<T>(arr: T[], from: number, to: number): T[] {
 }
 
 // parse ids safely
-const parseChipIndex = (id: string | null | undefined) =>
-    id && id.startsWith("chip-") ? Number(id.slice(5)) : null;
+const parseChipIndex = (id: string | null | undefined) => {
+    if (!id || !id.startsWith("chip-")) return null;
+    const n = Number(id.slice(5));
+    return Number.isFinite(n) ? n : null;
+};
 
-const parseSlotIndex = (id: string | null | undefined) =>
-    id && id.startsWith("slot-") ? Number(id.slice(5)) : null;
+const parseSlotIndex = (id: string | null | undefined) => {
+    if (!id || !id.startsWith("slot-")) return null;
+    const n = Number(id.slice(5));
+    return Number.isFinite(n) ? n : null;
+};
+
+function swap<T>(arr: T[], a: number, b: number): T[] {
+    if (a === b || a == null || b == null) return arr;
+    const next = arr.slice();
+    [next[a], next[b]] = [next[b], next[a]];
+    return next;
+}
 
 // Listener that converts shared drop events into React updates
-function DropListener({ onReorder }: { onReorder: (from: number, to: number) => void }) {
+function DropListener({
+    stepsLen,
+    onReorder,
+    onSwap
+}: {
+    stepsLen: number;
+    onReorder: (from: number, to: number) => void;
+    onSwap: (a: number, b: number) => void;
+}) {
     const { dropSeq, dropDragId, dropOverId } = useDnd();
     const lastSeq = useRef(-1);
 
@@ -33,11 +54,18 @@ function DropListener({ onReorder }: { onReorder: (from: number, to: number) => 
             if (seq !== lastSeq.current) {
                 lastSeq.current = seq;
 
-                const from = parseChipIndex(dropDragId.value);
-                const to = parseSlotIndex(dropOverId.value);
+                const fromChip = parseChipIndex(dropDragId.value);
+                const overChip = parseChipIndex(dropOverId.value);
+                const overSlot = parseSlotIndex(dropOverId.value);
+                const inRange = (n: number | null, len: number) =>
+                    n != null && n >= 0 && n < len;
 
-                if (from != null && to != null) {
-                    onReorder(from, to);
+                if (inRange(fromChip, stepsLen) && inRange(overChip, stepsLen)) {
+                    onSwap(fromChip!, overChip!);
+                } else if (inRange(fromChip, stepsLen) && overSlot != null) {
+                    if (overSlot === 0 || overSlot === stepsLen) {
+                        onReorder(fromChip!, overSlot);
+                    }
                 }
             }
         }, 33);
@@ -45,10 +73,29 @@ function DropListener({ onReorder }: { onReorder: (from: number, to: number) => 
             alive = false;
             clearInterval(interval);
         };
-    }, [dropSeq, dropDragId, dropOverId, onReorder]);
+    }, [dropSeq, dropDragId, dropOverId, stepsLen, onReorder, onSwap]);
 
     return null;
 }
+
+function DebugDrop() {
+    const { dropDragId, dropOverId, dropSeq } = useDnd();
+    const [d, setD] = useState({ drag: '', over: '', seq: 0 });
+
+    useEffect(() => {
+        let alive = true;
+        const t = setInterval(() => {
+            if (!alive) return;
+            setD({ drag: String(dropDragId.value ?? ''), over: String(dropOverId.value ?? ''), seq: dropSeq.value });
+        }, 100);
+        return () => { alive = false; clearInterval(t); };
+    }, [dropDragId, dropOverId, dropSeq]);
+
+    return <Text style={{ color: '#8ab', textAlign: 'center', marginTop: 4 }}>
+        drop: {d.drag} → {d.over} (#{d.seq})
+    </Text>;
+}
+
 
 export default function TimelineSlotsPlayground() {
     // seed with a tiny set to reorder
@@ -61,12 +108,17 @@ export default function TimelineSlotsPlayground() {
 
     return (
         <DndProvider>
-            <DropListener onReorder={(from, to) => setSteps((cur) => move(cur, from, to))} />
+            <DropListener
+                stepsLen={steps.length}
+                onReorder={(from, to) => setSteps((cur) => move(cur, from, to))}
+                onSwap={(a,b) => setSteps(cur => swap(cur, a, b))}
+            />
 
             <View style={S.root}>
                 <TimelineSlots steps={steps} />
                 <Text style={S.hint}>Drag a chip and drop on a + slot to reorder</Text>
                 <Text style={S.state}>Steps: {steps.join(" · ")}</Text>
+                <DebugDrop/>
             </View>
         </DndProvider>
     );

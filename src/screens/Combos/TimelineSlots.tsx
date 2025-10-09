@@ -19,7 +19,9 @@ export function TimelineSlots({ steps }: Props) {
                     <React.Fragment key={`frag-${i}`}>
                         {/* slot-i: insert point */}
                         <Droppable
+                            key={`slot-${i}`}
                             id={`slot-${i}`}
+                            edgeOnly={i === 0 || i === steps.length}
                             style={S.slot}
                             overBorderColor="#4b6cff"
                             idleBorderColor="#334155"
@@ -31,7 +33,11 @@ export function TimelineSlots({ steps }: Props) {
 
                         {/* chip-i: actual step (if exists) */}
                         {i < steps.length && (
-                            <Draggable id={`chip-${i}`} style={S.chip}>
+                            <Draggable
+                                key={`chip-${i}-${steps[i]}`}          // 👈 add this
+                                id={`chip-${i}`}
+                                style={S.chip}
+                            >
                                 <Text style={S.chipText}>{MOVEMENT_LABEL[steps[i]]}</Text>
                             </Draggable>
                         )}
