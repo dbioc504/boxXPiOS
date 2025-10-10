@@ -44,17 +44,21 @@ export default function ComboScreen() {
             <DndProvider>
                 <CombosDropListener
                     stepsLen={steps.length}
-                    onSwap={(a, b) => setSteps(cur => swap(cur, a, b))}
-                    onReorder={(from, to) => setSteps(cur => move(cur, from, to))}
-                    onInsertFromPalette={(moveKey, to) =>
+                    onSwap={(a, b) => setSteps(cur => {
+                        const next = cur.slice(); [next[a], next[b]] = [next[b], next[a]]; return next;
+                    })}
+                    onReorder={(from, to) => setSteps(cur => {
+                        const next = cur.slice(); const [it] = next.splice(from, 1); next.splice(to, 0, it); return next;
+                    })}
+                    onInsertFromPalette={(moveKey, to) => {
                         setSteps(cur => {
                             const next = cur.slice();
-                            if (to === 0) return [moveKey as Movement, ...next];
-                            if (to === next.length) return [...next, moveKey as Movement];
+                            next.splice(to, 0, moveKey as Movement);
                             return next;
-                        })
-                    }
+                        });
+                    }}
                 />
+
 
                 <View style={{flex: 1, padding: 16}}>
                     {/* header and your mockup UI go here */}

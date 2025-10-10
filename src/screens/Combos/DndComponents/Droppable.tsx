@@ -82,11 +82,16 @@ export function Droppable({
     }, [dragActive]);
 
     const aStyle = useAnimatedStyle(() => {
-        const isOver = overId.value === id;
         const dragId = activeDragId.value ?? '';
         const isChipDrag = dragId.startsWith('chip-');
         const isPaletteDrag = dragId.startsWith('palette:');
-        const canReact = (isChipDrag || isPaletteDrag) ? edgeSV.value === true : false;
+        const canReact =
+            isPaletteDrag
+                ? true                 // palette can use ALL slots
+                : isChipDrag
+                    ? edgeSV.value === true  // chips: only edge slots
+                    : false;
+        const isOver = overId.value === id;
 
 
         return {

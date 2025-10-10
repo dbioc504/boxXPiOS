@@ -1,22 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useDnd } from '@/screens/Combos/DndComponents/DndProvider';
 
-const parseChipIndex = (id: string | null | undefined) => {
-    if (!id || !id.startsWith('chip-')) return null;
-    const n = Number(id.slice(5));
-    return Number.isFinite(n) ? n : null;
-};
+const parseChipIndex = (id: string | null | undefined) => id?.startsWith("chip-") ? Number(id.slice(5)) : null;
+const parseSlotIndex = (id: string | null | undefined) => id?.startsWith("slot-") ? Number(id.slice(5)) : null;
+const parsePaletteMove = (id: string | null | undefined) => id?.startsWith("palette:") ? id.slice(8) : null;
 
-const parseSlotIndex = (id: string | null | undefined) => {
-    if (!id || !id.startsWith('slot-')) return null;
-    const n = Number(id.slice(5));
-    return Number.isFinite(n) ? n : null;
-};
-
-const parsePaletteMove = (id: string | null | undefined) => {
-    if (!id || !id.startsWith('palette:')) return null;
-    return id.slice('palette:'.length) as any;
-};
 
 export function CombosDropListener({
     stepsLen,
@@ -41,25 +29,27 @@ export function CombosDropListener({
             lastSeq.current = seq;
 
             const fromChip = parseChipIndex(dropDragId.value);
-            const fromPaletteMove = parsePaletteMove(dropDragId.value);
+            const fromPalette = parsePaletteMove(dropDragId.value); // <- NEW
             const overChip = parseChipIndex(dropOverId.value);
             const overSlot = parseSlotIndex(dropOverId.value);
 
             const inChipRange = (n: number | null) => n != null && n >= 0 && n < stepsLen;
-            const isEdgeSlot = (s: number | null | undefined) => s === 0 || s === stepsLen;
+            const isEdge = (n: number | null | undefined) => n === 0 || n === stepsLen;
+            const isValidSlot = (n: number | null | undefined) => n != null && n >= 0 && n <= stepsLen;
 
+            // chip ↔ chip swap
             if (inChipRange(fromChip) && inChipRange(overChip)) {
-                onSwap(fromChip!, overChip);
+                onSwap(fromChip!, overChip!);
                 return;
             }
-
-            if (inChipRange(fromChip) && isEdgeSlot(overSlot)) {
+            // chip → edge-slot reorder ONLY
+            if (inChipRange(fromChip) && isEdge(overSlot)) {
                 onReorder(fromChip!, overSlot!);
                 return;
             }
-
-            if (fromPaletteMove && isEdgeSlot(overSlot) && onInsertFromPalette) {
-                onInsertFromPalette(fromPaletteMove, overSlot!);
+            // palette → ANY slot insert (no swaps with chips)
+            if (fromPalette && isValidSlot(overSlot) && onInsertFromPalette) {
+                onInsertFromPalette(fromPalette, overSlot!);
                 return;
             }
         }, 33);

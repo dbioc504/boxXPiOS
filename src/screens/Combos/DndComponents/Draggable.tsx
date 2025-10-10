@@ -102,6 +102,35 @@ function hitForgiving(
     return bestSlotId ?? null;
 }
 
+function hitSlotsOnly(
+    rects: Record<string, Rect> | null | undefined,
+    cx: number,
+    cy: number
+): string | null {
+    "worklet";
+    if (!rects) return null;
+    const SLOT_ENTER_PAD = 24;
+    let best: string | null = null;
+    let bestDist = Infinity;
+    const inside = (r: Rect, pad: number) => {
+        const x0 = r.x - pad, y0 = r.y - pad, x1 = r.x + r.width + pad, y1 = r.y + r.height + pad;
+        return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1;
+    };
+
+    for (const key in rects) {
+        if (!key.startsWith("slot-")) continue;
+        const r = rects[key];
+        if (!r) continue;
+        if (inside(r, SLOT_ENTER_PAD)) {
+            const cxr = r.x + r.width / 2;
+            const cyr = r.y + r.height / 2;
+            const d = Math.hypot(cxr - cx, cyr - cy);
+            if (d < bestDist) { bestDist= d; best = key; }
+        }
+    }
+    return best;
+}
+
 
 export function Draggable({id, style, children, ...rest}: Props) {
     const {
@@ -198,14 +227,10 @@ export function Draggable({id, style, children, ...rest}: Props) {
             // convert to WINDOW coordinates (match Droppable rects)
             const prevHover = latchedHoverId.value ?? null;
 
-            // candidate under the finger (forgiving geometry + banding + spatial hysteresis)
-            const candidate = hitForgiving(
-                rects.value,
-                cx,
-                cy,
-                id,
-                prevHover
-            );
+           const isPaletteDrag = id.startsWith("palette:");
+           const candidate = isPaletteDrag
+            ? hitSlotsOnly(rects.value, cx, cy)
+            : hitForgiving(rects.value, cx, cy, id, prevHover);
 
             const now = Date.now();
 
@@ -226,7 +251,6 @@ export function Draggable({id, style, children, ...rest}: Props) {
 
             // drive visuals and typed hover ids from the *latched* hover
             const current = latchedHoverId.value;
-
             overId.value = current ?? null;
 
             if (id.startsWith("chip-")) {
@@ -240,11 +264,14 @@ export function Draggable({id, style, children, ...rest}: Props) {
                     hoverChipId.value = null;
                     hoverSlotId.value = null;
                 }
+            } else {
+                hoverChipId.value = null;
+                hoverSlotId.value = current && current.startsWith("slot-") ? current : null;
             }
         })
         .onEnd(() => {
             // choose best target at release time
-            let target = hoverChipId.value ?? hoverSlotId.value ?? overId.value ?? null;
+            let target = latchedHoverId.value ?? hoverChipId.value ?? hoverSlotId.value ?? overId.value ?? null;
 
             // never treat self as a target (no-op)
             if (target === id) target = null;
