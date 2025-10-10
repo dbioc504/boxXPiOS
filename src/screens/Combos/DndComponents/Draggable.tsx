@@ -10,70 +10,107 @@ type Props = ViewProps & {
     children: React.ReactNode;
 };
 
-function hitByCenter(
+// More-forgiving hover with padding + hysteresis + vertical banding
+function hitForgiving(
     rects: Record<string, Rect> | null | undefined,
     cx: number,
     cy: number,
-    excludeId: string | null
+    excludeId: string | null,
+    prevHoverId: string | null
 ): string | null {
     "worklet";
     if (!rects) return null;
 
-    const SLOT_PAD = 12;
-    const CHIP_PAD = 6;
+    // Tunables (increase if you still want it looser)
+    const CHIP_ENTER_PAD = 20;   // bigger => easier to acquire a chip
+    const CHIP_EXIT_PAD  = 28;   // bigger => stickier once acquired
+    const SLOT_ENTER_PAD = 24;   // easier to acquire edge slots
+    const Y_BAND_FACTOR  = 1.6;  // restrict chips to near-current row
 
-    for (const key in rects) {
-        if (!key.startsWith('chip-')) continue;
-        if (excludeId && key === excludeId) continue;
+    // Helper to test inside expanded rect
+    const inside = (r: Rect, pad: number) => {
+        const x0 = r.x - pad, y0 = r.y - pad, x1 = r.x + r.width + pad, y1 = r.y + r.height + pad;
+        return cx >= x0 && cx <= x1 && cy >= y0 && cy <= y1;
+    };
 
-        const r = rects[key];
-        if (!r) continue;
-
-        const rx0 = r.x - CHIP_PAD;
-        const ry0 = r.y - CHIP_PAD;
-        const rw2 = r.width + CHIP_PAD * 2;
-        const rh2 = r.height + CHIP_PAD * 2;
-        if (
-            Number.isFinite(rx0) && Number.isFinite(ry0) &&
-            Number.isFinite(rw2) && Number.isFinite(rh2) &&
-            rw2 > 0 && rh2 > 0 &&
-            cx >= rx0 && cx <= rx0 + rw2 &&
-            cy >= ry0 && cy <= ry0 + rh2
-        ) {
-            return key;
+    // 1) If we had a previous hover target, try to keep it (hysteresis)
+    if (prevHoverId && prevHoverId in (rects as any)) {
+        const r = rects[prevHoverId]!;
+        const pad = prevHoverId.startsWith("chip-") ? CHIP_EXIT_PAD : SLOT_ENTER_PAD;
+        if (inside(r, pad)) {
+            return prevHoverId;
         }
     }
 
+    // 2) Chips: collect candidates inside ENTER zone, filtered by same-row band
+    let bestChipId: string | null = null;
+    let bestChipDist = Infinity;
+
+    // If we have a previous chip, estimate a row height from it for banding
+    let rowHeight = 0;
+    if (prevHoverId && prevHoverId.startsWith("chip-")) {
+        const rr = rects[prevHoverId];
+        if (rr) rowHeight = rr.height;
+    }
+    // If not, approximate row height from any chip (first seen)
+    if (!rowHeight) {
+        for (const key in rects) {
+            if (key.startsWith("chip-")) { rowHeight = rects[key].height; break; }
+        }
+    }
+    const yBand = rowHeight ? rowHeight * Y_BAND_FACTOR : Infinity;
+
+    for (const key in rects) {
+        if (!key.startsWith("chip-")) continue;
+        if (excludeId && key === excludeId) continue;
+        const r = rects[key];
+        if (!r) continue;
+
+        // Vertical banding (stay near the current row)
+        if (Math.abs(cy - (r.y + r.height / 2)) > yBand / 2) continue;
+
+        if (inside(r, CHIP_ENTER_PAD)) {
+            const cxr = r.x + r.width / 2;
+            const cyr = r.y + r.height / 2;
+            const d = Math.hypot(cxr - cx, cyr - cy);
+            if (d < bestChipDist) {
+                bestChipDist = d;
+                bestChipId = key;
+            }
+        }
+    }
+    if (bestChipId) return bestChipId;
+
+    // 3) Slots (edge-only behavior is enforced in Droppable visuals + DropListener rules)
+    let bestSlotId: string | null = null;
+    let bestSlotDist = Infinity;
     for (const key in rects) {
         if (!key.startsWith("slot-")) continue;
-
         const r = rects[key];
         if (!r) continue;
-
-        const pad = SLOT_PAD;
-        const rx0 = r.x - pad;
-        const ry0 = r.y - pad;
-        const rw2 = r.width + pad * 2;
-        const rh2 = r.height + pad * 2;
-
-        if (
-            Number.isFinite(rx0) && Number.isFinite(ry0) &&
-            Number.isFinite(rw2) && Number.isFinite(rh2) &&
-            rw2 > 0 && rh2 > 0 &&
-            cx >= rx0 && cx <= rx0 + rw2 &&
-            cy >= ry0 && cy <= ry0 + rh2
-        ) {
-            return key;
+        if (inside(r, SLOT_ENTER_PAD)) {
+            const cxr = r.x + r.width / 2;
+            const cyr = r.y + r.height / 2;
+            const d = Math.hypot(cxr - cx, cyr - cy);
+            if (d < bestSlotDist) {
+                bestSlotDist = d;
+                bestSlotId = key;
+            }
         }
     }
-    return null;
+
+    return bestSlotId ?? null;
 }
+
 
 export function Draggable({id, style, children, ...rest}: Props) {
     const {
         rects, overId, dropDragId, dropOverId, dropSeq, dragActive,
         activeDragId, dragFromIndex, hoverChipId, hoverSlotId
     } = useDnd();
+
+    const HOVER_DWELL_MS = 80;
+
 
     useEffect(() => {
         return () => {
@@ -97,6 +134,10 @@ export function Draggable({id, style, children, ...rest}: Props) {
     const startY = useSharedValue(0);
     const w = useSharedValue(0);
     const h = useSharedValue(0);
+
+    const hoverCandidateId = useSharedValue<string | null>(null);
+    const hoverCandidateSince = useSharedValue(0);
+    const latchedHoverId = useSharedValue<string | null>(null);
 
     const onLayout = () => {
         setTimeout(() => {
@@ -139,6 +180,9 @@ export function Draggable({id, style, children, ...rest}: Props) {
             }
             hoverChipId.value = null;
             hoverSlotId.value = null;
+            hoverCandidateId.value = null;
+            latchedHoverId.value = null;
+            hoverCandidateSince.value = 0;
         })
         .onUpdate((g) => {
             // update translation
@@ -147,21 +191,51 @@ export function Draggable({id, style, children, ...rest}: Props) {
 
             // need size + initial window coords before hit-testing
             if (measured.value === 0) return;
-
-            // convert to WINDOW coordinates (match Droppable rects)
             const fingerBiasY = 6;
             const cx = g.absoluteX;
             const cy = g.absoluteY + fingerBiasY;
-            const over = hitByCenter(rects.value, cx, cy, id);
-            overId.value = over ?? null;
+
+            // convert to WINDOW coordinates (match Droppable rects)
+            const prevHover = latchedHoverId.value ?? null;
+
+            // candidate under the finger (forgiving geometry + banding + spatial hysteresis)
+            const candidate = hitForgiving(
+                rects.value,
+                cx,
+                cy,
+                id,
+                prevHover
+            );
+
+            const now = Date.now();
+
+            if (candidate !== hoverCandidateId.value) {
+                hoverCandidateId.value = candidate;
+                hoverCandidateSince.value = now;
+            }
+
+            // if there is no candidate, clear latch immediately
+            if (!hoverCandidateId.value) {
+                latchedHoverId.value = null;
+            } else {
+                // latch after dwell time
+                if (now - hoverCandidateSince.value >= HOVER_DWELL_MS) {
+                    latchedHoverId.value = hoverCandidateId.value;
+                }
+            }
+
+            // drive visuals and typed hover ids from the *latched* hover
+            const current = latchedHoverId.value;
+
+            overId.value = current ?? null;
 
             if (id.startsWith("chip-")) {
-                if (over && over.startsWith("chip-")) {
-                    hoverChipId.value = over;
+                if (current && current.startsWith("chip-")) {
+                    hoverChipId.value = current;
                     hoverSlotId.value = null;
-                } else if (over && over.startsWith("slot-")) {
+                } else if (current && current.startsWith("slot-")) {
                     hoverChipId.value = null;
-                    hoverSlotId.value = over;
+                    hoverSlotId.value = current;
                 } else {
                     hoverChipId.value = null;
                     hoverSlotId.value = null;
@@ -186,6 +260,10 @@ export function Draggable({id, style, children, ...rest}: Props) {
 
             hoverChipId.value = null;
             hoverSlotId.value = null;
+            hoverCandidateId.value = null;
+            latchedHoverId.value = null;
+            hoverCandidateSince.value = 0;
+
             activeDragId.value = null;
             dragFromIndex.value = null;
             dragActive.value = 0;
