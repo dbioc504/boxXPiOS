@@ -5,21 +5,15 @@ import {Draggable} from '@/screens/Combos/DndComponents/Draggable';
 import type {Movement} from '@/types/common';
 import {MOVEMENT_LABEL} from '@/types/common';
 import {GhostAtOrigin} from "@/screens/Combos/DndComponents/GhostAtOrigin";
+import {useSwapPreview} from "@/lib/hooks/useSwapPreview";
 
-export type TimelinePreviewProps = {
-    previewFromIndex?: number | null;
-    previewOverIndex?: number | null;
-    previewTargetIsChip?: boolean;
-};
+type Props = { steps: Movement[] };
 
-type Props = { steps: Movement[] } & TimelinePreviewProps;
-
-export function TimelineSlots({ steps, previewFromIndex = null, previewOverIndex = null, previewTargetIsChip = false }: Props) {
-    const renderChip = (i: number) => (
-        <View style={S.chip}>
-            <Text style={S.chipText}>{MOVEMENT_LABEL[steps[i]]}</Text>
-        </View>
-    );
+export function TimelineSlots({ steps }: Props) {
+    const { fromIndex, overIndex, targetIsChip } = useSwapPreview();
+    const previewFromIndex = fromIndex;
+    const previewOverIndex = overIndex;
+    const previewTargetIsChip = targetIsChip;
 
     return (
         <View style={S.wrap}>

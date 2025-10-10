@@ -83,8 +83,11 @@ export function Droppable({
 
     const aStyle = useAnimatedStyle(() => {
         const isOver = overId.value === id;
-        const chipDrag = !!activeDragId.value && activeDragId.value.startsWith("chip-");
-        const canReact = chipDrag ? edgeSV.value === true : true;
+        const dragId = activeDragId.value ?? '';
+        const isChipDrag = dragId.startsWith('chip-');
+        const isPaletteDrag = dragId.startsWith('palette:');
+        const canReact = (isChipDrag || isPaletteDrag) ? edgeSV.value === true : false;
+
 
         return {
             borderWidth: 2,
