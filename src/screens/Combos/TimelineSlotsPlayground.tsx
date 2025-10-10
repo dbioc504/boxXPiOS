@@ -4,6 +4,7 @@ import { View, StyleSheet, Text } from "react-native";
 import { DndProvider, useDnd } from "@/screens/Combos/DndComponents/DndProvider";
 import { TimelineSlots } from "./TimelineSlots";
 import type { Movement } from "@/types/common";
+import {useSwapPreview} from "@/lib/hooks/useSwapPreview";
 
 // simple move helper
 function move<T>(arr: T[], from: number, to: number): T[] {
@@ -96,6 +97,18 @@ function DebugDrop() {
     </Text>;
 }
 
+function TimelineWithPreview({ steps }: { steps: Movement[] }) {
+// ✅ This is a descendant of <DndProvider/>, so hooks that use context are safe here
+    const { fromIndex, overIndex, targetIsChip } = useSwapPreview();
+    return (
+        <TimelineSlots
+            steps={steps}
+            previewFromIndex={fromIndex}
+            previewOverIndex={overIndex}
+            previewTargetIsChip={targetIsChip}
+        />
+    );
+}
 
 export default function TimelineSlotsPlayground() {
     // seed with a tiny set to reorder
@@ -115,10 +128,9 @@ export default function TimelineSlotsPlayground() {
             />
 
             <View style={S.root}>
-                <TimelineSlots steps={steps} />
-                <Text style={S.hint}>Drag a chip and drop on a + slot to reorder</Text>
-                <Text style={S.state}>Steps: {steps.join(" · ")}</Text>
-                <DebugDrop/>
+                <TimelineWithPreview steps={steps}/>
+                <Text style={S.hint}>Drag a chip over another chip to preview swap</Text>
+                <Text style={S.state}>Steps: {steps.join(' · ')}</Text>
             </View>
         </DndProvider>
     );
