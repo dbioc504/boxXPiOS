@@ -1,74 +1,80 @@
-// MovementPalette.tsx
-import React, {useState} from "react";
-import {Pressable, StyleSheet, Text, View} from "react-native";
-import {BODY_PUNCHES, DEFENSES, MOVEMENT_LABEL, PUNCHES, type Movement} from "@/types/common";
-import {CHIP_H, CHIP_W} from "@/screens/Combos/ui";
-import { Draggable } from "@mgcrea/react-native-dnd";
-import Animated, { useAnimatedStyle } from "react-native-reanimated";
+import React, {useMemo, useState} from 'react';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Draggable} from '@/screens/Combos/DndComponents/Draggable';
+import type {Movement} from '@/types/common';
+import {BODY_PUNCHES, DEFENSES, MOVEMENT_LABEL, PUNCHES} from '@/types/common';
+import {colors} from "@/theme/theme";
 
-const GROUPS = [
-    { key: "punches", title: "PUNCHES", items: PUNCHES as Movement[] },
-    { key: "body", title: "BODY PUNCHES", items: BODY_PUNCHES as Movement[] },
-    { key: "defense", title: "DEFENSE", items: DEFENSES as Movement[] },
-] as const;
+export type PaletteCategory = 'punches' | 'body' | 'defense';
 
-export type MovementPaletteProps = { onPressChip?: (m: Movement) => void };
+const CATEGORY_MAP: Record<PaletteCategory, Movement[]> = {
+    punches: PUNCHES,
+    body: BODY_PUNCHES,
+    defense: DEFENSES
+};
 
-export function MovementPalette({ onPressChip }: MovementPaletteProps) {
-    const [pageIndex, setPageIndex] = useState(0);
-    const page = GROUPS[pageIndex];
+const CATEGORY_TITLE: Record<PaletteCategory, string> = {
+    punches: 'PUNCHES',
+    body: 'BODY PUNCHES',
+    defense: 'DEFENSE'
+};
+
+function TabButton({ label, active, onPress }: { label: string, active: boolean, onPress: () => void }) {
+    return (
+        <Pressable onPress={onPress} style={[ S.tabBtn, active ? S.tabOn : S.tabOff ]}>
+            <Text style={[S.tabText, active ? S.tabTextOn : S.tabTextOff]}>{label}</Text>
+        </Pressable>
+    )
+}
+
+export function MovementPalette({
+    initialCategory = 'punches' as PaletteCategory,
+    onCategoryChange
+}: {
+    initialCategory?: PaletteCategory;
+    onCategoryChange?: (c: PaletteCategory) => void;
+}) {
+    const [category, setCategory] = useState<PaletteCategory>(initialCategory);
+    const items = useMemo(() => CATEGORY_MAP[category], [category]);
+
+    const setCat = (c: PaletteCategory)=> {
+        setCategory(c);
+        onCategoryChange?.(c);
+    };
 
     return (
-        <View style={S.container}>
-            <View style={S.content}>
-                <View style={S.tabs} accessibilityRole="tablist">
-                    {GROUPS.map((g, i) => {
-                        const active = i === pageIndex;
-                        return (
-                            <Pressable key={g.key} onPress={() => setPageIndex(i)} style={[S.tab, active && S.tabActive]}>
-                                <Text style={[S.tabText, active && S.tabTextActive]}>{g.title}</Text>
-                            </Pressable>
-                        );
-                    })}
-                </View>
+        <View style={S.wrap}>
+            <Text style={S.title}>{CATEGORY_TITLE[category]}</Text>
 
-                <View style={S.grid}>
-                    {page.items.map((m) => {
-                        // animated style local to each chip
-                        const aStyle = useAnimatedStyle(() => {
-                            "worklet";
-                            return {}; // keep minimal for now
-                        });
+            <View style={S.tabs}>
+                <TabButton label="Punches" active={category === 'punches'} onPress={() => setCat('punches')}/>
+                <TabButton label="Body" active={category === 'body'} onPress={() => setCat('body')}/>
+                <TabButton label="Defense" active={category === 'defense'} onPress={() => setCat('defense')}/>
+            </View>
 
-                        return (
-                            <Draggable key={m} id={`mv-${m}`} data={{ movement: m }}>
-                                <Animated.View style={[S.chip, aStyle]}>
-                                    <Pressable
-                                        onPress={() => onPressChip?.(m)}
-                                        accessible
-                                        accessibilityLabel={MOVEMENT_LABEL[m]}
-                                    >
-                                        <Text style={S.chipText}>{MOVEMENT_LABEL[m]}</Text>
-                                    </Pressable>
-                                </Animated.View>
-                            </Draggable>
-                        );
-                    })}
-                </View>
+            <View style={S.grid}>
+                {items.map((mv) => (
+                    <Draggable key={mv} id={`palette:${mv}`} style={S.chip} >
+                        <Text style={S.chipText}>{MOVEMENT_LABEL[mv]}</Text>
+                    </Draggable>
+                ))}
             </View>
         </View>
     );
 }
 
 const S = StyleSheet.create({
-    container: { width: "100%", alignItems: "stretch", marginBottom: 40 },
-    content: { width: "100%", paddingHorizontal: 12 },
-    tabs: { flexDirection: "row", alignItems: "center", gap: 8, paddingBottom: 8 },
-    tab: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 12, backgroundColor: "#2a2a2a", height: 40, justifyContent: "center", marginBottom: 4 },
-    tabActive: { backgroundColor: "#4b6cff" },
-    tabText: { color: "#ddd", fontSize: 14 },
-    tabTextActive: { color: "#fff", fontWeight: "600" },
-    grid: { flexDirection: "row", flexWrap: "wrap", gap: 8, justifyContent: "space-between" },
-    chip: { width: CHIP_W, height: CHIP_H, borderRadius: 16, backgroundColor: "#8e8af7", justifyContent: "center", alignItems: "center", paddingHorizontal: 12 },
-    chipText: { color: "#0b0b2a", fontSize: 12.5, fontWeight: "600", textAlign: "center" },
+    wrap: { padding: 12, backgroundColor: '#0b0b2a', borderRadius: 14, borderWidth: 2, borderColor: '#334155' },
+    title: { color: colors.offWhite, fontWeight: '800', fontSize: 16, textAlign: 'center', marginBottom: 8 },
+    tabs: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 8 },
+    tabBtn: { paddingHorizontal: 12, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    tabOn: { backgroundColor: colors.text },
+    tabOff: { backgroundColor: '#1f2a44' },
+    tabText: { fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
+    tabTextOn: { color: '#0b0b2a' },
+    tabTextOff: { color: '#a3b1c9' },
+
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 8, paddingBottom: 4 },
+    chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 12, backgroundColor: '#8e8af7' },
+    chipText: { color: '#0b0b2a', fontWeight: '700' },
 });

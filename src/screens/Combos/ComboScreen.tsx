@@ -1,14 +1,14 @@
 // ComboScreen.tsx
-import React, { useMemo, useState } from 'react';
-import { View, Text } from 'react-native';
-import { DndProvider } from '@/screens/Combos/DndComponents/DndProvider';
-import type { Movement } from '@/types/common';
-import { Draggable } from "./DndComponents/Draggable";
+import React, {useMemo, useState} from 'react';
+import {View} from 'react-native';
+import {DndProvider} from '@/screens/Combos/DndComponents/DndProvider';
+import type {Movement} from '@/types/common';
 import {CombosDropListener} from "@/screens/Combos/DndComponents/CombosDropListener";
 import {TimelineSlots} from "@/screens/Combos/TimelineSlots";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {sharedStyle} from "@/theme/theme";
 import {Header} from "@/theme/T";
+import {MovementPalette} from "@/screens/Combos/MovementPalette";
 
 function move<T>(arr: T[], from: number, to: number): T[] {
     const next = arr.slice();
@@ -63,24 +63,25 @@ export default function ComboScreen() {
                 <View style={{flex: 1, padding: 16}}>
                     {/* header and your mockup UI go here */}
 
+                    <MovementPalette />
                     {/* timeline */}
                     <TimelineSlots steps={steps}/>
 
                     {/* simple palette sample to prove the id contract */}
-                    <View style={{marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
-                        {palette.map((mv, i) => (
-                            <Draggable key={mv} id={`palette:${mv}`}>
-                                <View style={{
-                                    paddingVertical: 6,
-                                    paddingHorizontal: 10,
-                                    borderRadius: 10,
-                                    backgroundColor: '#64748b'
-                                }}>
-                                    <Text style={{color: 'white', fontWeight: '600'}}>{mv}</Text>
-                                </View>
-                            </Draggable>
-                        ))}
-                    </View>
+                    {/*<View style={{marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>*/}
+                    {/*    {palette.map((mv, i) => (*/}
+                    {/*        <Draggable key={mv} id={`palette:${mv}`}>*/}
+                    {/*            <View style={{*/}
+                    {/*                paddingVertical: 6,*/}
+                    {/*                paddingHorizontal: 10,*/}
+                    {/*                borderRadius: 10,*/}
+                    {/*                backgroundColor: '#64748b'*/}
+                    {/*            }}>*/}
+                    {/*                <Text style={{color: 'white', fontWeight: '600'}}>{mv}</Text>*/}
+                    {/*            </View>*/}
+                    {/*        </Draggable>*/}
+                    {/*    ))}*/}
+                    {/*</View>*/}
                 </View>
             </DndProvider>
         </SafeAreaView>
