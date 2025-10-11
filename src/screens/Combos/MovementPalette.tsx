@@ -64,17 +64,17 @@ export function MovementPalette({
 }
 
 const S = StyleSheet.create({
-    wrap: { padding: 12, backgroundColor: '#0b0b2a', borderRadius: 14, borderWidth: 2, borderColor: '#334155' },
-    title: { color: colors.offWhite, fontWeight: '800', fontSize: 16, textAlign: 'center', marginBottom: 8 },
+    wrap: { padding: 8, backgroundColor: colors.mainBtn, borderRadius: 14, borderWidth: 2, borderColor: colors.offWhite },
+    title: { color: colors.offWhite, fontWeight: '600', fontSize: 18, textAlign: 'center', marginBottom: 8 },
     tabs: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 8 },
-    tabBtn: { paddingHorizontal: 12, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+    tabBtn: { paddingHorizontal: 12, height: 28, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     tabOn: { backgroundColor: colors.text },
     tabOff: { backgroundColor: '#1f2a44' },
     tabText: { fontSize: 16, fontWeight: '600', letterSpacing: 0.3 },
-    tabTextOn: { color: '#0b0b2a' },
+    tabTextOn: { color: colors.mainBtn },
     tabTextOff: { color: '#a3b1c9' },
 
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 8, paddingBottom: 4 },
     chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 12, backgroundColor: '#8e8af7' },
-    chipText: { color: '#0b0b2a', fontWeight: '700' },
+    chipText: { color: colors.mainBtn, fontWeight: '700' },
 });

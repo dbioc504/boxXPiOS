@@ -10,33 +10,12 @@ import {sharedStyle} from "@/theme/theme";
 import {Header} from "@/theme/T";
 import {MovementPalette} from "@/screens/Combos/MovementPalette";
 
-function move<T>(arr: T[], from: number, to: number): T[] {
-    const next = arr.slice();
-    const [item] = next.splice(from, 1);
-    next.splice(to, 0, item);
-    return next;
-}
-
-function swap<T>(arr: T[], a: number, b: number): T[] {
-    if (a === b) return arr;
-    const next = arr.slice();
-    [next[a], next[b]] = [next[b], next[a]];
-    return next;
-}
-
 export default function ComboScreen() {
     const initial: Movement[] = useMemo(
-        () => ['jab', 'straight', 'left_hook'] as Movement[],
+        () => [] as Movement[],
         []
     );
     const [steps, setSteps] = useState<Movement[]>(initial);
-
-    // optional sample palette state
-    const [palette] = useState<Movement[]>([
-        'right_uppercut',
-        'left_uppercut',
-        'overhand',
-    ] as Movement[]);
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -60,7 +39,7 @@ export default function ComboScreen() {
                 />
 
 
-                <View style={{flex: 1, padding: 16}}>
+                <View style={{flex: 1, paddingHorizontal: 12}}>
                     {/* header and your mockup UI go here */}
 
                     <MovementPalette />
