@@ -6,6 +6,7 @@ import type {Movement} from '@/types/common';
 import {MOVEMENT_LABEL} from '@/types/common';
 import {GhostAtOrigin} from "@/screens/Combos/DndComponents/GhostAtOrigin";
 import {useSwapPreview} from "@/lib/hooks/useSwapPreview";
+import {colors} from "@/theme/theme";
 
 type Props = { steps: Movement[] };
 
@@ -61,8 +62,9 @@ export function TimelineSlots({ steps }: Props) {
 }
 
 const S = StyleSheet.create({
-    wrap: { padding: 12, gap: 12 },
-    title: { fontSize: 16, fontWeight: '700', color: '#eef' },
+    wrap: { padding: 8, borderColor: colors.offWhite, backgroundColor: colors.mainBtn,
+        borderWidth: 2, borderRadius: 14, marginVertical: 8, height: 320, overflow: 'visible' },
+    title: { fontSize: 18, fontWeight: '600', color: colors.offWhite, textAlign: 'left', marginBottom: 8 },
     row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 8 },
     slot: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
     slotPlus: { color: '#cbd5e1', fontSize: 20, fontWeight: '700' },

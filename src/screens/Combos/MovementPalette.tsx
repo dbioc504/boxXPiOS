@@ -4,6 +4,8 @@ import {Draggable} from '@/screens/Combos/DndComponents/Draggable';
 import type {Movement} from '@/types/common';
 import {BODY_PUNCHES, DEFENSES, MOVEMENT_LABEL, PUNCHES} from '@/types/common';
 import {colors} from "@/theme/theme";
+import {useDnd} from "@/screens/Combos/DndComponents/DndProvider";
+import Animated, {useAnimatedStyle} from "react-native-reanimated";
 
 export type PaletteCategory = 'punches' | 'body' | 'defense';
 
@@ -34,6 +36,16 @@ export function MovementPalette({
     initialCategory?: PaletteCategory;
     onCategoryChange?: (c: PaletteCategory) => void;
 }) {
+    const { activeDragId } = useDnd();
+    const aWrap = useAnimatedStyle(() => {
+        const dragId = activeDragId.value ?? '';
+        const paletteDragging = dragId.startsWith('palette:');
+        return {
+            zIndex: paletteDragging ? 1000 : 0,
+            elevation: paletteDragging ? 1000 : 0
+        };
+    });
+
     const [category, setCategory] = useState<PaletteCategory>(initialCategory);
     const items = useMemo(() => CATEGORY_MAP[category], [category]);
 
@@ -43,7 +55,7 @@ export function MovementPalette({
     };
 
     return (
-        <View style={S.wrap}>
+        <Animated.View style={[S.wrap, aWrap]}>
             <Text style={S.title}>{CATEGORY_TITLE[category]}</Text>
 
             <View style={S.tabs}>
@@ -59,7 +71,7 @@ export function MovementPalette({
                     </Draggable>
                 ))}
             </View>
-        </View>
+        </Animated.View>
     );
 }
 
