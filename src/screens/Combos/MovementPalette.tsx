@@ -76,7 +76,8 @@ export function MovementPalette({
 }
 
 const S = StyleSheet.create({
-    wrap: { padding: 8, backgroundColor: colors.mainBtn, borderRadius: 14, borderWidth: 2, borderColor: colors.offWhite },
+    wrap: { padding: 8, backgroundColor: colors.mainBtn, borderRadius: 14, borderWidth: 2,
+        borderColor: colors.offWhite, overflow: 'visible' },
     title: { color: colors.offWhite, fontWeight: '600', fontSize: 18, textAlign: 'center', marginBottom: 8 },
     tabs: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 8 },
     tabBtn: { paddingHorizontal: 12, height: 28, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
