@@ -24,9 +24,9 @@ export default function HomeScreen() {
             <View style={[signInStyles.buttonGroup, {rowGap: 20}, {marginBottom: 20}]}>
 
                 <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
-                <MainButton label="COMBOS" onPress={() => nav.navigate('Combos')}/>
+                <MainButton label="COMBOS" onPress={() => nav.navigate('CombosIndex')}/>
                 <MainButton label="MECHANICS" onPress={() => {}}/>
-                <MainButton label="WORKOUTS" onPress={() => {}}/>
+                <MainButton label="DOWNLOADS" onPress={() => {}}/>
                 <MainButton label="TIMER" onPress={() => {}}/>
 
             </View>

@@ -207,7 +207,6 @@ const S = StyleSheet.create({
     titleHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
     title: { fontSize: 18, fontWeight: '600', color: colors.offWhite, flex: 1 },
     rightHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-
     controls: { flexDirection: 'row', gap: 8, marginRight: 6 },
     ctrlBtn: {
         width: 32, height: 28, borderRadius: 8, borderWidth: 2, borderColor: colors.offWhite,
@@ -215,25 +214,20 @@ const S = StyleSheet.create({
     },
     ctrlPressed: { opacity: 0.7 },
     ctrlText: { color: colors.offWhite, fontWeight: '800', fontSize: 14 },
-
     editBtn: {
         flexDirection: 'row', alignItems: 'center', gap: 6,
         paddingHorizontal: 10, height: 28, borderRadius: 8, borderWidth: 2,
         borderColor: colors.offWhite, backgroundColor: '#1f2a44'
     },
     editText: { color: colors.offWhite, fontWeight: '600', fontSize: 12, letterSpacing: 0.3 },
-
     viewport: { flex: 1 },
-
     row: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', alignContent: 'flex-start', gap: 8, paddingBottom: 8 },
     slot: { width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
     slotPlus: { color: '#cbd5e1', fontSize: 20, fontWeight: '700' },
-
     chipWrap: { position: 'relative' },
     chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#8e8af7' },
     chipRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     chipText: { color: '#0b0b2a', fontWeight: '600' },
-
     delBtn: {
         width: 22, height: 22, alignItems: 'center', justifyContent: 'center',
     },

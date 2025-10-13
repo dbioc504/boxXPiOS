@@ -4,12 +4,14 @@ import HomeScreen from "../screens/HomeScreen";
 import SignInScreen from "../screens/SignInScreen";
 import SkillsScreen from "../screens/Skills/SkillsScreen"
 import ComboScreen from "@/screens/Combos/ComboScreen";
+import CombosIndexScreen from "@/screens/Combos/CombosIndexScreen";
 
 export type RootStackParamList = {
     Home: undefined,
     SignIn: undefined,
     Skills: undefined,
-    Combos: undefined
+    Combos: undefined,
+    CombosIndex: undefined
 };
 
 const NAV_ID = 'Rootstack' as const;
@@ -27,6 +29,7 @@ export default function RootNavigator() {
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="SignIn" component={SignInScreen} />
                 <Stack.Screen name="Skills" component={SkillsScreen} />
+                <Stack.Screen name='CombosIndex' component={CombosIndexScreen} />
                 <Stack.Screen name='Combos' component={ComboScreen}/>
             </Stack.Navigator>
         </NavigationContainer>

@@ -19,6 +19,7 @@ type Props = {
     selected?: Style | null;
     onSelect?: (v: Style) => void;
     showRadio?: boolean;
+    headerRight?: React.ReactNode;
 }
 
 export function ExpandableSection({
@@ -33,6 +34,7 @@ export function ExpandableSection({
     selected = null,
     onSelect,
     showRadio = true,
+    headerRight
 }: Props) {
     const [internal, setInternal] = useState(!!defaultExpanded);
     const isControlled = expanded !== undefined;
@@ -48,10 +50,31 @@ export function ExpandableSection({
                 isSelected && skillsStyles.cardSelected,
             ]}
         >
-            <Pressable onPress={() => onToggle(id)} hitSlop={8} style={skillsStyles.cardHeader}>
-                <BodyText style={skillsStyles.cardHeaderText}>{title}  </BodyText>
-                <Ionicons name={isOpen ? 'caret-up': 'caret-down'} size={20} color={colors.offWhite}/>
-            </Pressable>
+            {!headerRight ? (
+                // ORIGINAL centered header (unchanged)
+                <Pressable
+                    onPress={() => (expanded !== undefined ? onToggle?.(id) : setInternal(v => !v))}
+                    hitSlop={8}
+                    style={skillsStyles.cardHeader}
+                >
+                    <BodyText style={skillsStyles.cardHeaderText}>{title} </BodyText>
+                    <Ionicons name={isOpen ? 'caret-up' : 'caret-down'} size={20} color={colors.offWhite}/>
+                </Pressable>
+            ) : (
+                // Row header when actions exist: title left, actions right
+                <View style={[skillsStyles.cardHeader, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+                    <Pressable
+                        onPress={() => (expanded !== undefined ? onToggle?.(id) : setInternal(v => !v))}
+                        hitSlop={8}
+                        style={{ flexDirection: 'row', alignItems: 'center' }}
+                    >
+                        <BodyText style={skillsStyles.cardHeaderText}>{title} </BodyText>
+                        <Ionicons name={isOpen ? 'caret-up' : 'caret-down'} size={20} color={colors.offWhite}/>
+                    </Pressable>
+
+                    <View>{headerRight}</View>
+                </View>
+            )}
 
             {isOpen && (
                 <>
