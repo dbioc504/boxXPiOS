@@ -16,6 +16,7 @@ export default function ComboScreen() {
         []
     );
     const [steps, setSteps] = useState<Movement[]>(initial);
+    const [editing, setEditing] = useState(false);
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -40,27 +41,21 @@ export default function ComboScreen() {
 
 
                 <View style={{flex: 1, paddingHorizontal: 12}}>
-                    {/* header and your mockup UI go here */}
 
                     <MovementPalette />
                     {/* timeline */}
-                    <TimelineSlots steps={steps}/>
+                    <TimelineSlots
+                        steps={steps}
+                        isEditing={editing}
+                        onToggleEdit={() => setEditing(e => !e)}
+                        onDeleteStep={(idx) => setSteps(cur => {
+                            if (idx < 0 || idx >= cur.length) return cur;
+                            const next = cur.slice();
+                            next.splice(idx, 1);
+                            return next;
+                        })}
+                    />
 
-                    {/* simple palette sample to prove the id contract */}
-                    {/*<View style={{marginTop: 16, flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>*/}
-                    {/*    {palette.map((mv, i) => (*/}
-                    {/*        <Draggable key={mv} id={`palette:${mv}`}>*/}
-                    {/*            <View style={{*/}
-                    {/*                paddingVertical: 6,*/}
-                    {/*                paddingHorizontal: 10,*/}
-                    {/*                borderRadius: 10,*/}
-                    {/*                backgroundColor: '#64748b'*/}
-                    {/*            }}>*/}
-                    {/*                <Text style={{color: 'white', fontWeight: '600'}}>{mv}</Text>*/}
-                    {/*            </View>*/}
-                    {/*        </Draggable>*/}
-                    {/*    ))}*/}
-                    {/*</View>*/}
                 </View>
             </DndProvider>
         </SafeAreaView>

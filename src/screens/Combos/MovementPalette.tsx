@@ -89,5 +89,5 @@ const S = StyleSheet.create({
 
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingTop: 8, paddingBottom: 4 },
     chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 12, backgroundColor: '#8e8af7' },
-    chipText: { color: colors.mainBtn, fontWeight: '700' },
+    chipText: { color: colors.mainBtn, fontWeight: '600' },
 });
