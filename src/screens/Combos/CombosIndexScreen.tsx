@@ -4,6 +4,8 @@ import type {Combo} from '@/types/combo';
 import {ComboRow} from './ComboRow';
 import {useNavigation} from '@react-navigation/native';
 import {Header} from "@/theme/T";
+import {colors, sharedStyle} from "@/theme/theme";
+import {SafeAreaView} from "react-native-safe-area-context";
 
 export default function CombosIndexScreen() {
     const nav = useNavigation<any>();
@@ -22,13 +24,13 @@ export default function CombosIndexScreen() {
     };
 
     return (
-        <View style={S.screen}>
+        <SafeAreaView style={sharedStyle.safeArea}>
             <Header title='COMBOS'/>
 
             <FlatList
                 data={combos}
                 keyExtractor={(c) => c.id}
-                contentContainerStyle={{ padding: 12, gap: 12 }}
+                contentContainerStyle={{ padding: 12, gap: 4 }}
                 renderItem={({ item }) => (
                     <ComboRow
                         combo={item}
@@ -45,20 +47,15 @@ export default function CombosIndexScreen() {
                     <Text style={S.createText}>CREATE +</Text>
                 </Pressable>
             </View>
-        </View>
+        </SafeAreaView>
     )
 }
 
 const S = StyleSheet.create({
-    screen: { flex: 1, backgroundColor: '#0b0b2a' },
-    header: {
-        fontSize: 32, fontWeight: '900', color: '#fffd71', letterSpacing: 1,
-        paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
-    },
     footer: { padding: 16 },
     createBtn: {
-        height: 56, borderRadius: 14, backgroundColor: '#d9d35b',
+        height: 56, borderRadius: 14, backgroundColor: colors.text,
         alignItems: 'center', justifyContent: 'center',
     },
-    createText: { color: '#0b0b2a', fontWeight: '900', fontSize: 22, letterSpacing: 0.5 },
+    createText: {fontWeight: '600', fontSize: 22, letterSpacing: 0.5 },
 });

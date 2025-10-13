@@ -20,7 +20,7 @@ export default function ComboScreen() {
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
-            <Header title='COMBOS'/>
+            <Header title='CREATE'/>
             <DndProvider>
                 <CombosDropListener
                     stepsLen={steps.length}
