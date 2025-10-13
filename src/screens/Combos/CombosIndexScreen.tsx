@@ -43,7 +43,14 @@ export default function CombosIndexScreen() {
             />
 
             <View style={S.footer}>
-                <Pressable style={S.createBtn} onPress={() => nav.navigate('Combos')}>
+                <Pressable
+                    style={({pressed}) => [
+                        S.createBtn,
+                        {opacity: (pressed ? 0.7 : 1)},
+                        {backgroundColor: pressed ? colors.pressedBorder : colors.text}
+                    ]}
+                    onPress={() => nav.navigate('Combos')}
+                >
                     <Text style={S.createText}>CREATE +</Text>
                 </Pressable>
             </View>
