@@ -106,7 +106,13 @@ export function TimelineSlots({ steps, isEditing = false, onToggleEdit, onDelete
                         </Pressable>
                     </View>
 
-                    <Pressable onPress={onToggleEdit} hitSlop={8} style={S.editBtn}>
+                    <Pressable
+                        onPress={onToggleEdit}
+                        hitSlop={8}
+                        style={({pressed}) => [
+                            S.editBtn,
+                            { opacity: pressed ? 0.7 : 1 }
+                        ]}>
                         <Ionicons
                             name={isEditing ? 'checkmark-circle-outline' : 'create-outline'}
                             size={18}

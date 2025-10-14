@@ -198,7 +198,7 @@ export default function ComboScreen() {
                     })}
                 >
                     <BodyText style={{ fontWeight: '600', fontSize: 20 }}>
-                        {comboId ? 'Save' : 'Create'}
+                        {comboId ? 'SAVE' : 'CREATE +'}
                     </BodyText>
                 </Pressable>
             </View>
