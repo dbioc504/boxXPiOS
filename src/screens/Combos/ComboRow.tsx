@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Alert, Pressable, StyleSheet, Text, View} from 'react-native';
 import {ExpandableSection} from '@/screens/Skills/ExpandableSection';
-import {type Movement, MOVEMENT_LABEL} from '@/types/common';
+import {CATEGORY_LABEL, type Movement, MOVEMENT_LABEL} from '@/types/common';
 import {colors} from '@/theme/theme';
 import {ComboMeta} from "@/lib/repos/combos.repo";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
@@ -62,6 +62,13 @@ export function ComboRow({ meta, expanded, onToggle, onEdit, onDelete }: Props) 
             isStyleCard={false}
             showRadio={false}
         >
+            <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                <Text style={{color: colors.text, fontSize: 18, textAlign: 'center'}}>Category:</Text>
+                <Text style={{color: colors.text, fontSize: 18, textAlign: 'center'}}>
+                    {CATEGORY_LABEL[meta.category]}
+                </Text>
+            </View>
+
             {/* Chips preview */}
             {loading && (
                 <View style={styles.loadingRow}>
@@ -85,11 +92,19 @@ export function ComboRow({ meta, expanded, onToggle, onEdit, onDelete }: Props) 
 
             {/*  Row  */}
             <View style={styles.actionsRow}>
-                <Pressable style={styles.actionBtn} onPress={() => onEdit(meta.id)}>
+                <Pressable
+                    style={({ pressed }) => [
+                        styles.actionBtn,
+                        { opacity: (pressed ? 0.7 : 1) }
+                    ]}
+                    onPress={() => onEdit(meta.id)}>
                     <Text style={styles.actionText}>EDIT</Text>
                 </Pressable>
                 <Pressable
-                    style={styles.actionBtn}
+                    style={({ pressed }) => [
+                        styles.actionBtn,
+                        { opacity: (pressed ? 0.7 : 1) }
+                    ]}
                     onPress={() => {
                         Alert.alert('Delete Combo?', `Delete "${title}?`, [
                             { text: 'Cancel', style: 'cancel' },
@@ -108,7 +123,7 @@ const styles = StyleSheet.create({
     loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
     loadingText: { color: colors.offWhite, opacity: 0.8 },
 
-    chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
     chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#8e8af7' },
     chipText: { color: '#0b0b2a', fontWeight: '700' },
     emptyText: { color: colors.offWhite, opacity: 0.7 },
@@ -117,7 +132,7 @@ const styles = StyleSheet.create({
     actionBtn: {
         paddingHorizontal: 14, height: 34, borderRadius: 8,
         alignItems: 'center', justifyContent: 'center', borderWidth: 1,
-        borderColor: colors.offWhite, backgroundColor: '#384466'
+        borderColor: colors.offWhite, backgroundColor: '#384466', marginBottom: 6
     },
     actionText: { color: colors.offWhite, fontWeight: '600', letterSpacing: 0.3 },
 });
