@@ -9,6 +9,7 @@ import {AuthProvider} from "@/lib/AuthProvider";
 import {RepoProvider} from '@/lib/providers/RepoProvider'
 import {StyleProvider} from "@/lib/providers/StyleProvider";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
+import { CombosRepoProvider } from '@/lib/repos/CombosRepoContext';
 
 
 
@@ -35,10 +36,12 @@ export default function App() {
                 <RepoProvider>
                     <StyleProvider>
                         <ThemeProvider>
-                            <StatusBar style="light"/>
-                            <SafeAreaProvider>
-                                <RootNavigator/>
-                            </SafeAreaProvider>
+                            <CombosRepoProvider>
+                                <StatusBar style="light"/>
+                                <SafeAreaProvider>
+                                    <RootNavigator/>
+                                </SafeAreaProvider>
+                            </CombosRepoProvider>
                         </ThemeProvider>
                     </StyleProvider>
                 </RepoProvider>

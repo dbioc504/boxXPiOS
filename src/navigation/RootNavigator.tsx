@@ -7,11 +7,11 @@ import ComboScreen from "@/screens/Combos/ComboScreen";
 import CombosIndexScreen from "@/screens/Combos/CombosIndexScreen";
 
 export type RootStackParamList = {
-    Home: undefined,
-    SignIn: undefined,
-    Skills: undefined,
-    Combos: undefined,
-    CombosIndex: undefined
+    Home: undefined;
+    SignIn: undefined;
+    Skills: undefined;
+    Combos: { comboId: string } | undefined;
+    CombosIndex: undefined;
 };
 
 const NAV_ID = 'Rootstack' as const;

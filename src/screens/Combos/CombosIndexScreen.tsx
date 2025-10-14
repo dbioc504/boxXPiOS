@@ -1,27 +1,42 @@
-import React, {useMemo, useState} from 'react';
+import React, {useCallback, useState} from 'react';
 import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
-import type {Combo} from '@/types/combo';
 import {ComboRow} from './ComboRow';
-import {useNavigation} from '@react-navigation/native';
+import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {Header} from "@/theme/T";
 import {colors, sharedStyle} from "@/theme/theme";
 import {SafeAreaView} from "react-native-safe-area-context";
+import {NativeStackScreenProps} from "@react-navigation/native-stack";
+import {RootStackParamList} from "@/navigation/RootNavigator";
+import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
+import {ComboMeta} from "@/lib/repos/combos.repo";
 
 export default function CombosIndexScreen() {
-    const nav = useNavigation<any>();
+    const nav = useNavigation<NativeStackScreenProps<RootStackParamList, 'CombosIndex'>['navigation']>();
+    const repo = useCombosRepo();
+    const userId = 'demo';
 
-    const seed= useMemo<Combo[]>(() => ([
-        { id: 'c1', name: 'tick tick boom', category: "speed_and_power", steps: ['jab','jab','straight'] },
-        { id: 'c2', name: 'rocking chair', category: "speed_and_power", steps: ['upjab', 'straight', 'upjab', 'straight'] }
-    ]), []);
-    const [combos, setCombos] = useState<Combo[]>(seed);
+    const [combos, setCombos] = useState<ComboMeta[]>([]);
     const [openId, setOpenId] = useState<string | null>(null);
+
+    const load = useCallback(async () => {
+        const list = await repo.listCombos(userId);
+        setCombos(list);
+    }, [repo,userId]);
+
+    useFocusEffect(
+        useCallback(() => {
+            load();
+        }, [load])
+    )
 
     const onToggle = (id: string) => setOpenId(prev => prev === id ? null : id);
     const onEdit = (id: string) => nav.navigate('Combos', { comboId: id });
-    const onDelete = (id: string) => {
-        setCombos(cur => cur.filter(c => c.id !== id));
+    const onDelete = async (id: string) => {
+        await repo.deleteCombo(userId, id);
+        if (openId === id) setOpenId(null);
+        await load();
     };
+
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -33,7 +48,7 @@ export default function CombosIndexScreen() {
                 contentContainerStyle={{ padding: 12, gap: 4 }}
                 renderItem={({ item }) => (
                     <ComboRow
-                        combo={item}
+                        meta={item}
                         expanded={openId === item.id}
                         onToggle={onToggle}
                         onEdit={onEdit}

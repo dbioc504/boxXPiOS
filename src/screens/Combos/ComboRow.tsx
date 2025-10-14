@@ -1,9 +1,10 @@
-import React from 'react';
-import {Alert, Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {ActivityIndicator, Alert, Pressable, StyleSheet, Text, View} from 'react-native';
 import {ExpandableSection} from '@/screens/Skills/ExpandableSection';
 import {type Movement, MOVEMENT_LABEL} from '@/types/common';
-import type {Combo} from '@/types/combo';
 import {colors} from '@/theme/theme';
+import {ComboMeta} from "@/lib/repos/combos.repo";
+import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 
 const nameFromSteps = (steps: Movement[]) =>
     steps.slice(0, 3).map(s => MOVEMENT_LABEL[s]).join(' - ') || 'Untitled';
@@ -16,24 +17,45 @@ function toTitleCase(str) {
     }).join(' ');
 }
 
-export function ComboRow({
-    combo,
-    expanded,
-    onToggle,
-    onEdit,
-    onDelete
-}: {
-    combo: Combo;
+type Props = {
+    meta: ComboMeta;
     expanded: boolean;
     onToggle: (id: string) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
-}) {
-    const title = combo.name ?? nameFromSteps(combo.steps);
+};
+
+export function ComboRow({ meta, expanded, onToggle, onEdit, onDelete }: Props) {
+    const repo = useCombosRepo();
+    const userId = 'demo';
+
+    const [steps, setSteps] = useState<Movement[] | null>(null);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        let alive = true;
+        (async () => {
+            if (!expanded || steps !== null || loading) return;
+            setLoading(true);
+            try {
+                const data = await repo.getCombo(userId, meta.id);
+                if (alive) setSteps(data?.steps ?? []);
+            } finally {
+                if (alive) setLoading(false);
+            }
+        })();
+        return () => { alive = false; };
+    }, [expanded, steps, loading, repo, userId, meta.id]);
+
+    const derivedTitle = meta.name?.trim()
+        ? meta.name
+        : (steps ? nameFromSteps(steps) : 'Untitled');
+
+    const title = toTitleCase(derivedTitle);
 
     return (
         <ExpandableSection
-            id={combo.id}
+            id={meta.id}
             title={toTitleCase(title)}
             expanded={expanded}
             onToggle={onToggle}
@@ -41,25 +63,37 @@ export function ComboRow({
             showRadio={false}
         >
             {/* Chips preview */}
-            <View style={styles.chipsWrap}>
-                {combo.steps.map((mv, i) => (
-                    <View key={`${combo.id}-${i}`} style={styles.chip}>
-                        <Text style={styles.chipText}>{MOVEMENT_LABEL[mv]}</Text>
-                    </View>
-                ))}
-            </View>
+            {loading && (
+                <View style={styles.loadingRow}>
+                    <ActivityIndicator color={colors.offWhite} />
+                    <Text style={styles.loadingText}>Loading...</Text>
+                </View>
+            )}
+
+            {!loading && steps && (
+                <View style={styles.chipsWrap}>
+                    {steps.map((mv, i) => (
+                        <View key={`${meta.id}-${i}`} style={styles.chip}>
+                            <Text style={styles.chipText}>{MOVEMENT_LABEL[mv]}</Text>
+                        </View>
+                    ))}
+                    {steps.length === 0 && (
+                        <Text style={styles.emptyText}>No steps yet.</Text>
+                    )}
+                </View>
+            )}
 
             {/*  Row  */}
             <View style={styles.actionsRow}>
-                <Pressable style={styles.actionBtn} onPress={() => onEdit(combo.id)}>
+                <Pressable style={styles.actionBtn} onPress={() => onEdit(meta.id)}>
                     <Text style={styles.actionText}>EDIT</Text>
                 </Pressable>
                 <Pressable
                     style={styles.actionBtn}
                     onPress={() => {
-                        Alert.alert('Delete combo?', `Delete "${title}?`, [
+                        Alert.alert('Delete Combo?', `Delete "${title}?`, [
                             { text: 'Cancel', style: 'cancel' },
-                            { text: 'Delete', style: 'destructive', onPress: () => onDelete(combo.id) },
+                            { text: 'Delete', style: 'destructive', onPress: () => onDelete(meta.id) },
                         ]);
                     }}
                 >
@@ -71,9 +105,14 @@ export function ComboRow({
 }
 
 const styles = StyleSheet.create({
+    loadingRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+    loadingText: { color: colors.offWhite, opacity: 0.8 },
+
     chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     chip: { paddingVertical: 6, paddingHorizontal: 10, borderRadius: 10, backgroundColor: '#8e8af7' },
     chipText: { color: '#0b0b2a', fontWeight: '700' },
+    emptyText: { color: colors.offWhite, opacity: 0.7 },
+
     actionsRow: { flexDirection: 'row', gap: 8, marginTop: 12, justifyContent: 'center' },
     actionBtn: {
         paddingHorizontal: 14, height: 34, borderRadius: 8,
@@ -81,8 +120,4 @@ const styles = StyleSheet.create({
         borderColor: colors.offWhite, backgroundColor: '#384466'
     },
     actionText: { color: colors.offWhite, fontWeight: '600', letterSpacing: 0.3 },
-    menuBtn: {
-        width: 32, height: 28, borderRadius: 8, borderWidth: 2, borderColor: colors.offWhite,
-        alignItems: 'center', justifyContent: 'center', backgroundColor: '#1f2a44',
-    },
 });
