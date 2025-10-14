@@ -69,9 +69,11 @@ export default function CombosIndexScreen() {
                     <Text style={S.createText}>CREATE +</Text>
                 </Pressable>
             </View>
+
+
         </SafeAreaView>
-    )
-}
+    );
+};
 
 const S = StyleSheet.create({
     footer: { padding: 16 },
