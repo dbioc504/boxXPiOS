@@ -1,6 +1,6 @@
 import { Style } from '@/types/common';
 import {useState} from "react";
-import { Pressable, View} from "react-native";
+import { Pressable, View, StyleSheet} from "react-native";
 import {skillsStyles} from "@/screens/Skills/styles";
 import {BodyText} from "@/theme/T";
 import {Ionicons} from "@expo/vector-icons";
@@ -50,31 +50,61 @@ export function ExpandableSection({
                 isSelected && skillsStyles.cardSelected,
             ]}
         >
+            // ...inside return()
+
             {!headerRight ? (
-                // ORIGINAL centered header (unchanged)
+                // CENTERED HEADER (no headerRight): caret pinned to right, title truly centered
                 <Pressable
                     onPress={() => (expanded !== undefined ? onToggle?.(id) : setInternal(v => !v))}
                     hitSlop={8}
-                    style={skillsStyles.cardHeader}
+                    style={[skillsStyles.cardHeader, HS.centeredHeader]}
                 >
-                    <BodyText style={skillsStyles.cardHeaderText}>{title} </BodyText>
-                    <Ionicons name={isOpen ? 'caret-up' : 'caret-down'} size={20} color={colors.offWhite}/>
+                    <BodyText
+                        // title will stay centered and truncate if long
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        style={[skillsStyles.cardHeaderText, HS.centeredTitle]}
+                    >
+                        {title}
+                    </BodyText>
+
+                    <Ionicons
+                        name={isOpen ? 'caret-up' : 'caret-down'}
+                        size={20}
+                        color={colors.offWhite}
+                        style={HS.caret}
+                    />
                 </Pressable>
             ) : (
-                // Row header when actions exist: title left, actions right
-                <View style={[skillsStyles.cardHeader, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
+                // ROW HEADER with actions on the right
+                <View style={[skillsStyles.cardHeader, HS.rowHeader]}>
                     <Pressable
                         onPress={() => (expanded !== undefined ? onToggle?.(id) : setInternal(v => !v))}
                         hitSlop={8}
-                        style={{ flexDirection: 'row', alignItems: 'center' }}
+                        style={HS.rowLeft}
                     >
-                        <BodyText style={skillsStyles.cardHeaderText}>{title} </BodyText>
-                        <Ionicons name={isOpen ? 'caret-up' : 'caret-down'} size={20} color={colors.offWhite}/>
+                        <BodyText
+                            numberOfLines={1}
+                            ellipsizeMode="tail"
+                            style={[skillsStyles.cardHeaderText, HS.rowTitle]}
+                        >
+                            {title}
+                        </BodyText>
+
+                        <Ionicons
+                            name={isOpen ? 'caret-up' : 'caret-down'}
+                            size={20}
+                            color={colors.offWhite}
+                            style={{ marginLeft: 8 }}
+                        />
                     </Pressable>
 
-                    <View>{headerRight}</View>
+                    <View style={HS.rowRight}>
+                        {headerRight}
+                    </View>
                 </View>
             )}
+
 
             {isOpen && (
                 <>
@@ -101,3 +131,49 @@ export function ExpandableSection({
         </View>
     );
 }
+
+const HS = StyleSheet.create({
+    // centered variant
+    centeredHeader: {
+        position: 'relative',
+        justifyContent: 'center',   // keeps the title centered
+        alignItems: 'center',
+        paddingRight: 28,
+        paddingLeft: 18,
+        minHeight: 40,
+    },
+    centeredTitle: {
+        maxWidth: '100%',
+        textAlign: 'center',
+    },
+    caret: {
+        position: 'absolute',
+        right: 8,
+    },
+
+    // row variant (with actions)
+    rowHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 8,
+        minHeight: 40,
+    },
+    rowLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flexShrink: 1,   // allow this group to shrink so actions stay visible
+        flexGrow: 1,
+        minWidth: 0,     // enables text truncation on Android
+    },
+    rowTitle: {
+        flexShrink: 1,
+        maxWidth: '100%',
+    },
+    rowRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        flexShrink: 0,
+    },
+});

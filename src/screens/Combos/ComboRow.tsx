@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     actionsRow: { flexDirection: 'row', gap: 8, marginTop: 12, justifyContent: 'center' },
     actionBtn: {
         paddingHorizontal: 14, height: 34, borderRadius: 8,
-        alignItems: 'center', justifyContent: 'center', borderWidth: 2,
+        alignItems: 'center', justifyContent: 'center', borderWidth: 1,
         borderColor: colors.offWhite, backgroundColor: '#384466'
     },
     actionText: { color: colors.offWhite, fontWeight: '600', letterSpacing: 0.3 },

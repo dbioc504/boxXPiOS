@@ -46,7 +46,7 @@ export function Header({ title, forceMode, onClose, isModal, rightSlot }: Header
     }
 
     return (
-        <View style={[styles.container, { paddingTop: 10 }]}>
+        <View style={[styles.container]}>
             {/* LEFT SIDE: back button only on non-Home */}
             <View style={[styles.side, { width: SIDE_WIDTH, alignItems: 'flex-start' }]}>
                 {   isModal ? (

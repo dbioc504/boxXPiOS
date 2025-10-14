@@ -1,18 +1,20 @@
 // ComboScreen.tsx
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {Alert, Modal, Pressable, View} from 'react-native';
+import {Alert, Modal, Pressable, TextInput, View} from 'react-native';
 import {DndProvider} from '@/screens/Combos/DndComponents/DndProvider';
-import {Category, CATEGORY_LABEL, Movement} from '@/types/common';
+import {Category, CATEGORY_LABEL, Movement, STYLE_LABEL} from '@/types/common';
 import {CombosDropListener} from "@/screens/Combos/DndComponents/CombosDropListener";
 import {TimelineSlots} from "@/screens/Combos/TimelineSlots";
 import {SafeAreaView} from "react-native-safe-area-context";
-import {sharedStyle} from "@/theme/theme";
+import {colors, sharedStyle} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
 import {MovementPalette} from "@/screens/Combos/MovementPalette";
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import {RootStackParamList} from "@/navigation/RootNavigator";
 import {useNavigation, useRoute} from "@react-navigation/native";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
+import { useStyle } from '@/lib/providers/StyleProvider';
+import { STYLE_TO_CATEGORIES } from '@/types/validation';
 
 type RouteProps = NativeStackScreenProps<RootStackParamList, 'Combos'>['route'];
 type NavProps = NativeStackScreenProps<RootStackParamList, 'Combos'>['navigation'];
@@ -41,19 +43,29 @@ export default function ComboScreen() {
     const [name, setName] = useState<string>('');
     const [category, setCategory] = useState<Category | null>(null);
     const [saving, setSaving] = useState(false);
+    const { style: userStyle } = useStyle();
+
+    const allowedCategories = useMemo(
+        () => (userStyle ? STYLE_TO_CATEGORIES[userStyle] : []),
+        [userStyle]
+    );
 
     useEffect(() => {
         let alive = true;
-        const loadMeta = async () => {
+        (async () => {
             if (!comboId) return;
             const res = await repo.getCombo(userId, comboId);
             if (!alive || !res) return;
+
             setName(res.meta.name ?? '');
-            setCategory((res.meta.category as Category) ?? null);
-        };
-        loadMeta();
+            const currentCat = (res.meta.category as Category) ?? null;
+
+            setCategory(
+                currentCat && allowedCategories.includes(currentCat) ? currentCat : null
+            );
+        })();
         return () => { alive = false; };
-    }, [comboId, repo, userId]);
+    }, [comboId, repo, userId, allowedCategories]);
 
     const onOpenSave = () => setSaveOpen(true);
     const onCloseSave = () => setSaveOpen(false);
@@ -61,7 +73,12 @@ export default function ComboScreen() {
     const onConfirmSave = async () => {
         try {
             setSaving(true);
+
+            const finalCategory =
+                category && allowedCategories.includes(category) ? category : null;
+
             if (!comboId) {
+                await repo.createCombo(userId, { name: name || 'New Combo', category: finalCategory }, steps);
                 setSaving(false);
                 setSaveOpen(false);
                 nav.goBack();
@@ -72,6 +89,7 @@ export default function ComboScreen() {
                 nav.goBack();
             }
         } catch (e) {
+            setSaving(false);
             setSaveOpen(false);
             Alert.alert('Save failed', 'Please try again');
         }
@@ -118,7 +136,7 @@ export default function ComboScreen() {
             }
 
             setSteps(res.steps);
-            setTitle(res.meta.name || 'EDIT');
+            setTitle('EDIT');
             setLoading(false);
         };
 
@@ -126,7 +144,6 @@ export default function ComboScreen() {
         return () => { alive = false; };
     }, [comboId, repo, nav]);
 
-    // @ts-ignore
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
             <Header title={title} />
@@ -174,10 +191,10 @@ export default function ComboScreen() {
                     style={({pressed}) => ({
                         height: 56, borderRadius: 14,
                         alignItems: 'center', justifyContent: 'center',
-                        backgroundColor: pressed ? '#2a3555' : '#3b4a76'
+                        backgroundColor: pressed ? colors.pressedBorder : colors.text
                     })}
                 >
-                    <BodyText style={{ color: 'white', fontWeight: '700', fontSize: 18 }}>
+                    <BodyText style={{ fontWeight: '600', fontSize: 20 }}>
                         {comboId ? 'Save' : 'Create'}
                     </BodyText>
                 </Pressable>
@@ -185,48 +202,66 @@ export default function ComboScreen() {
 
             <Modal visible={saveOpen} transparent animationType="fade" onRequestClose={onCloseSave}>
                 <View style={{ flex:1, backgroundColor:'rgba(0,0,0,0.5)', justifyContent:'center', padding:16 }}>
-                    <View style={{ backgroundColor:'#0b0b2a', borderRadius:12, padding:16, borderWidth:2, borderColor:'#fff' }}>
-                        <BodyText style={{ color:'#fff', fontWeight:'700', fontSize:18, marginBottom:12 }}>
+                    <View style={{ backgroundColor: colors.background, borderRadius:12, padding:16, borderWidth:1, borderColor:colors.offWhite }}>
+                        <BodyText style={{ color:colors.offWhite, fontWeight:'700', fontSize:18, marginBottom:12 }}>
                             {comboId ? 'Save Combo' : 'Create Combo'}
                         </BodyText>
 
                         {/* Name input */}
                         {/* Replace with your themed TextInput */}
                         <View style={{ borderWidth:1, borderColor:'#445', borderRadius:8, paddingHorizontal:10, marginBottom:12 }}>
-                            <BodyText style={{ color:'#9ab', marginTop:6 }}>Name (optional)</BodyText>
-                            {/* Your TextInput here to bind `name` */}
-                        </View>
+                            <BodyText style={{ color:'#9ab', marginTop:6 }}>Name (optional):</BodyText>
+                            <TextInput
+                                value={name}
+                                onChangeText={setName}
+                                placeholder='eg. Flash Gordon'
+                                placeholderTextColor='colors.offwhite'
+                                style={{ color: colors.offWhite, paddingVertical:8 }}
+                                autoCapitalize='words'
+                                autoCorrect={false}
+                            />
+                            </View>
 
                         {/* Category picker (simple buttons or your selector) */}
-                        <BodyText style={{ color:'#9ab', marginBottom:6 }}>Category (optional)</BodyText>
+                        {/* Category picker (filtered by user style) */}
+                        <BodyText style={{ color:'#9ab', marginBottom:6 }}>
+                            Category: {userStyle ? `(${STYLE_LABEL[userStyle].toUpperCase()})` : '(choose a style in Skills)'}
+                        </BodyText>
+
                         <View style={{ flexDirection:'row', flexWrap:'wrap', gap:8, marginBottom:16 }}>
-                            {Object.entries(CATEGORY_LABEL).map(([key, label]) => (
+                            {allowedCategories.map((key) => (
                                 <Pressable
                                     key={key}
-                                    onPress={() => setCategory(key as Category)}
+                                    onPress={() => setCategory(key)}
                                     style={{
-                                        paddingHorizontal:10, height:32, borderRadius:8, borderWidth:2,
+                                        paddingHorizontal:10, height:32, borderRadius:8, borderWidth:1,
                                         borderColor: category === key ? '#fff' : '#445',
                                         alignItems:'center', justifyContent:'center'
                                     }}
                                 >
-                                    <BodyText style={{ color:'#fff' }}>{label}</BodyText>
+                                    <BodyText style={{ color:'#fff' }}>{CATEGORY_LABEL[key]}</BodyText>
                                 </Pressable>
                             ))}
-                            <Pressable onPress={() => setCategory(null)} style={{
-                                paddingHorizontal:10, height:32, borderRadius:8, borderWidth:2,
-                                borderColor: category == null ? '#fff' : '#445',
-                                alignItems:'center', justifyContent:'center'
-                            }}>
+
+                            {/* Optional "None" */}
+                            <Pressable
+                                onPress={() => setCategory(null)}
+                                style={{
+                                    paddingHorizontal:10, height:32, borderRadius:8, borderWidth:1,
+                                    borderColor: category == null ? '#fff' : '#445',
+                                    alignItems:'center', justifyContent:'center'
+                                }}
+                            >
                                 <BodyText style={{ color:'#fff' }}>None</BodyText>
                             </Pressable>
                         </View>
 
+
                         <View style={{ flexDirection:'row', gap:8, justifyContent:'flex-end' }}>
-                            <Pressable onPress={onCloseSave} disabled={saving} style={{ paddingHorizontal:12, height:36, borderRadius:8, borderWidth:2, borderColor:'#fff', alignItems:'center', justifyContent:'center' }}>
+                            <Pressable onPress={onCloseSave} disabled={saving} style={{ paddingHorizontal:12, height:36, borderRadius:8, borderWidth:1, borderColor:'#fff', alignItems:'center', justifyContent:'center' }}>
                                 <BodyText style={{ color:'#fff' }}>Cancel</BodyText>
                             </Pressable>
-                            <Pressable onPress={onConfirmSave} disabled={saving} style={{ paddingHorizontal:12, height:36, borderRadius:8, borderWidth:2, borderColor:'#fff', backgroundColor:'#1f2a44', alignItems:'center', justifyContent:'center' }}>
+                            <Pressable onPress={onConfirmSave} disabled={saving} style={{ paddingHorizontal:12, height:36, borderRadius:8, borderWidth:1, borderColor:'#fff', backgroundColor:'#1f2a44', alignItems:'center', justifyContent:'center' }}>
                                 <BodyText style={{ color:'#fff', fontWeight:'700' }}>{saving ? 'Saving…' : (comboId ? 'Save' : 'Create')}</BodyText>
                             </Pressable>
                         </View>

@@ -45,7 +45,7 @@ export default function CombosIndexScreen() {
             <FlatList
                 data={combos}
                 keyExtractor={(c) => c.id}
-                contentContainerStyle={{ padding: 12, gap: 4 }}
+                contentContainerStyle={{ padding: 8, gap: 4 }}
                 renderItem={({ item }) => (
                     <ComboRow
                         meta={item}
@@ -81,5 +81,5 @@ const S = StyleSheet.create({
         height: 56, borderRadius: 14, backgroundColor: colors.text,
         alignItems: 'center', justifyContent: 'center',
     },
-    createText: {fontWeight: '600', fontSize: 22, letterSpacing: 0.5 },
+    createText: {fontWeight: '600', fontSize: 20, letterSpacing: 0.5 },
 });
