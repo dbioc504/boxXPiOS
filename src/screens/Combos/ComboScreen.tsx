@@ -83,7 +83,10 @@ export default function ComboScreen() {
                 setSaveOpen(false);
                 nav.goBack();
             } else {
-                if (name) await repo.renameCombo(userId, comboId, name);
+                await  repo.updateMeta(userId, comboId, {
+                    name: name || 'New Combo',
+                    category: finalCategory
+                })
                 setSaving(false);
                 setSaveOpen(false);
                 nav.goBack();
@@ -215,7 +218,7 @@ export default function ComboScreen() {
                                 value={name}
                                 onChangeText={setName}
                                 placeholder='eg. Flash Gordon'
-                                placeholderTextColor='colors.offwhite'
+                                placeholderTextColor={colors.offWhite}
                                 style={{ color: colors.offWhite, paddingVertical:8 }}
                                 autoCapitalize='words'
                                 autoCorrect={false}

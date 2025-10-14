@@ -21,6 +21,13 @@ export interface CombosRepo {
         meta: Partial<Pick<ComboMeta, "name" | "category">>,
         steps?: Movement[]
     ): Promise<ComboMeta>;
+
+    updateMeta(
+        userId: UserId,
+        id: ComboId,
+        patch: Partial<Pick<ComboMeta, 'name' | 'category'>>
+    ): Promise<void>;
+
     renameCombo(userId: UserId, id: ComboId, name: string): Promise<void>;
     deleteCombo(userId: UserId, id: ComboId): Promise<void>;
     saveSteps(userId: UserId, id: ComboId, steps: Movement[]): Promise<void>;

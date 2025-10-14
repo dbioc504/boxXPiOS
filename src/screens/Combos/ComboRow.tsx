@@ -65,7 +65,7 @@ export function ComboRow({ meta, expanded, onToggle, onEdit, onDelete }: Props) 
             <View style={{ alignItems: 'center', marginBottom: 8 }}>
                 <Text style={{color: colors.text, fontSize: 18, textAlign: 'center'}}>Category:</Text>
                 <Text style={{color: colors.text, fontSize: 18, textAlign: 'center'}}>
-                    {CATEGORY_LABEL[meta.category]}
+                    {meta.category ? CATEGORY_LABEL[meta.category] : 'None'}
                 </Text>
             </View>
 
