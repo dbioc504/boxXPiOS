@@ -19,33 +19,40 @@ function toTitleCase(str) {
 
 type Props = {
     meta: ComboMeta;
+    userId: string;
     expanded: boolean;
     onToggle: (id: string) => void;
     onEdit: (id: string) => void;
     onDelete: (id: string) => void;
 };
 
-export function ComboRow({ meta, expanded, onToggle, onEdit, onDelete }: Props) {
+export function ComboRow({ meta, userId, expanded, onToggle, onEdit, onDelete }: Props) {
     const repo = useCombosRepo();
-    const userId = 'demo';
-
     const [steps, setSteps] = useState<Movement[] | null>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         let alive = true;
+        if (!expanded || steps !== null) return;
+
         (async () => {
-            if (!expanded || steps !== null || loading) return;
             setLoading(true);
             try {
-                const data = await repo.getCombo(userId, meta.id);
+                const data = await repo.getCombo(meta.id);
                 if (alive) setSteps(data?.steps ?? []);
+            } catch (err) {
+                console.log("ComboRow load steps error", err);
+                if (alive) setSteps([]);
             } finally {
                 if (alive) setLoading(false);
             }
         })();
+
         return () => { alive = false; };
-    }, [expanded, steps, loading, repo, userId, meta.id]);
+        // Only re run when the row expands or the combo changes
+    }, [expanded, meta.id]);
+
+
 
     const derivedTitle = meta.name?.trim()
         ? meta.name

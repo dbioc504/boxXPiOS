@@ -2,33 +2,33 @@
 import { Movement } from "@/types/common";
 
 export type ComboId = string;
-export type UserId = string;
 
 export type ComboMeta = {
     id: ComboId;
-    userId: UserId;
+    // You usually don’t need userId in the UI layer; omit it from the public type.
     name: string;
     category?: string | null;
-    createdAt: string;
-    updatedAt: string;
+    createdAt: string;  // ISO string
+    updatedAt: string;  // ISO string
 };
 
 export interface CombosRepo {
-    listCombos(userId: UserId): Promise<ComboMeta[]>;
-    getCombo(userId: UserId, id: ComboId): Promise<{ meta: ComboMeta; steps: Movement[] } | null>;
+    // All methods act on “current user” implicitly (via Supabase session + RLS)
+    listCombos(): Promise<ComboMeta[]>;
+
+    getCombo(id: ComboId): Promise<{ meta: ComboMeta; steps: Movement[] } | null>;
+
     createCombo(
-        userId: UserId,
         meta: Partial<Pick<ComboMeta, "name" | "category">>,
         steps?: Movement[]
     ): Promise<ComboMeta>;
 
     updateMeta(
-        userId: UserId,
         id: ComboId,
-        patch: Partial<Pick<ComboMeta, 'name' | 'category'>>
+        patch: Partial<Pick<ComboMeta, "name" | "category">>
     ): Promise<void>;
 
-    renameCombo(userId: UserId, id: ComboId, name: string): Promise<void>;
-    deleteCombo(userId: UserId, id: ComboId): Promise<void>;
-    saveSteps(userId: UserId, id: ComboId, steps: Movement[]): Promise<void>;
+    deleteCombo(id: ComboId): Promise<void>;
+
+    saveSteps(id: ComboId, steps: Movement[]): Promise<void>;
 }

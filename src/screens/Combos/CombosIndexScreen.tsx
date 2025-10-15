@@ -1,4 +1,4 @@
-import React, {useCallback, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import {ComboRow} from './ComboRow';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -9,17 +9,22 @@ import {NativeStackScreenProps} from "@react-navigation/native-stack";
 import {RootStackParamList} from "@/navigation/RootNavigator";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 import {ComboMeta} from "@/lib/repos/combos.repo";
+import {useAuth} from "@/lib/AuthProvider";
+import {probeStepsOnce} from "@/dev/selfTest";
 
 export default function CombosIndexScreen() {
     const nav = useNavigation<NativeStackScreenProps<RootStackParamList, 'CombosIndex'>['navigation']>();
     const repo = useCombosRepo();
-    const userId = 'demo';
+    const { user, loading } = useAuth();
+    const userId = user?.id;
+    if (!userId) return null;
 
     const [combos, setCombos] = useState<ComboMeta[]>([]);
     const [openId, setOpenId] = useState<string | null>(null);
 
     const load = useCallback(async () => {
-        const list = await repo.listCombos(userId);
+        if (!userId) return;
+        const list = await repo.listCombos();
         setCombos(list);
     }, [repo,userId]);
 
@@ -29,14 +34,24 @@ export default function CombosIndexScreen() {
         }, [load])
     )
 
+    useEffect(() => {
+        let done = false;
+        if (loading || !user || done) return;
+        done = true;
+        probeStepsOnce().catch(err => console.log("probe error", err));
+    }, [loading, user]);
+
+
     const onToggle = (id: string) => setOpenId(prev => prev === id ? null : id);
     const onEdit = (id: string) => nav.navigate('Combos', { comboId: id });
     const onDelete = async (id: string) => {
-        await repo.deleteCombo(userId, id);
+        await repo.deleteCombo(id);
         if (openId === id) setOpenId(null);
         await load();
     };
 
+    if (loading) return null;
+    if (!userId) return null;
 
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
@@ -49,6 +64,7 @@ export default function CombosIndexScreen() {
                 renderItem={({ item }) => (
                     <ComboRow
                         meta={item}
+                        userId={userId}
                         expanded={openId === item.id}
                         onToggle={onToggle}
                         onEdit={onEdit}

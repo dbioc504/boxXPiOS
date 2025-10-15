@@ -15,6 +15,7 @@ import {useNavigation, useRoute} from "@react-navigation/native";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 import { useStyle } from '@/lib/providers/StyleProvider';
 import { STYLE_TO_CATEGORIES } from '@/types/validation';
+import {useAuth} from "@/lib/AuthProvider";
 
 type RouteProps = NativeStackScreenProps<RootStackParamList, 'Combos'>['route'];
 type NavProps = NativeStackScreenProps<RootStackParamList, 'Combos'>['navigation'];
@@ -30,7 +31,11 @@ export default function ComboScreen() {
     const route = useRoute<RouteProps>();
     const nav = useNavigation<NavProps>();
     const repo = useCombosRepo();
-    const userId = 'demo';
+    const { user, loading: authLoading } = useAuth();
+    const userId = user?.id;
+
+    if (authLoading) return null;
+    if (!userId) return null;
 
     const comboId = route.params?.comboId ?? null;
 
@@ -54,7 +59,7 @@ export default function ComboScreen() {
         let alive = true;
         (async () => {
             if (!comboId) return;
-            const res = await repo.getCombo(userId, comboId);
+            const res = await repo.getCombo(comboId);
             if (!alive || !res) return;
 
             setName(res.meta.name ?? '');
@@ -78,12 +83,12 @@ export default function ComboScreen() {
                 category && allowedCategories.includes(category) ? category : null;
 
             if (!comboId) {
-                await repo.createCombo(userId, { name: name || 'New Combo', category: finalCategory }, steps);
+                await repo.createCombo({ name: name || 'New Combo', category: finalCategory }, steps);
                 setSaving(false);
                 setSaveOpen(false);
                 nav.goBack();
             } else {
-                await  repo.updateMeta(userId, comboId, {
+                await  repo.updateMeta(comboId, {
                     name: name || 'New Combo',
                     category: finalCategory
                 })
@@ -106,7 +111,7 @@ export default function ComboScreen() {
 
         saveTimer.current = setTimeout(async () => {
             try {
-                await repo.saveSteps(userId, comboId, steps);
+                await repo.saveSteps(comboId, steps);
                 savingRef.current = 'saved';
             } catch (e) {
                 savingRef.current = 'error';
@@ -128,7 +133,7 @@ export default function ComboScreen() {
                 return;
             }
             setLoading(true);
-            const res = await repo.getCombo(userId, comboId);
+            const res = await repo.getCombo(comboId);
             if (!alive) return;
 
             if (!res) {
