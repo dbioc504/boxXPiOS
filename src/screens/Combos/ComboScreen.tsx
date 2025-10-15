@@ -1,6 +1,6 @@
 // ComboScreen.tsx
 import React, {useEffect, useMemo, useRef, useState} from 'react';
-import {Alert, Modal, Pressable, TextInput, View} from 'react-native';
+import {Alert, Modal, Pressable, TextInput, View, StyleSheet} from 'react-native';
 import {DndProvider} from '@/screens/Combos/DndComponents/DndProvider';
 import {Category, CATEGORY_LABEL, Movement, STYLE_LABEL} from '@/types/common';
 import {CombosDropListener} from "@/screens/Combos/DndComponents/CombosDropListener";
@@ -261,11 +261,25 @@ export default function ComboScreen() {
 
 
                         <View style={{ flexDirection:'row', gap:8, justifyContent:'flex-end' }}>
-                            <Pressable onPress={onCloseSave} disabled={saving} style={{ paddingHorizontal:12, height:36, borderRadius:8, borderWidth:1, borderColor:'#fff', alignItems:'center', justifyContent:'center' }}>
+                            <Pressable
+                                onPress={onCloseSave}
+                                disabled={saving}
+                                style={({pressed}) => [
+                                    S.cancelSaveBtn,
+                                    { opacity: (pressed) ? 0.7 : 1 }
+                                ]}
+                            >
                                 <BodyText style={{ color:'#fff' }}>Cancel</BodyText>
                             </Pressable>
-                            <Pressable onPress={onConfirmSave} disabled={saving} style={{ paddingHorizontal:12, height:36, borderRadius:8, borderWidth:1, borderColor:'#fff', backgroundColor:'#1f2a44', alignItems:'center', justifyContent:'center' }}>
-                                <BodyText style={{ color:'#fff', fontWeight:'700' }}>{saving ? 'Saving…' : (comboId ? 'Save' : 'Create')}</BodyText>
+                            <Pressable
+                                onPress={onConfirmSave}
+                                disabled={saving}
+                                style={({pressed}) => [
+                                    S.cancelSaveBtn,
+                                    { opacity: (pressed) ? 0.7 : 1 }
+                                ]}
+                            >
+                                <BodyText style={{ color:'#fff' }}>{saving ? 'Saving…' : (comboId ? 'Save' : 'Create')}</BodyText>
                             </Pressable>
                         </View>
                     </View>
@@ -275,3 +289,16 @@ export default function ComboScreen() {
         </SafeAreaView>
     );
 }
+
+const S = StyleSheet.create({
+    cancelSaveBtn: {
+        paddingHorizontal:12,
+        height:36,
+        borderRadius:8,
+        borderWidth:1,
+        borderColor:'#fff',
+        backgroundColor:'#1f2a44',
+        alignItems:'center',
+        justifyContent:'center'
+    }
+})
