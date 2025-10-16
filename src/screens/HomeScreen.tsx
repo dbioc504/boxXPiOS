@@ -27,7 +27,7 @@ export default function HomeScreen() {
                 <MainButton label="COMBOS" onPress={() => nav.navigate('CombosIndex')}/>
                 <MainButton label="MECHANICS" onPress={() => {}}/>
                 <MainButton label="DOWNLOADS" onPress={() => {}}/>
-                <MainButton label="TIMER" onPress={() => {}}/>
+                <MainButton label="TIMER" onPress={() => nav.navigate('TimerSetup')}/>
 
             </View>
             {/*login buttons*/}

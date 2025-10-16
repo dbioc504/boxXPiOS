@@ -1,11 +1,9 @@
 // src/lib/repos/combos.repo.supabase.ts
-import { supabase } from "@/lib/supabase";
-import { CombosRepo, ComboMeta, ComboId } from "./combos.repo";
-import { Movement } from "@/types/common";
+import {supabase} from "@/lib/supabase";
+import {ComboMeta, CombosRepo} from "./combos.repo";
+import {Movement} from "@/types/common";
 
 function assertAuthed() {
-    // (Optional) If you want to hard-fail when no user is present:
-    // In Expo RN, supabase-js caches the session; you can also inject user externally.
     return;
 }
 
@@ -62,6 +60,9 @@ export const supabaseCombosRepo: CombosRepo = {
     },
 
     async createCombo(meta, steps = []) {
+        if (!steps || steps.length < 2) {
+            throw new Error("Combo must have at least two steps");
+        }
         // get the current user so we can satisfy RLS check(user_id = auth.uid())
         const { data: { user }, error: userErr } = await supabase.auth.getUser();
         if (userErr) throw userErr;

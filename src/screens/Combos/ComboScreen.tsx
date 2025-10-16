@@ -2,7 +2,7 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {Alert, Modal, Pressable, TextInput, View, StyleSheet} from 'react-native';
 import {DndProvider} from '@/screens/Combos/DndComponents/DndProvider';
-import {Category, CATEGORY_LABEL, Movement, STYLE_LABEL} from '@/types/common';
+import {Category, CATEGORY_LABEL, Movement, MOVEMENT_LABEL, STYLE_LABEL} from '@/types/common';
 import {CombosDropListener} from "@/screens/Combos/DndComponents/CombosDropListener";
 import {TimelineSlots} from "@/screens/Combos/TimelineSlots";
 import {SafeAreaView} from "react-native-safe-area-context";
@@ -77,31 +77,33 @@ export default function ComboScreen() {
 
     const onConfirmSave = async () => {
         try {
-            setSaving(true);
+            if (steps.length < 2) {
+                Alert.alert("Add at least two moves to save");
+                return;
+            }
+
+            const fallbackName =
+                name?.trim() ||
+                steps.slice(0, 3).map(s => MOVEMENT_LABEL[s]).join(" ");
 
             const finalCategory =
                 category && allowedCategories.includes(category) ? category : null;
 
             if (!comboId) {
-                await repo.createCombo({ name: name || 'New Combo', category: finalCategory }, steps);
-                setSaving(false);
-                setSaveOpen(false);
-                nav.goBack();
+                await repo.createCombo({ name: fallbackName, category: finalCategory }, steps);
             } else {
-                await  repo.updateMeta(comboId, {
-                    name: name || 'New Combo',
-                    category: finalCategory
-                })
-                setSaving(false);
-                setSaveOpen(false);
-                nav.goBack();
+                await repo.updateMeta(comboId, { name: fallbackName, category: finalCategory });
+                await repo.saveSteps(comboId, steps);
             }
-        } catch (e) {
-            setSaving(false);
+
             setSaveOpen(false);
-            Alert.alert('Save failed', 'Please try again');
+            nav.goBack();
+        } catch (e) {
+            setSaveOpen(false);
+            Alert.alert("Save failed", "Please try again");
         }
     };
+
 
     useEffect(() => {
         if (!comboId) return;
@@ -152,6 +154,8 @@ export default function ComboScreen() {
         return () => { alive = false; };
     }, [comboId, repo, nav]);
 
+    const canSave = steps.length >= 2;
+
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
             <Header title={title} />
@@ -194,7 +198,7 @@ export default function ComboScreen() {
 
             <View style={{ padding: 12 }}>
                 <Pressable
-                    disabled={saving}
+                    disabled={saving || canSave}
                     onPress={onOpenSave}
                     style={({pressed}) => ({
                         height: 56, borderRadius: 14,
@@ -223,7 +227,7 @@ export default function ComboScreen() {
                                 value={name}
                                 onChangeText={setName}
                                 placeholder='eg. Flash Gordon'
-                                placeholderTextColor={colors.offWhite}
+                                placeholderTextColor='#445'
                                 style={{ color: colors.offWhite, paddingVertical:8 }}
                                 autoCapitalize='words'
                                 autoCorrect={false}
