@@ -7,7 +7,8 @@ import { useNavigation } from "@react-navigation/native";
 import { Header, BodyText } from "@/theme/T";
 import { colors, sharedStyle } from "@/theme/theme";
 import { fmtMMSS } from "@/lib/time";
-import { DurationPicker } from "@/screens/Timer/DurationPicker.ios";
+// @ts-ignore
+import { DurationPicker } from "@/screens/Timer/DurationPicker";
 import { TimerConfig, DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY } from "@/types/timer";
 import type { RootStackParamList } from "@/navigation/RootNavigator";
 
@@ -162,9 +163,11 @@ function RowLabel({ children }: { children: React.ReactNode }) {
 
 function Pill({ children }: { children: React.ReactNode }) {
     return (
-        <BodyText style={{ color: colors.offWhite, fontWeight: '800', fontSize: 16 }}>
-            {children}
-        </BodyText>
+        <View style={S.pill}>
+            <BodyText style={{color: colors.offWhite, fontWeight: '800', fontSize: 16}}>
+                {children}
+            </BodyText>
+        </View>
     );
 }
 

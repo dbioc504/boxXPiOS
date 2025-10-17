@@ -23,11 +23,12 @@ export function DurationPicker({
                         mode='countdown'
                         display='spinner'
                         value={new Date(ms)}
-                        onChange={(_, d) => d && setMs(d.getTime)}
+                        onChange={(_, d) => d && setMs(d.getTime())}
+                        style={{ height: 216 }}
                     />
                     <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12, marginTop: 12 }}>
-                        <Pressable onPress={onClose}><BodyText>Cancel</BodyText></Pressable>
-                        <Pressable onPress={() => onConfirm(Math.round(ms / 1000))}><BodyText>Done</BodyText></Pressable>
+                        <Pressable onPress={onClose}><BodyText style={{ color: colors.offWhite }}>Cancel</BodyText></Pressable>
+                        <Pressable onPress={() => onConfirm(Math.round(ms / 1000))}><BodyText style={{ color: colors.offWhite }}>Done</BodyText></Pressable>
                     </View>
                 </View>
             </View>

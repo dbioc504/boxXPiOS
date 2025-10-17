@@ -1,4 +1,4 @@
-// ComboScreen.tsx
+// ComboBuilderScreen.tsx
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {Alert, Modal, Pressable, TextInput, View, StyleSheet} from 'react-native';
 import {DndProvider} from '@/screens/Combos/DndComponents/DndProvider';
@@ -17,10 +17,10 @@ import { useStyle } from '@/lib/providers/StyleProvider';
 import { STYLE_TO_CATEGORIES } from '@/types/validation';
 import {useAuth} from "@/lib/AuthProvider";
 
-type RouteProps = NativeStackScreenProps<RootStackParamList, 'Combos'>['route'];
-type NavProps = NativeStackScreenProps<RootStackParamList, 'Combos'>['navigation'];
+type RouteProps = NativeStackScreenProps<RootStackParamList, 'ComboBuilder'>['route'];
+type NavProps = NativeStackScreenProps<RootStackParamList, 'ComboBuilder'>['navigation'];
 
-export default function ComboScreen() {
+export default function ComboBuilderScreen() {
     const savingRef = useRef<'idle' | 'saving' | 'saved' | 'error'>('idle');
     const saveTimer = useRef<NodeJS.Timeout>(null);
 
@@ -198,7 +198,7 @@ export default function ComboScreen() {
 
             <View style={{ padding: 12 }}>
                 <Pressable
-                    disabled={saving || canSave}
+                    disabled={saving || !canSave}
                     onPress={onOpenSave}
                     style={({pressed}) => ({
                         height: 56, borderRadius: 14,
@@ -285,7 +285,7 @@ export default function ComboScreen() {
                                 disabled={saving}
                                 style={({pressed}) => [
                                     S.cancelSaveBtn,
-                                    { opacity: (pressed) ? 0.7 : 1 }
+                                    { opacity: (pressed) ? 0.7 : 1, backgroundColor: colors.pressedBorder  }
                                 ]}
                             >
                                 <BodyText style={{ color:'#fff' }}>{saving ? 'Saving…' : (comboId ? 'Save' : 'Create')}</BodyText>

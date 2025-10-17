@@ -3,7 +3,7 @@ import {NavigationContainer} from "@react-navigation/native";
 import HomeScreen from "../screens/HomeScreen";
 import SignInScreen from "../screens/SignInScreen";
 import SkillsScreen from "../screens/Skills/SkillsScreen"
-import ComboScreen from "@/screens/Combos/ComboScreen";
+import ComboBuilderScreen from "@/screens/Combos/ComboBuilderScreen";
 import CombosIndexScreen from "@/screens/Combos/CombosIndexScreen";
 import TimerSetupScreen from "@/screens/Timer/TimerSetupScreen";
 
@@ -11,7 +11,7 @@ export type RootStackParamList = {
     Home: undefined;
     SignIn: undefined;
     Skills: undefined;
-    Combos: { comboId: string } | undefined;
+    ComboBuilder: { comboId: string } | undefined;
     CombosIndex: undefined;
     TimerSetup: undefined;
 };
@@ -32,7 +32,7 @@ export default function RootNavigator() {
                 <Stack.Screen name="SignIn" component={SignInScreen} />
                 <Stack.Screen name="Skills" component={SkillsScreen} />
                 <Stack.Screen name='CombosIndex' component={CombosIndexScreen} />
-                <Stack.Screen name='Combos' component={ComboScreen}/>
+                <Stack.Screen name='ComboBuilder' component={ComboBuilderScreen}/>
                 <Stack.Screen name='TimerSetup' component={TimerSetupScreen}/>
             </Stack.Navigator>
         </NavigationContainer>

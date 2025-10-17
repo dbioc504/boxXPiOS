@@ -110,7 +110,7 @@ export function ComboRow({ meta, userId, expanded, onToggle, onEdit, onDelete }:
                 <Pressable
                     style={({ pressed }) => [
                         styles.actionBtn,
-                        { opacity: (pressed ? 0.7 : 1) }
+                        { opacity: (pressed ? 0.7 : 1), backgroundColor: colors.selected }
                     ]}
                     onPress={() => {
                         Alert.alert('Delete Combo?', `Delete "${title}?`, [

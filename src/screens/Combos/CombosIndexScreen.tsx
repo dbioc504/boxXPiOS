@@ -43,7 +43,7 @@ export default function CombosIndexScreen() {
 
 
     const onToggle = (id: string) => setOpenId(prev => prev === id ? null : id);
-    const onEdit = (id: string) => nav.navigate('Combos', { comboId: id });
+    const onEdit = (id: string) => nav.navigate('ComboBuilder', { comboId: id });
     const onDelete = async (id: string) => {
         await repo.deleteCombo(id);
         if (openId === id) setOpenId(null);
@@ -80,7 +80,7 @@ export default function CombosIndexScreen() {
                         {opacity: (pressed ? 0.7 : 1)},
                         {backgroundColor: pressed ? colors.pressedBorder : colors.text}
                     ]}
-                    onPress={() => nav.navigate('Combos')}
+                    onPress={() => nav.navigate('ComboBuilder')}
                 >
                     <Text style={S.createText}>CREATE +</Text>
                 </Pressable>
