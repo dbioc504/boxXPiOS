@@ -7,14 +7,13 @@ import { useNavigation } from "@react-navigation/native";
 import { Header, BodyText } from "@/theme/T";
 import { colors, sharedStyle } from "@/theme/theme";
 import { fmtMMSS } from "@/lib/time";
-// @ts-ignore
-import { DurationPicker } from "@/screens/Timer/DurationPicker";
+import { CustomTimePicker } from "@/screens/Timer/CustomTimePicker";
 import { TimerConfig, DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY } from "@/types/timer";
 import type { RootStackParamList } from "@/navigation/RootNavigator";
 
 type Nav = NativeStackScreenProps<RootStackParamList, "TimerSetup">["navigation"];
 
-type OpenPickerTarget = null | "round" | "rest" | "warmup";
+type OpenPickerTarget = null | "rounds" | "round" | "rest" | "warmup";
 
 export default function TimerSetupScreen() {
     const nav = useNavigation<Nav>();
@@ -38,10 +37,11 @@ export default function TimerSetupScreen() {
 
     const openPicker = (t: OpenPickerTarget) => setOpen(t);
     const closePicker = () => setOpen(null);
-    const setPicked = (sec: number) => {
-        if (open === 'round') setCfg(c => ({ ...c, roundSec: sec }));
-        if (open === 'rest') setCfg(c => ({ ...c, restSec: sec }));
-        if (open === 'warmup') setCfg(c => ({ ...c, warmupSec: sec }));
+    const setPicked = (value: number) => {
+        if (open === 'rounds') setCfg(c => ({ ...c, rounds: value }));
+        if (open === 'round') setCfg(c => ({ ...c, roundSec: value }));
+        if (open === 'rest') setCfg(c => ({ ...c, restSec: value }));
+        if (open === 'warmup') setCfg(c => ({ ...c, warmupSec: value }));
         closePicker();
     };
 
@@ -72,13 +72,9 @@ export default function TimerSetupScreen() {
 
             <View style={{ paddingHorizontal: 12, gap: 12 }}>
                 {/*  ROUNDS  */}
-                <Row>
+                <Row onPress={() => openPicker("rounds")}>
                     <RowLabel>ROUNDS</RowLabel>
-                    <Counter
-                        value={cfg.rounds}
-                        onDec={() => bumpRounds(-1)}
-                        onInc={() => bumpRounds(1)}
-                    />
+                    <Pill>{cfg.rounds}</Pill>
                 </Row>
 
                 {/*  ROUND TIME  */}
@@ -127,9 +123,16 @@ export default function TimerSetupScreen() {
             </View>
 
             {open && (
-                <DurationPicker
-                    initialSec={
-                        open === "round" ? cfg.roundSec : open === "rest" ? cfg.restSec : cfg.warmupSec
+                <CustomTimePicker
+                    mode={
+                        open === "rounds" ? "rounds" :
+                        open === "round" ? "roundTime" :
+                        open === "rest" ? "restTime" : "getReadyTime"
+                    }
+                    initialValue={
+                        open === "rounds" ? cfg.rounds :
+                        open === "round" ? cfg.roundSec :
+                        open === "rest" ? cfg.restSec : cfg.warmupSec
                     }
                     onClose={closePicker}
                     onConfirm={setPicked}
