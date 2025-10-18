@@ -120,7 +120,7 @@ export function CustomTimePicker({
                         {
                             opacity,
                             transform: [{ scale }],
-                            color: isSelected ? colors.text : colors.offWhite,
+                            color: isSelected ? 'white' : colors.offWhite,
                             fontWeight: isSelected ? "800" : "400"
                         }
                     ]}
@@ -195,11 +195,9 @@ const S = StyleSheet.create({
         right: 0,
         height: ITEM_HEIGHT,
         marginTop: -ITEM_HEIGHT / 2,
-        borderTopWidth: 2,
-        borderBottomWidth: 2,
-        borderColor: colors.text,
         zIndex: 1,
-        backgroundColor: "rgba(255,255,255,0.05)",
+        backgroundColor: colors.categories,
+        opacity: 0.3
     },
     item: { justifyContent: "center", alignItems: "center" },
     itemText: { fontSize: 24 },

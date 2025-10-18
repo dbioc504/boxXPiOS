@@ -10,7 +10,8 @@ export const colors = {
     form: '#5A5361',
     offWhite: '#DFDAF0',
     select: '#C26B6B',
-    selected: '#943D3D'
+    selected: '#943D3D',
+    timerStart: '#2F742F'
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };
