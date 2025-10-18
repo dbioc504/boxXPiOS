@@ -27,7 +27,7 @@ function getValuesForMode(mode: PickerMode): number[] {
             return [60, 120, 180, 240];
         case "restTime":
         case "getReadyTime":
-            return [15, 30, 45, 60];
+            return [0, 15, 30, 45, 60];
         default:
             return [];
     }

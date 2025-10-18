@@ -54,7 +54,7 @@ export default function TimerSetupScreen() {
             Alert.alert("Timer", "Please set at least 1 round and >= 0:30 round time.");
             return;
         }
-        nav.navigate("TimerRun", { fromSetup: true });
+        nav.navigate("TimerRun");
     };
 
     return (
