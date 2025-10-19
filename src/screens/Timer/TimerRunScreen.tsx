@@ -111,15 +111,15 @@ export default function TimerRunScreen() {
 
     const color =
         ps?.phase === "getReady" ||
-        ps?.phase === "rest" ? colors.select :
+        ps?.phase === "rest" ? colors.timerRed :
         ps?.phase === "round" ? colors.timerStart : colors.background;
 
     return (
-        <SafeAreaView style={[sharedStyle.safeArea, styles.screen]}>
+        <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
                 <Header title=""/>
 
                 <View style={styles.center}>
-                    <BodyText style={[styles.phase, { color }]}>{phaseLabel}</BodyText>
+                    <BodyText style={[styles.phase, { color: colors.offWhite }]}>{phaseLabel}</BodyText>
                     <BodyText style={styles.time}>{fmtMMSS(remainSec)}</BodyText>
 
                     <View style={styles.progressWrap}>
@@ -209,10 +209,10 @@ const styles = StyleSheet.create({
         width: "90%",
         height: 10,
         borderRadius: 999,
-        backgroundColor: "#1f2a44",
+        backgroundColor: colors.offWhite,
         overflow: "hidden",
         borderWidth: 1,
-        borderColor: "#2a3350",
+        borderColor: colors.offWhite,
         marginTop: 6,
     },
     progressBar: { height: "100%" },
