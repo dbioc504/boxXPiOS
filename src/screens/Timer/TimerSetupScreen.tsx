@@ -138,7 +138,12 @@ function Row({ children, onPress }: { children: React.ReactNode; onPress?: () =>
             onPress={onPress}
             style={({ pressed }) => [
                 S.row,
-                { backgroundColor: pressed ? colors.pressedBorder : colors.mainBtn },
+                { opacity: pressed ? 0.7 : 1 },
+                pressed && {
+                    backgroundColor: colors.signIn,
+                    transform: [{ scale: 1.02 }],
+                    borderColor: colors.form
+                },
             ]}
         >
             {children}
@@ -222,16 +227,16 @@ const S = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "space-between",
+        backgroundColor: colors.mainBtn
     },
     pill: {
         minWidth: 74,
         height: 36,
         borderRadius: 10,
-        borderWidth: 0.5,
-        borderColor: colors.offWhite,
         alignItems: "center",
         justifyContent: "center",
         paddingHorizontal: 10,
+        backgroundColor: colors.categories
     },
     primaryBtn: {
         flex: 1,

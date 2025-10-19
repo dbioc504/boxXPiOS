@@ -12,7 +12,9 @@ export const colors = {
     select: '#C26B6B',
     selected: '#943D3D',
     timerStart: '#2F742F',
-    timerRed: '#BD0000'
+    timerRed: '#BD0000',
+    timePicker: '#373A3E',
+    timeContainer: '#62676F'
 }
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };

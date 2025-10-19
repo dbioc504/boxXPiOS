@@ -171,10 +171,10 @@ export function CustomTimePicker({
 
                     <View style={S.buttonRow}>
                         <Pressable onPress={onClose} style={({ pressed }) => [S.button, pressed && S.buttonPressed]}>
-                            <BodyText style={S.buttonText}>Cancel</BodyText>
+                            <BodyText style={S.buttonText}>CANCEL</BodyText>
                         </Pressable>
                         <Pressable onPress={() => onConfirm(values[selectedIndex])} style={({ pressed }) => [S.button, pressed && S.buttonPressed]}>
-                            <BodyText style={S.buttonText}>Done</BodyText>
+                            <BodyText style={[S.buttonText, { color: '#2821FF' }]}>DONE</BodyText>
                         </Pressable>
                     </View>
                 </View>
@@ -185,7 +185,7 @@ export function CustomTimePicker({
 
 const S = StyleSheet.create({
     overlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", padding: 16 },
-    container: { backgroundColor: colors.background, borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.offWhite },
+    container: { backgroundColor: colors.timeContainer, borderRadius: 12, padding: 16, },
     title: { color: colors.offWhite, fontWeight: "700", fontSize: 18, marginBottom: 16, textAlign: "center" },
     pickerContainer: { height: CONTAINER_HEIGHT, position: "relative", marginBottom: 16 },
     selectionIndicator: {
@@ -196,7 +196,7 @@ const S = StyleSheet.create({
         height: ITEM_HEIGHT,
         marginTop: -ITEM_HEIGHT / 2,
         zIndex: 1,
-        backgroundColor: colors.categories,
+        backgroundColor: colors.timePicker,
         opacity: 0.3
     },
     item: { justifyContent: "center", alignItems: "center" },
@@ -206,12 +206,9 @@ const S = StyleSheet.create({
         paddingHorizontal: 12,
         height: 36,
         borderRadius: 8,
-        borderWidth: 1,
-        borderColor: colors.offWhite,
-        backgroundColor: "#1f2a44",
         alignItems: "center",
         justifyContent: "center",
     },
     buttonPressed: { opacity: 0.7 },
-    buttonText: { color: colors.offWhite },
+    buttonText: { color: colors.offWhite, fontWeight: '500' },
 });
