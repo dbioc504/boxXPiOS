@@ -45,7 +45,7 @@ export default function TimerSetupScreen() {
         closePicker();
     };
 
-    const goSkillDisplay = () => nav.navigate("SkillDisplay");
+    const goSkillDisplay = () => nav.navigate("TimerSkillDisplay");
     const goComboDisplay = () => nav.navigate("ComboDisplay");
     const goMechanicsDisplay = () => nav.navigate("MechanicsDisplay");
 

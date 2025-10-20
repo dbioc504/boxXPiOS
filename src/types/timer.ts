@@ -7,6 +7,7 @@ export type TimerConfig = {
     showCombos: boolean;
     showMechanics: boolean;
     skillMode: "balanced" | "specialized";
+    specializedCategory?: import("@/types/common").Category | null;
 };
 
 export const DEFAULT_TIMER_CONFIG: TimerConfig = {
@@ -18,6 +19,7 @@ export const DEFAULT_TIMER_CONFIG: TimerConfig = {
     showCombos: false,
     showMechanics: false,
     skillMode: "balanced",
+    specializedCategory: null,
 };
 
 export const TIMER_STORE_KEY = "timerConfig:v1";

@@ -7,6 +7,7 @@ import ComboBuilderScreen from "@/screens/Combos/ComboBuilderScreen";
 import CombosIndexScreen from "@/screens/Combos/CombosIndexScreen";
 import TimerSetupScreen from "@/screens/Timer/TimerSetupScreen";
 import TimerRunScreen from "@/screens/Timer/TimerRunScreen";
+import SkillDisplayScreen from "@/screens/Timer/SkillDisplayScreen";
 
 export type RootStackParamList = {
     Home: undefined;
@@ -16,6 +17,7 @@ export type RootStackParamList = {
     CombosIndex: undefined;
     TimerSetup: undefined;
     TimerRun: undefined;
+    TimerSkillDisplay: undefined;
 };
 
 const NAV_ID = 'Rootstack' as const;
@@ -37,6 +39,7 @@ export default function RootNavigator() {
                 <Stack.Screen name='ComboBuilder' component={ComboBuilderScreen}/>
                 <Stack.Screen name='TimerSetup' component={TimerSetupScreen}/>
                 <Stack.Screen name='TimerRun' component={TimerRunScreen}/>
+                <Stack.Screen name='TimerSkillDisplay' component={SkillDisplayScreen}/>
             </Stack.Navigator>
         </NavigationContainer>
     );
