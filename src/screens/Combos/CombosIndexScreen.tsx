@@ -37,7 +37,6 @@ export default function CombosIndexScreen() {
     useEffect(() => {
         let done = false;
         if (loading || !user || done) return;
-        done = true;
         probeStepsOnce().catch(err => console.log("probe error", err));
     }, [loading, user]);
 
@@ -82,7 +81,7 @@ export default function CombosIndexScreen() {
                     ]}
                     onPress={() => nav.navigate('ComboBuilder')}
                 >
-                    <Text style={S.createText}>CREATE +</Text>
+                    <Text style={[S.createText, { fontWeight: '600', fontSize: 20, letterSpacing: 0.5 }]}>CREATE +</Text>
                 </Pressable>
             </View>
 

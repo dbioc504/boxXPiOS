@@ -1,10 +1,9 @@
 import React from 'react';
-import {Modal, View, TextInput, Pressable, Keyboard, StyleSheet, Alert, ScrollView} from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BodyText, Header } from "@/theme/T";
-import { colors } from "@/theme/theme";
+import {Alert, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View} from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
+import {BodyText, Header} from "@/theme/T";
+import {colors} from "@/theme/theme";
 import {Ionicons} from "@expo/vector-icons";
-import {skillsStyles} from "@/screens/Skills/styles";
 
 type Props = {
     visible: boolean;
@@ -103,7 +102,7 @@ export function TechniqueFormModal({
                                             ? <Ionicons name='add' size={20} style={{marginRight: 4}}/>
                                             : null
                                 }
-                                <BodyText style={styles.primaryText}>{submitLabel}</BodyText>
+                                <BodyText style={[styles.primaryText, { fontSize: 20, letterSpacing: 0.5 }]}>{submitLabel}</BodyText>
                             </View>
                         </Pressable>
                     </View>

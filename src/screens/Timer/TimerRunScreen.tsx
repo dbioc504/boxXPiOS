@@ -216,9 +216,9 @@ function PrimaryBtn({ label, onPress }: { label: string; onPress: () => void }) 
 
 const styles = StyleSheet.create({
     screen: { flex: 1 },
-    center: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 16, gap: 12, alignSelf: "stretch" },
-    phase: { fontSize: 22, fontWeight: "800", letterSpacing: 0.5 },
-    time: { fontSize: 64, fontWeight: "900", color: colors.offWhite },
+    center: { flex: 1, alignItems: "center", paddingHorizontal: 16, gap: 3, alignSelf: "stretch" },
+    phase: { fontSize: 30, fontWeight: "800", letterSpacing: 0.5 },
+    time: { fontSize: 80, fontWeight: "800", color: colors.offWhite },
     progressWrap: {
         width: "90%",
         height: 10,
@@ -236,9 +236,6 @@ const styles = StyleSheet.create({
         marginTop: 8,
         marginHorizontal: 16,
         borderRadius: 12,
-        borderWidth: 1,
-        borderColor: colors.offWhite,
-        backgroundColor: colors.mainBtn,
         paddingHorizontal: 12,
         paddingVertical: 6,
     },
@@ -254,5 +251,5 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    primaryBtnText: { color: colors.background, fontWeight: "800", fontSize: 18 },
+    primaryBtnText: { color: colors.background, fontWeight: "600", fontSize: 20, letterSpacing: 0.5 },
 });

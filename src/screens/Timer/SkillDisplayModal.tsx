@@ -1,28 +1,27 @@
 // src/screens/Timer/SkillDisplayModal.tsx
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal, View, StyleSheet, Pressable, ActivityIndicator, Alert, ScrollView } from "react-native";
+import React, {useCallback, useEffect, useMemo, useState} from "react";
+import {ActivityIndicator, Alert, Modal, Pressable, StyleSheet, View} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { BodyText, Header } from "@/theme/T";
-import { colors } from "@/theme/theme";
-import { CATEGORY_LABEL, type Category } from "@/types/common";
-import type { Technique } from "@/types/technique";
-import { DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig } from "@/types/timer";
-import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved, type RoundPlan } from "@/types/skillPlan";
-import { planBalanced, planSpecialized } from "@/screens/Timer/planner";
-import { ExpandableSection } from "@/screens/Skills/ExpandableSection";
-import { RadioRow } from "@/screens/Skills/RadioRow";
-import { useRepos } from "@/lib/providers/RepoProvider";
-import { useAuth } from "@/lib/AuthProvider";
-import { useStyle } from "@/lib/providers/StyleProvider";
-import { STYLE_TO_CATEGORIES } from "@/types/validation";
+import {SafeAreaView} from "react-native-safe-area-context";
+import {BodyText, Header} from "@/theme/T";
+import {colors} from "@/theme/theme";
+import {type Category, CATEGORY_LABEL} from "@/types/common";
+import type {Technique} from "@/types/technique";
+import {DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig} from "@/types/timer";
+import {type RoundPlan, SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
+import {planBalanced, planSpecialized} from "@/screens/Timer/planner";
+import {ExpandableSection} from "@/screens/Skills/ExpandableSection";
+import {RadioRow} from "@/screens/Skills/RadioRow";
+import {useRepos} from "@/lib/providers/RepoProvider";
+import {useAuth} from "@/lib/AuthProvider";
+import {useStyle} from "@/lib/providers/StyleProvider";
+import {STYLE_TO_CATEGORIES} from "@/types/validation";
 
 type Mode = "balanced" | "specialized";
 
 type Props = {
     visible: boolean;
     onClose: () => void;
-    /** optional: let parent react after save (e.g., toast) */
     onSaved?: () => void;
 };
 
@@ -144,83 +143,81 @@ export default function SkillDisplayModal({ visible, onClose, onSaved }: Props) 
             onRequestClose={onClose}
         >
             <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
-                <ScrollView>
-                    <Header title="SKILL DISPLAY" isModal onClose={onClose} />
+                <Header title="SKILL DISPLAY" isModal onClose={onClose} />
 
-                    {!userStyle && (
-                        <View style={styles.notice}>
-                            <BodyText style={styles.noticeText}>
-                                Pick your style in Skills first. This screen will then show only those categories.
-                            </BodyText>
-                        </View>
-                    )}
-
-                    <View style={styles.cards}>
-                        {/* BALANCED */}
-                        <ExpandableSection
-                            id="balanced"
-                            title="BALANCED"
-                            defaultExpanded
-                            isStyleCard={false}
-                            showRadio={false}
-                            selected={mode === "balanced"}     // border color via your cardSelected style
-                        >
-                            <BodyText style={styles.help}>
-                                All your skills are evenly distributed by category to help you sharpen your skills all around.
-                            </BodyText>
-                            <View style={styles.centerRadioBox}>
-                                <RadioRow
-                                    label="SELECTED"
-                                    value={"balanced" as any}
-                                    selected={mode as any}
-                                    onSelect={() => onPickMode("balanced")}
-                                />
-                            </View>
-                        </ExpandableSection>
-
-                        {/* SPECIALIZED */}
-                        <ExpandableSection
-                            id="specialized"
-                            title="SPECIALIZED"
-                            defaultExpanded
-                            isStyleCard={false}
-                            showRadio={false}
-                            selected={mode === "specialized"}  // border color via your cardSelected style
-                        >
-                            <BodyText style={styles.help}>
-                                Select a category to focus on. Those skills will be shown about seventy percent of the workout.
-                            </BodyText>
-
-                            <View style={{ gap: 10, marginTop: 6 }}>
-                                {specializedChoices.map(([cat, label]) => (
-                                    <RadioRow
-                                        key={cat}
-                                        label={label}
-                                        value={cat as any}
-                                        selected={focus as any}
-                                        onSelect={(v: any) => onPickFocus(v as Category)}
-                                    />
-                                ))}
-                                {specializedChoices.length === 0 && (
-                                    <BodyText style={{ color: colors.offWhite, opacity: 0.8 }}>
-                                        {userStyle
-                                            ? "Add techniques to your style’s categories to enable planning."
-                                            : "Select your style to choose a focus category."}
-                                    </BodyText>
-                                )}
-                            </View>
-
-                            <View style={[styles.centerRadioBox, { marginTop: 10 }]}>
-                                <RadioRow
-                                    label="SELECTED"
-                                    value={"specialized" as any}
-                                    selected={mode as any}
-                                    onSelect={() => onPickMode("specialized")}
-                                />
-                            </View>
-                        </ExpandableSection>
+                {!userStyle && (
+                    <View style={styles.notice}>
+                        <BodyText style={styles.noticeText}>
+                            Pick your style in Skills first. This screen will then show only those categories.
+                        </BodyText>
                     </View>
-                </ScrollView>
+                )}
+
+                <View style={styles.cards}>
+                    {/* BALANCED */}
+                    <ExpandableSection
+                        id="balanced"
+                        title="BALANCED"
+                        defaultExpanded
+                        isStyleCard={false}
+                        showRadio={false}
+                        selected={mode === "balanced"}     // border color via your cardSelected style
+                    >
+                        <BodyText style={styles.help}>
+                            All your skills are evenly distributed by category to help you sharpen your skills all around.
+                        </BodyText>
+                        <View style={styles.centerRadioBox}>
+                            <RadioRow
+                                label="SELECTED"
+                                value={"balanced" as any}
+                                selected={mode as any}
+                                onSelect={() => onPickMode("balanced")}
+                            />
+                        </View>
+                    </ExpandableSection>
+
+                    {/* SPECIALIZED */}
+                    <ExpandableSection
+                        id="specialized"
+                        title="SPECIALIZED"
+                        defaultExpanded
+                        isStyleCard={false}
+                        showRadio={false}
+                        selected={mode === "specialized"}  // border color via your cardSelected style
+                    >
+                        <BodyText style={styles.help}>
+                            Select a category to focus on. Those skills will be shown about seventy percent of the workout.
+                        </BodyText>
+
+                        <View style={{ marginTop: 3 }}>
+                            {specializedChoices.map(([cat, label]) => (
+                                <RadioRow
+                                    key={cat}
+                                    label={label}
+                                    value={cat as any}
+                                    selected={focus as any}
+                                    onSelect={(v: any) => onPickFocus(v as Category)}
+                                />
+                            ))}
+                            {specializedChoices.length === 0 && (
+                                <BodyText style={{ color: colors.offWhite, opacity: 0.8 }}>
+                                    {userStyle
+                                        ? "Add techniques to your style’s categories to enable planning."
+                                        : "Select your style to choose a focus category."}
+                                </BodyText>
+                            )}
+                        </View>
+
+                        <View style={[styles.centerRadioBox, { marginTop: 10 }]}>
+                            <RadioRow
+                                label="SELECTED"
+                                value={"specialized" as any}
+                                selected={mode as any}
+                                onSelect={() => onPickMode("specialized")}
+                            />
+                        </View>
+                    </ExpandableSection>
+                </View>
 
                 {/* your styled SAVE button (unchanged look) */}
                 <View style={styles.saveWrap}>
@@ -244,15 +241,14 @@ export default function SkillDisplayModal({ visible, onClose, onSaved }: Props) 
 }
 
 const styles = StyleSheet.create({
-    cards: { paddingHorizontal: 12, gap: 14, marginTop: 6 },
+    cards: { paddingHorizontal: 12, gap: 3, marginTop: 6 },
     help: { color: colors.offWhite, opacity: 0.9, marginBottom: 8 },
     centerRadioBox: {
         marginTop: 6,
-        borderWidth: 1,
+        borderWidth: 2,
         borderColor: colors.offWhite,
         borderRadius: 10,
         alignItems: "center",
-        paddingVertical: 6,
     },
     saveWrap: { padding: 16 },
     saveBtn: {
@@ -261,7 +257,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         justifyContent: "center",
     },
-    saveText: { fontWeight: "600", fontSize: 20, letterSpacing: 1 },
+    saveText: { fontWeight: "600", fontSize: 20, letterSpacing: 0.5 },
     notice: {
         marginHorizontal: 12,
         marginTop: 8,

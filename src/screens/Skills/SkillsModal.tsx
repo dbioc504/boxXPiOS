@@ -147,7 +147,7 @@ export function SkillsModal({
                         ]}
                     >
                         <Ionicons name="add" size={24} style={skillsStyles.modalAddButtonIcon} />
-                        <BodyText style={skillsStyles.modalAddButtonText}>Add New Technique</BodyText>
+                        <BodyText style={[skillsStyles.modalAddButtonText, { fontWeight: '600', fontSize: 20, letterSpacing: 0.5 }]}>Add New Technique</BodyText>
                     </Pressable>
                 </View>
 

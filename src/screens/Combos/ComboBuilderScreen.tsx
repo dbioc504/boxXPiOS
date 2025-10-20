@@ -206,7 +206,7 @@ export default function ComboBuilderScreen() {
                         backgroundColor: pressed ? colors.pressedBorder : colors.text
                     })}
                 >
-                    <BodyText style={{ fontWeight: '600', fontSize: 20 }}>
+                    <BodyText style={{ fontWeight: '600', fontSize: 20, letterSpacing: 0.5 }}>
                         {comboId ? 'SAVE' : 'CREATE +'}
                     </BodyText>
                 </Pressable>
