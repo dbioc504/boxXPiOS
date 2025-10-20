@@ -1,3 +1,4 @@
+// src/lib/skills/planner.ts
 import type { Technique } from "@/types/technique";
 import type { Category } from "@/types/common";
 
@@ -11,36 +12,41 @@ type ByCategory = Record<Category, Technique[]>;
 
 function cloneQueues(groups: ByCategory): Record<Category, Technique[]> {
     const copy: Record<Category, Technique[]> = {} as any;
-    (Object.keys(groups) as Category[]).forEach(c => {
-        copy[c] = groups[c]?.slice() ?? [];
-    })
+    (Object.keys(groups) as Category[]).forEach((c) => {
+        copy[c] = groups[c]?.slice?.() ?? [];
+    });
     return copy;
 }
 
 function totalSize(groups: ByCategory): number {
-    return (Object.keys(groups) as Category[]).reduce((acc, c) => acc + (groups[c].length ?? 0), 0);
+    return (Object.keys(groups) as Category[]).reduce(
+        (acc, c) => acc + ((groups[c]?.length ?? 0) as number),
+        0
+    );
 }
 
 function categoriesInStyle(groups: ByCategory): Category[] {
-    return (Object.keys(groups) as Category[]).filter(c => (groups[c].length ?? 0) > 0);
+    return (Object.keys(groups) as Category[]).filter((c) => (groups[c]?.length ?? 0) > 0);
 }
 
 function roundCounts(totalSlots: number, rounds: number): number[] {
-    const base = Math.floor(totalSlots / rounds);
-    const rem = totalSlots % rounds;
-    return Array.from({ length: rounds }, (_, i) => base + (i < rem ? 1 : 0));
+    const r = Math.max(1, rounds);
+    const base = Math.floor(totalSlots / r);
+    const rem = totalSlots % r;
+    return Array.from({ length: r }, (_, i) => base + (i < rem ? 1 : 0));
 }
 
 function takeFromQueue(q: Technique[], k: number): Technique[] {
     const taken: Technique[] = [];
-    while (k > 0 && q.length > 0) {
+    let need = Math.max(0, k);
+    while (need > 0 && q.length > 0) {
         taken.push(q.shift()!);
-        k -= 1;
+        need -= 1;
     }
     return taken;
 }
 
-function fillFromRotatingQueus(
+function fillFromRotatingQueues(
     k: number,
     primary: Category | null,
     order: Category[],
@@ -50,16 +56,14 @@ function fillFromRotatingQueus(
 
     const tryPull = (cat: Category | null, need: number) => {
         if (!cat) return 0;
-        const pulled = takeFromQueue(queues[cat], need);
+        const pulled = takeFromQueue(queues[cat] ?? [], need);
         if (pulled.length) out.push(...pulled);
         return pulled.length;
     };
 
-    let remaining = k;
+    let remaining = Math.max(0, k);
 
-    if (primary) {
-        remaining -= tryPull(primary, remaining);
-    }
+    if (primary) remaining -= tryPull(primary, remaining);
 
     if (remaining > 0) {
         for (let i = 0; i < order.length && remaining > 0; i++) {
@@ -79,6 +83,7 @@ function fillFromRotatingQueus(
     return { list: out };
 }
 
+// BALANCED: every technique appears once by the end; counts per round are even; category focus rotates.
 export function planBalanced(rounds: number, groups: ByCategory): RoundPlan[] {
     const cats = categoriesInStyle(groups);
     const total = totalSize(groups);
@@ -98,12 +103,13 @@ export function planBalanced(rounds: number, groups: ByCategory): RoundPlan[] {
         const k = counts[r];
         const focus = cats[r % cats.length];
         const borrowOrder = cats.slice(r % cats.length).concat(cats.slice(0, r % cats.length));
-        const { list } = fillFromRotatingQueus(k, focus, borrowOrder, queues);
+        const { list } = fillFromRotatingQueues(k, focus, borrowOrder, queues);
         plans.push({ roundIndex: r, categoryFocus: focus, techniques: list });
     }
     return plans;
 }
 
+// SPECIALIZED: cover everything once, then top up selected category to ~targetShare of all shown items.
 export function planSpecialized(
     rounds: number,
     groups: ByCategory,
@@ -121,14 +127,13 @@ export function planSpecialized(
     }
 
     const selectedCount = groups[selected]?.length ?? 0;
-
     const sMinForShare = Math.ceil(selectedCount / targetShare);
     const totalSlots = Math.max(totalUnique, sMinForShare);
     const counts = roundCounts(totalSlots, rounds);
 
     const selectedRounds = Math.round(rounds * targetShare);
     const otherRounds = rounds - selectedRounds;
-    const others = cats.filter(c => c !== selected);
+    const others = cats.filter((c) => c !== selected);
 
     const focusSeq: (Category | null)[] = [];
     let selLeft = selectedRounds;
@@ -136,7 +141,7 @@ export function planSpecialized(
     let iOther = 0;
 
     for (let r = 0; r < rounds; r++) {
-        const wantSelected = selLeft > 0 && (selLeft / (rounds - r)) >= targetShare;
+        const wantSelected = selLeft > 0 && selLeft / (rounds - r) >= targetShare;
         if (wantSelected && focusSeq[focusSeq.length - 1] !== selected) {
             focusSeq.push(selected);
             selLeft -= 1;
@@ -163,21 +168,22 @@ export function planSpecialized(
     for (let r = 0; r < rounds; r++) {
         const k = counts[r];
         const focus = focusSeq[r] ?? selected;
-        const borrowOrder = [focus, ...cats.filter(c => c !== focus)];
-        const { list } = fillFromRotatingQueus(k, focus, borrowOrder as Category[], queues);
+        const borrowOrder = [focus, ...cats.filter((c) => c !== focus)];
+        const { list } = fillFromRotatingQueues(k, focus, borrowOrder as Category[], queues);
         plans.push({ roundIndex: r, categoryFocus: focus, techniques: list });
     }
 
     const shownSelected = plans.reduce(
-        (acc, rp) => acc + rp.techniques.filter(t => t.category === selected).length, 0
+        (acc, rp) => acc + rp.techniques.filter((t) => t.category === selected).length,
+        0
     );
     const targetSelected = Math.ceil(totalSlots * targetShare);
     let needMore = Math.max(0, targetSelected - shownSelected);
 
     if (needMore > 0 && selectedCount > 0) {
-        const pool = groups[selected].slice();
+        const pool = (groups[selected] ?? []).slice();
         let pIdx = 0;
-        for (let r=0; r < rounds && needMore > 0; r++) {
+        for (let r = 0; r < rounds && needMore > 0; r++) {
             const rp = plans[r];
             const toAdd = Math.min(needMore, 2);
             for (let a = 0; a < toAdd && needMore > 0; a++) {
@@ -188,6 +194,6 @@ export function planSpecialized(
             }
         }
     }
+
     return plans;
 }
-

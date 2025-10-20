@@ -7,7 +7,7 @@ import ComboBuilderScreen from "@/screens/Combos/ComboBuilderScreen";
 import CombosIndexScreen from "@/screens/Combos/CombosIndexScreen";
 import TimerSetupScreen from "@/screens/Timer/TimerSetupScreen";
 import TimerRunScreen from "@/screens/Timer/TimerRunScreen";
-import SkillDisplayScreen from "@/screens/Timer/SkillDisplayScreen";
+import SkillDisplayScreen from "@/screens/Timer/SkillDisplayModal";
 
 export type RootStackParamList = {
     Home: undefined;

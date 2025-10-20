@@ -1,11 +1,11 @@
 import { Style } from '@/types/common';
-import {useState} from "react";
-import { Pressable, View, StyleSheet} from "react-native";
-import {skillsStyles} from "@/screens/Skills/styles";
-import {BodyText} from "@/theme/T";
-import {Ionicons} from "@expo/vector-icons";
-import {colors} from "@/theme/theme";
-import {RadioRow} from "@/screens/Skills/RadioRow";
+import { useState } from "react";
+import { Pressable, View, StyleSheet } from "react-native";
+import { skillsStyles } from "@/screens/Skills/styles";
+import { BodyText } from "@/theme/T";
+import { Ionicons } from "@expo/vector-icons";
+import { colors } from "@/theme/theme";
+import { RadioRow } from "@/screens/Skills/RadioRow";
 
 type Props = {
     id: string;
@@ -16,7 +16,7 @@ type Props = {
     onToggle?: (id: string) => void;
     isStyleCard: boolean;
     value?: Style;
-    selected?: Style | null;
+    selected?: Style | boolean | null;
     onSelect?: (v: Style) => void;
     showRadio?: boolean;
     headerRight?: React.ReactNode;
@@ -40,7 +40,7 @@ export function ExpandableSection({
     const isControlled = expanded !== undefined;
     const isOpen = isControlled ? !!expanded : internal;
 
-    const isSelected = isStyleCard && selected === value;
+    const isSelected = isStyleCard ? selected === value : !!selected;
 
     return (
         <View
@@ -122,7 +122,7 @@ export function ExpandableSection({
                                     borderRadius: 10,
                                 }}
                             >
-                                <RadioRow label="SELECT" value={value} selected={selected} onSelect={onSelect}/>
+                                <RadioRow label="SELECT" value={value} selected={selected as Style | null} onSelect={onSelect}/>
                             </View>
                         )}
                     </View>

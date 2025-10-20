@@ -10,6 +10,8 @@ import {fmtMMSS} from "@/lib/time";
 import {CustomTimePicker} from "@/screens/Timer/CustomTimePicker";
 import {DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, TimerConfig} from "@/types/timer";
 import type {RootStackParamList} from "@/navigation/RootNavigator";
+import {Ionicons} from "@expo/vector-icons";
+import SkillDisplayModal from "@/screens/Timer/SkillDisplayModal";
 
 type Nav = NativeStackScreenProps<RootStackParamList, "TimerSetup">["navigation"];
 
@@ -19,6 +21,7 @@ export default function TimerSetupScreen() {
     const nav = useNavigation<Nav>();
     const [cfg, setCfg] = useState<TimerConfig>(DEFAULT_TIMER_CONFIG);
     const [open, setOpen] = useState<OpenPickerTarget>(null);
+    const [showSkillModal, setShowSkillModal] = useState(false);
 
     useEffect(() => {
         (async () => {
@@ -45,7 +48,7 @@ export default function TimerSetupScreen() {
         closePicker();
     };
 
-    const goSkillDisplay = () => nav.navigate("TimerSkillDisplay");
+    const goSkillDisplay = () => setShowSkillModal(true);
     const goComboDisplay = () => nav.navigate("ComboDisplay");
     const goMechanicsDisplay = () => nav.navigate("MechanicsDisplay");
 
@@ -110,6 +113,14 @@ export default function TimerSetupScreen() {
                 <View style={{ flexDirection: 'row', marginTop: 4 }}>
                     <PrimaryBtn label="START" onPress={onStart} disabled={!canStart}/>
                 </View>
+
+                <SkillDisplayModal
+                    visible={showSkillModal}
+                    onClose={() => setShowSkillModal(false)}
+                    onSaved={() => {
+                        setShowSkillModal(false)
+                    }}
+                />
             </View>
 
             {open && (
@@ -192,7 +203,7 @@ function ToggleRow({
                 />
                 {onMore && (
                     <Pressable onPress={onMore} style={({ pressed }) => [S.moreBtn, pressed && { opacity: 0.7 }]}>
-                        <BodyText style={{ color: colors.offWhite }}>•••</BodyText>
+                        <Ionicons name='cog-outline' color={colors.offWhite} size={30}/>
                     </Pressable>
                 )}
             </View>
@@ -254,8 +265,6 @@ const S = StyleSheet.create({
         justifyContent: "center",
     },
     moreBtn: {
-        width: 36,
-        height: 28,
         borderRadius: 8,
         borderWidth: 1,
         borderColor: colors.offWhite,
