@@ -24,9 +24,12 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.dominickbioc.boxxp",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "audio"
+        ]
       },
-      "usesAppleSignIn": true,
+      "usesAppleSignIn": true
     },
     "android": {
       "adaptiveIcon": {
@@ -42,7 +45,9 @@
     "plugins": [
       "expo-font",
       "expo-build-properties",
-      "expo-apple-authentication"
+      "expo-apple-authentication",
+      "expo-audio",
+      "expo-web-browser"
     ],
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://okhbdsvzevhfqbeoclft.supabase.co",
