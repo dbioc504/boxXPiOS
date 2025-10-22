@@ -111,7 +111,7 @@ export default function TimerSetupScreen() {
 
                 {/*  actions  */}
                 <View style={{ flexDirection: 'row', marginTop: 4 }}>
-                    <PrimaryBtn label="START" onPress={onStart} disabled={!canStart}/>
+                    <PrimaryBtn label="START" onPress={onStart}/>
                 </View>
 
                 <SkillDisplayModal

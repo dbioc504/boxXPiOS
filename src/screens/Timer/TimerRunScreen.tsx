@@ -12,6 +12,9 @@ import {useKeepAwake} from "expo-keep-awake";
 import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
 import {type Category, CATEGORY_LABEL} from "@/types/common";
 import {useTenSecondClack, useTimerSounds} from "@/screens/Timer/useTimerSounds";
+import {ensureNotifPermissions} from "@/notifications/setup";
+import { useBackgroundCues } from './useBackgroundCues';
+
 
 type Phase = "getReady" | "round" | "rest" | "done";
 
@@ -160,6 +163,12 @@ export default function TimerRunScreen() {
         return { techs, focusLabel };
     }, [plan, cfg, ps]);
 
+    useEffect(() => { ensureNotifPermissions().catch(() => {}); }, []);
+
+    useBackgroundCues(ps, cfg ?? null, {
+        bell: 'roundBell.wav',
+        clack: 'sticksClack.wav'
+    });
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>

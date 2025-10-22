@@ -1,7 +1,9 @@
 {
   "expo": {
     "assetBundlePatterns": [
-      "**/*"
+      "assets/sounds/*",
+      "assets/fonts/*",
+      "assets/*"
     ],
     "name": "Boxxp",
     "scheme": "boxxp",
@@ -47,7 +49,8 @@
       "expo-build-properties",
       "expo-apple-authentication",
       "expo-audio",
-      "expo-web-browser"
+      "expo-web-browser",
+      "expo-notifications"
     ],
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://okhbdsvzevhfqbeoclft.supabase.co",
