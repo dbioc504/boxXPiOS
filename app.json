@@ -50,7 +50,15 @@
       "expo-apple-authentication",
       "expo-audio",
       "expo-web-browser",
-      "expo-notifications"
+      [
+        "expo-notifications",
+        {
+          "sounds": [
+            "./assets/sounds/roundBell.wav",
+            "./assets/sounds/sticksClack.wav"
+          ]
+        }
+      ]
     ],
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://okhbdsvzevhfqbeoclft.supabase.co",

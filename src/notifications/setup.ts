@@ -11,5 +11,14 @@ Notifications.setNotificationHandler({
 
 export async function ensureNotifPermissions() {
     const { status } = await Notifications.getPermissionsAsync();
-    if ( status !== 'granted' ) await Notifications.requestPermissionsAsync();
+
+    if (status !== 'granted') {
+        await Notifications.requestPermissionsAsync({
+            ios: {
+                allowAlert: true,
+                allowSound: true,
+                allowBadge: false,
+            },
+        });
+    }
 }

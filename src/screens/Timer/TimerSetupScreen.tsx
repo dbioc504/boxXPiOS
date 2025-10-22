@@ -36,7 +36,6 @@ export default function TimerSetupScreen() {
         AsyncStorage.setItem(TIMER_STORE_KEY, JSON.stringify(cfg)).catch(() => {});
     }, [cfg]);
 
-    const canStart = useMemo(() => cfg.rounds >= 1 && cfg.roundSec >= 30, [cfg]);
 
     const openPicker = (t: OpenPickerTarget) => setOpen(t);
     const closePicker = () => setOpen(null);
@@ -53,10 +52,6 @@ export default function TimerSetupScreen() {
     const goMechanicsDisplay = () => nav.navigate("MechanicsDisplay");
 
     const onStart = () => {
-        if (!canStart) {
-            Alert.alert("Timer", "Please set at least 1 round and >= 0:30 round time.");
-            return;
-        }
         nav.navigate("TimerRun");
     };
 

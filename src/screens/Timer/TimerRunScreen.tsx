@@ -168,7 +168,7 @@ export default function TimerRunScreen() {
     useBackgroundCues(ps, cfg ?? null, {
         bell: 'roundBell.wav',
         clack: 'sticksClack.wav'
-    });
+    }, isRunning);
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>

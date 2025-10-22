@@ -51,7 +51,7 @@ export function computeUpcomingCues(ps: PhaseState, cfg: TimerCfg, now: number, 
     const rem0 = remainingMs(cur, tCursor);
     cur.phaseStartAtMs = tCursor - (cur.phaseDurationMs - rem0);
 
-    while (cues.length < limit && cur.phase !== "done") {
+    while (cur.phase !== "done") {
         const rem = remainingMs(cur, tCursor);
         const phaseEndAt = tCursor + rem;
 
