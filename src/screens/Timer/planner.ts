@@ -1,6 +1,6 @@
 // src/lib/skills/planner.ts
-import type { Technique } from "@/types/technique";
-import type { Category } from "@/types/common";
+import type {Technique} from "@/types/technique";
+import type {Category} from "@/types/common";
 
 export type RoundPlan = {
     roundIndex: number;
@@ -73,17 +73,30 @@ function fillFromRotatingQueues(
         }
     }
 
+    // If still short, cycle one-by-one across whatever's left
     let idx = 0;
     while (remaining > 0 && order.length > 0) {
         const c = order[idx % order.length];
         remaining -= tryPull(c, 1);
         idx += 1;
+
+        // break if nothing is left anywhere
+        const anyLeft = order.some((cat) => (queues[cat]?.length ?? 0) > 0);
+        if (!anyLeft) break;
     }
+
+    const  seen = new Set<string>();
+    const uniqueOut = out.filter(t => {
+        if (!t?.id) return false;
+        if (seen.has(t.id)) return false;
+        seen.add(t.id);
+        return true;
+    });
 
     return { list: out };
 }
 
-// BALANCED: every technique appears once by the end; counts per round are even; category focus rotates.
+// BALANCED (unchanged) — already no-repeats because we consume queues once
 export function planBalanced(rounds: number, groups: ByCategory): RoundPlan[] {
     const cats = categoriesInStyle(groups);
     const total = totalSize(groups);
@@ -109,12 +122,14 @@ export function planBalanced(rounds: number, groups: ByCategory): RoundPlan[] {
     return plans;
 }
 
-// SPECIALIZED: cover everything once, then top up selected category to ~targetShare of all shown items.
+// SPECIALIZED
+// Add opts.noRepeats: if true, do not top-up beyond the unique pool (global uniqueness).
 export function planSpecialized(
     rounds: number,
     groups: ByCategory,
     selected: Category,
-    targetShare = 0.7
+    targetShare = 0.7,
+    opts?: { noRepeats?: boolean }
 ): RoundPlan[] {
     const cats = categoriesInStyle(groups);
     const totalUnique = totalSize(groups);
@@ -127,10 +142,15 @@ export function planSpecialized(
     }
 
     const selectedCount = groups[selected]?.length ?? 0;
-    const sMinForShare = Math.ceil(selectedCount / targetShare);
-    const totalSlots = Math.max(totalUnique, sMinForShare);
+
+    // If no repeats are allowed, the total slots are capped at totalUnique (one pass over the pool).
+    const totalSlots = opts?.noRepeats
+        ? totalUnique
+        : Math.max(totalUnique, Math.ceil(selectedCount / targetShare));
+
     const counts = roundCounts(totalSlots, rounds);
 
+    // Build focus sequence (bias selected to ~targetShare of rounds)
     const selectedRounds = Math.round(rounds * targetShare);
     const otherRounds = rounds - selectedRounds;
     const others = cats.filter((c) => c !== selected);
@@ -163,6 +183,7 @@ export function planSpecialized(
         }
     }
 
+    // Initial distribution — consumes queues (unique by construction)
     const queues = cloneQueues(groups);
     const plans: RoundPlan[] = [];
     for (let r = 0; r < rounds; r++) {
@@ -173,6 +194,12 @@ export function planSpecialized(
         plans.push({ roundIndex: r, categoryFocus: focus, techniques: list });
     }
 
+    if (opts?.noRepeats) {
+        // No top-up pass at all — we’re done. This guarantees global uniqueness.
+        return plans;
+    }
+
+    // Otherwise, keep your original top-up to approach targetShare (could repeat globally).
     const shownSelected = plans.reduce(
         (acc, rp) => acc + rp.techniques.filter((t) => t.category === selected).length,
         0
@@ -183,14 +210,26 @@ export function planSpecialized(
     if (needMore > 0 && selectedCount > 0) {
         const pool = (groups[selected] ?? []).slice();
         let pIdx = 0;
+
         for (let r = 0; r < rounds && needMore > 0; r++) {
             const rp = plans[r];
-            const toAdd = Math.min(needMore, 2);
-            for (let a = 0; a < toAdd && needMore > 0; a++) {
+            const existingIds = new Set(rp.techniques.map((t) => t.id));
+            let addedHere = 0;
+
+            let attempts = 0;
+            const maxAttempts = pool.length * 2;
+
+            while (needMore > 0 && addedHere < 2 && attempts < maxAttempts) {
                 const pick = pool[pIdx % pool.length];
-                rp.techniques.push(pick);
                 pIdx += 1;
-                needMore -= 1;
+                attempts += 1;
+
+                if (!existingIds.has(pick.id)) {
+                    rp.techniques.push(pick);
+                    existingIds.add(pick.id);
+                    addedHere += 1;
+                    needMore -= 1;
+                }
             }
         }
     }

@@ -9,8 +9,7 @@ import {AuthProvider} from "@/lib/AuthProvider";
 import {RepoProvider} from '@/lib/providers/RepoProvider'
 import {StyleProvider} from "@/lib/providers/StyleProvider";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
-import { CombosRepoProvider } from '@/lib/repos/CombosRepoContext';
-
+import {CombosRepoProvider} from '@/lib/repos/CombosRepoContext';
 
 
 export default function App() {
@@ -23,6 +22,7 @@ export default function App() {
         Roboto: require('./assets/fonts/Roboto-Regular.ttf'),
         RobotoMedium: require('./assets/fonts/Roboto-Medium.ttf'),
     });
+
 
     if (!fontsLoaded) {
         return null;

@@ -114,7 +114,7 @@ export default function SkillDisplayModal({ visible, onClose, onSaved }: Props) 
 
             const plans: RoundPlan[] =
                 mode === "specialized" && focus
-                    ? planSpecialized(rounds, nonEmpty as any, focus, 0.7)
+                    ? planSpecialized(rounds, nonEmpty as any, focus, 0.7, { noRepeats: true })
                     : planBalanced(rounds, nonEmpty as any);
 
             const blob: SkillPlanSaved = {
