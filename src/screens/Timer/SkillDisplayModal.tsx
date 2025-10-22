@@ -148,7 +148,7 @@ export default function SkillDisplayModal({ visible, onClose, onSaved }: Props) 
                 {!userStyle && (
                     <View style={styles.notice}>
                         <BodyText style={styles.noticeText}>
-                            Pick your style in Skills first. This screen will then show only those categories.
+                            {'Pick your style in Skills first. This screen will then show only those categories.'}
                         </BodyText>
                     </View>
                 )}
@@ -164,7 +164,7 @@ export default function SkillDisplayModal({ visible, onClose, onSaved }: Props) 
                         selected={mode === "balanced"}     // border color via your cardSelected style
                     >
                         <BodyText style={styles.help}>
-                            All your skills are evenly distributed by category to help you sharpen your skills all around.
+                            {'All your skills are evenly distributed by category to help you sharpen your skills all around.'}
                         </BodyText>
                         <View style={styles.centerRadioBox}>
                             <RadioRow
@@ -186,8 +186,7 @@ export default function SkillDisplayModal({ visible, onClose, onSaved }: Props) 
                         selected={mode === "specialized"}  // border color via your cardSelected style
                     >
                         <BodyText style={styles.help}>
-                            Select a category to focus on. Those skills will be shown about seventy percent of the workout.
-                        </BodyText>
+                            {'Select a category to focus on. Those skills will be shown about seventy percent of the workout.'}                        </BodyText>
 
                         <View style={{ marginTop: 3 }}>
                             {specializedChoices.map(([cat, label]) => (

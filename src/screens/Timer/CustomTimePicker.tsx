@@ -19,24 +19,20 @@ const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 const SPACER = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
 const CENTER = (VISIBLE_ITEMS - 1) / 2;
 
+const TIME_VALUES = [15, 30, 45, 60, 90, 120, 150, 180, 210, 240];
+const ROUND_VALUES = Array.from({ length: 50 }, (_, i) => i + 1);
+
 function getValuesForMode(mode: PickerMode): number[] {
-    switch (mode) {
-        case "rounds":
-            return Array.from({ length: 50 }, (_, i) => i + 1);
-        case "roundTime":
-            return [60, 120, 180, 240];
-        case "restTime":
-        case "getReadyTime":
-            return [0, 15, 30, 45, 60];
-        default:
-            return [];
-    }
+    if (mode === "rounds") return ROUND_VALUES;
+    return TIME_VALUES;
 }
 
 function formatValue(value: number, mode: PickerMode) {
     if (mode === "rounds") return String(value);
-    if (value < 60) return `${value}s`;
-    return `${Math.floor(value / 60)}m`;
+    if (value < 60) return `00:${value}`;
+    const m = Math.floor(value / 60);
+    const s = value % 60;
+    return `0${m}:${String(s).padStart(2, "0")}`;
 }
 
 export function CustomTimePicker({
@@ -80,11 +76,17 @@ export function CustomTimePicker({
     }, []);
 
     const lastHapticAt = useRef(0);
-    const tickHaptic = () => {
+    const HAPTIC_INTERVAL_MS = 80;
+
+    const tickHaptic = async () => {
         const now = Date.now();
-        if (now - lastHapticAt.current < 70) return;
+        if (now - lastHapticAt.current < HAPTIC_INTERVAL_MS) return;
         lastHapticAt.current = now;
-        Haptics.selectionAsync();
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    };
+
+    const confirmHaptic = async () => {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     };
 
     const handleScroll = (e: any) => {
@@ -98,6 +100,7 @@ export function CustomTimePicker({
     const handleMomentumScrollEnd = (e: any) => {
         const idx = offsetToIndex(e.nativeEvent.contentOffset.y);
         if (idx !== selectedIndex) setSelectedIndex(idx);
+        confirmHaptic();
     };
 
     const getItemLayout = (_: any, index: number)=> ({

@@ -16,6 +16,8 @@ export function useTimerSounds() {
                 await setAudioModeAsync({
                     playsInSilentMode: true,
                     allowsRecording: false,
+                    shouldPlayInBackground: true,
+                    interruptionMode: 'mixWithOthers'
                 });
             } catch {
 
