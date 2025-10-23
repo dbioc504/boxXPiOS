@@ -51,7 +51,3 @@ It guides athletes from **sign-in** to **skill libraries**, **drag-and-drop comb
 | **Validation & Testing** | Zod • Jest |
 | **Design System** | Custom fonts, icons, and colors in `/src/theme/` |
 
----
-
-## 📂 Project Structure
-
