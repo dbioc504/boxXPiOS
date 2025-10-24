@@ -10,6 +10,11 @@ import {RepoProvider} from '@/lib/providers/RepoProvider'
 import {StyleProvider} from "@/lib/providers/StyleProvider";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {CombosRepoProvider} from '@/lib/repos/CombosRepoContext';
+import { LogBox } from "react-native";
+
+LogBox.ignoreLogs([
+    'Text strings must be rendered within a <Text> component',
+]);
 
 
 export default function App() {

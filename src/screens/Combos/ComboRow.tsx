@@ -5,6 +5,7 @@ import {CATEGORY_LABEL, type Movement, MOVEMENT_LABEL} from '@/types/common';
 import {colors} from '@/theme/theme';
 import {ComboMeta} from "@/lib/repos/combos.repo";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
+import {RadioRow} from "@/screens/Skills/RadioRow";
 
 const nameFromSteps = (steps: Movement[]) =>
     steps.slice(0, 3).map(s => MOVEMENT_LABEL[s]).join(' - ') || 'Untitled';
@@ -22,11 +23,15 @@ type Props = {
     userId: string;
     expanded: boolean;
     onToggle: (id: string) => void;
-    onEdit: (id: string) => void;
-    onDelete: (id: string) => void;
+    onEdit?: (id: string) => void;
+    onDelete?: (id: string) => void;
+
+    selectMode?: boolean;
+    selected?: boolean;
+    onSelectToggle?: (id: string) => void;
 };
 
-export function ComboRow({ meta, userId, expanded, onToggle, onEdit, onDelete }: Props) {
+export function ComboRow({ meta, userId, expanded, onToggle, onEdit, onDelete, selectMode, selected, onSelectToggle }: Props) {
     const repo = useCombosRepo();
     const [steps, setSteps] = useState<Movement[] | null>(null);
     const [loading, setLoading] = useState(false);
@@ -68,15 +73,18 @@ export function ComboRow({ meta, userId, expanded, onToggle, onEdit, onDelete }:
             onToggle={onToggle}
             isStyleCard={false}
             showRadio={false}
+            // when selected is true, ExpandableSection applies the selected border style
+            selected={!!selected}
         >
             <View style={{ alignItems: 'center', marginBottom: 8 }}>
+                {/* Category block unchanged */}
                 <Text style={{color: colors.text, fontSize: 18, textAlign: 'center'}}>Category:</Text>
                 <Text style={{color: colors.text, fontSize: 18, textAlign: 'center'}}>
                     {meta.category ? CATEGORY_LABEL[meta.category] : 'None'}
                 </Text>
             </View>
 
-            {/* Chips preview */}
+            {/* Chips preview unchanged */}
             {loading && (
                 <View style={styles.loadingRow}>
                     <ActivityIndicator color={colors.offWhite} />
@@ -91,39 +99,59 @@ export function ComboRow({ meta, userId, expanded, onToggle, onEdit, onDelete }:
                             <Text style={styles.chipText}>{MOVEMENT_LABEL[mv]}</Text>
                         </View>
                     ))}
-                    {steps.length === 0 && (
-                        <Text style={styles.emptyText}>No steps yet.</Text>
-                    )}
+                    {steps.length === 0 && <Text style={styles.emptyText}>No steps yet.</Text>}
                 </View>
             )}
 
-            {/*  Row  */}
-            <View style={styles.actionsRow}>
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.actionBtn,
-                        { opacity: (pressed ? 0.7 : 1) }
-                    ]}
-                    onPress={() => onEdit(meta.id)}>
-                    <Text style={styles.actionText}>EDIT</Text>
-                </Pressable>
-                <Pressable
-                    style={({ pressed }) => [
-                        styles.actionBtn,
-                        { opacity: (pressed ? 0.7 : 1), backgroundColor: colors.selected }
-                    ]}
-                    onPress={() => {
-                        Alert.alert('Delete Combo?', `Delete "${title}?`, [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Delete', style: 'destructive', onPress: () => onDelete(meta.id) },
-                        ]);
-                    }}
-                >
-                    <Text style={styles.actionText}>DELETE</Text>
-                </Pressable>
-            </View>
+            {/* ACTIONS or SELECTOR */}
+            {!selectMode ? (
+                // original edit/delete row (guard against undefined handlers)
+                <View style={styles.actionsRow}>
+                    {onEdit && (
+                        <Pressable
+                            style={({ pressed }) => [styles.actionBtn, { opacity: (pressed ? 0.7 : 1) }]}
+                            onPress={() => onEdit(meta.id)}
+                        >
+                            <Text style={styles.actionText}>EDIT</Text>
+                        </Pressable>
+                    )}
+                    {onDelete && (
+                        <Pressable
+                            style={({ pressed }) => [
+                                styles.actionBtn,
+                                { opacity: (pressed ? 0.7 : 1), backgroundColor: colors.selected }
+                            ]}
+                            onPress={() => {
+                                Alert.alert('Delete Combo?', `Delete "${title}"?`, [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    { text: 'Delete', style: 'destructive', onPress: () => onDelete(meta.id) },
+                                ]);
+                            }}
+                        >
+                            <Text style={styles.actionText}>DELETE</Text>
+                        </Pressable>
+                    )}
+                </View>
+            ) : (
+                // “radio” select row (looks like your Skill modal block)
+                <View style={{
+                    marginTop: 10,
+                    alignItems: 'center',
+                    borderColor: colors.offWhite,
+                    borderWidth: 2,
+                    borderRadius: 10,
+                }}>
+                    <RadioRow
+                        label={selected ? 'SELECTED' : 'SELECT'}
+                        value={meta.id as any}
+                        selected={selected ? (meta.id as any) : (null as any)}
+                        onSelect={() => onSelectToggle?.(meta.id)}
+                    />
+                </View>
+            )}
         </ExpandableSection>
     );
+
 }
 
 const styles = StyleSheet.create({
