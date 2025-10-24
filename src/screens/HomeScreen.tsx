@@ -25,7 +25,7 @@ export default function HomeScreen() {
 
                 <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
                 <MainButton label="COMBOS" onPress={() => nav.navigate('CombosIndex')}/>
-                <MainButton label="MECHANICS" onPress={() => {}}/>
+                <MainButton label="MECHANICS" onPress={() => nav.navigate('MechanicsCat')}/>
                 <MainButton label="DOWNLOADS" onPress={() => {}}/>
                 <MainButton label="TIMER" onPress={() => nav.navigate('TimerSetup')}/>
 
@@ -83,7 +83,7 @@ export const homeBtns = StyleSheet.create({
     }
 });
 
-function MainButton({ label, onPress }: { label: string; onPress?: () => void }) {
+export function MainButton({ label, onPress }: { label: string; onPress?: () => void }) {
     return (
         <Pressable
             onPress={onPress}
