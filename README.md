@@ -31,11 +31,6 @@ It guides athletes from **sign-in** to **skill libraries**, **drag-and-drop comb
 - In-app playback powered by **expo-audio** with haptic feedback for realism.
 - Intelligent phase syncing ensures timer recovery on app resume.
 
-### 🧠 AI-Friendly Design
-- Modular structure and strong typing make the codebase approachable for AI copilots.
-- Schema-driven validation enables safe code generation and refactoring.
-- Built-in unit tests and type safety keep development predictable and fast.
-
 ---
 
 ## 🏗️ Tech Stack
