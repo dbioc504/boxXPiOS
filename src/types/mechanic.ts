@@ -1,29 +1,41 @@
-import {Category, Id, Movement} from './common';
+// src/types/mechanic.ts
+import {Category, Id, Movement} from '@/types/common';
 
-export type MechanicGroup = 'stance' | 'footwork' | 'defense' | 'punches';
-
-export const MECHANIC_GROUP_LABEL: Record<MechanicGroup, string> = {
-    stance: 'Stance',
-    footwork: 'Footwork',
-    defense: 'Defense',
-    punches: 'Punches'
-}
-
-export const MECHANIC_GROUPS: MechanicGroup[] = [
+export type MechanicsGroup = 'stance' | 'footwork' | 'defense' | 'punches';
+export const MECHANICS_GROUP: MechanicsGroup[] = [
     'stance', 'footwork', 'defense', 'punches'
 ];
 
-export interface MechanicBullet {
-    id: Id;
-    text: string;
-}
+export type MechanicBullet = { id: Id; text: string };
 
-export interface Mechanic {
+export const MECHANICS_GROUP_LABEL: Record<MechanicsGroup, string> = {
+    stance: 'Stance',
+    footwork: 'Footwork',
+    defense: 'Defense',
+    punches: 'Punches',
+};
+
+
+export type MechanicBase = {
     id: Id;
-    group: MechanicGroup;
-    movement?: Movement;
+    group: MechanicsGroup;
     bullets: MechanicBullet[];
-    skillCategories?: Category[];
-}
+};
 
-export type MechanicsCatalog = Record<MechanicGroup, Mechanic[]>
+export type MechanicTitleItem = MechanicBase & {
+    kind: 'title';
+    title: string;
+};
+
+export type MechanicMovementItem = MechanicBase & {
+    kind: 'movement';
+    movement: Movement;
+    category?: Category[]; // or Category[] if you want strong typing now
+};
+
+export type Mechanic = MechanicTitleItem | MechanicMovementItem;
+
+export type MechanicsCatalog = {
+    version: number;
+    items: Mechanic[];
+};
