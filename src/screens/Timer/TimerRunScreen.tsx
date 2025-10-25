@@ -1,6 +1,6 @@
 // src/screens/Timer/TimerRunScreen.tsx
 import React, {useEffect, useMemo, useRef, useState} from "react";
-import {AppState, AppStateStatus, FlatList, Pressable, StyleSheet, View} from "react-native";
+import {AppState, AppStateStatus, FlatList, Pressable, ScrollView, StyleSheet, View} from "react-native";
 import {SafeAreaView} from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import {BodyText, Header} from "@/theme/T";
@@ -13,7 +13,12 @@ import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
 import {type Category, CATEGORY_LABEL} from "@/types/common";
 import {useTenSecondClack, useTimerSounds} from "@/screens/Timer/useTimerSounds";
 import {ensureNotifPermissions} from "@/notifications/setup";
-import { useBackgroundCues } from './useBackgroundCues';
+import {useBackgroundCues} from './useBackgroundCues';
+import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
+import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
+import {useAuth} from "@/lib/AuthProvider";
+import {ComboMeta} from "@/lib/repos/combos.repo";
+import {ComboRow} from "@/screens/Combos/ComboRow";
 
 
 type Phase = "getReady" | "round" | "rest" | "done";
@@ -29,8 +34,16 @@ const TICK_MS = 80;
 
 export default function TimerRunScreen() {
     useKeepAwake();
+    const repo = useCombosRepo();
+    const { user } = useAuth();
+    const userId = user?.id ?? null;
+
     const [cfg, setCfg] = useState<TimerConfig | null>(null);
     const [plan, setPlan] = useState<SkillPlanSaved | null>(null);
+
+    const [comboIds, setComboIds] = useState<string[] | null>(null);
+    const [selectedCombos, setSelectedCombos] = useState<ComboMeta[]>([]);
+    const [comboExpanded, setComboExpanded] = useState<Set<string>>(new Set());
 
     const [ps, setPs] = useState<PhaseState | null>(null);
     const [isRunning, setIsRunning] = useState(false);
@@ -70,6 +83,19 @@ export default function TimerRunScreen() {
                 const raw = await AsyncStorage.getItem(SKILL_PLAN_STORE_KEY);
                 if (raw) setPlan(JSON.parse(raw));
             } catch { setPlan(null); }
+        })();
+    }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const raw = await AsyncStorage.getItem(COMBO_DISPLAY_STORE_KEY);
+                if (!raw) { setComboIds([]); return; }
+                const saved = JSON.parse(raw) as ComboDisplaySaved;
+                setComboIds(saved.selectedIds ?? []);
+            } catch {
+                setComboIds([]);
+            }
         })();
     }, []);
 
@@ -125,6 +151,24 @@ export default function TimerRunScreen() {
         return () => tickRef.current && clearTimeout(tickRef.current);
     }, [ps, isRunning, cfg]);
 
+    useEffect(() => {
+        if (!comboIds || comboIds.length === 0) { setSelectedCombos([]); return; }
+
+        let alive = true;
+        (async () => {
+            try {
+                const all = await repo.listCombos();
+                const byId = new Map(all.map(c => [c.id, c]));
+                const picked = comboIds.map(id => byId.get(id)).filter(Boolean) as ComboMeta[];
+                if (alive) setSelectedCombos(picked);
+            } catch {
+                if (alive) setSelectedCombos([]);
+            }
+        })();
+
+        return () => { alive = false };
+    }, [repo, comboIds, userId]);
+
     const remain = ps ? Math.max(0, remainingMs(ps, now)) : 0;
     const remainSec = Math.ceil(remain / 1000);
 
@@ -170,11 +214,29 @@ export default function TimerRunScreen() {
         clack: 'sticksClack.wav'
     }, isRunning);
 
+    const combosVisible = useMemo(() => {
+        if (!cfg?.showCombos) return false;
+        if (!ps || ps.phase !== "round") return false;
+        return selectedCombos.length > 0;
+    }, [cfg?.showCombos, ps?.phase, selectedCombos]);
+
+    const onToggleCombo = (id: string) => {
+        setComboExpanded(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
+    };
+
+
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
             <Header title=""/>
 
-            <View style={styles.center}>
+            <ScrollView
+                contentContainerStyle={styles.center}
+                style={{ flex: 1, alignSelf: 'stretch' }}
+            >
                 <BodyText style={[styles.phase, { color: colors.offWhite }]}>{phaseLabel}</BodyText>
                 <BodyText style={styles.time}>{fmtMMSS(remainSec)}</BodyText>
 
@@ -202,11 +264,32 @@ export default function TimerRunScreen() {
                             )}
                             contentContainerStyle={{ paddingVertical: 6, gap: 16 }}
                             style={{ alignSelf: 'stretch' }}
+                            scrollEnabled={false}
+                            removeClippedSubviews={false}
                         />
 
                     </View>
                 )}
-            </View>
+
+                {combosVisible && (
+                    <View style={styles.skillsWrap}>
+                        <BodyText style={styles.skillsTitle}>COMBOS</BodyText>
+                        <View style={{ alignSelf: 'stretch', gap: 12 }}>
+                            {selectedCombos.map((meta) => (
+                                <ComboRow
+                                    key={meta.id}
+                                    meta={meta}
+                                    userId={userId!}
+                                    expanded={comboExpanded.has(meta.id)}
+                                    onToggle={onToggleCombo}
+                                    selectMode={false}
+                                    selected={false}
+                                />
+                            ))}
+                        </View>
+                    </View>
+                )}
+            </ScrollView>
 
             <View style={styles.footer}>
                 <PrimaryBtn label={isRunning ? "Pause" : "Resume"} onPress={() => setIsRunning((r) => !r)} />
@@ -257,7 +340,7 @@ function PrimaryBtn({ label, onPress }: { label: string; onPress: () => void }) 
 
 const styles = StyleSheet.create({
     screen: { flex: 1 },
-    center: { flex: 1, alignItems: "center", paddingHorizontal: 16, gap: 3, alignSelf: "stretch" },
+    center: { alignItems: "center", paddingHorizontal: 16, gap: 3, alignSelf: "stretch" },
     phase: { fontSize: 30, fontWeight: "800", letterSpacing: 0.5 },
     time: { fontSize: 80, fontWeight: "800", color: colors.offWhite },
     progressWrap: {

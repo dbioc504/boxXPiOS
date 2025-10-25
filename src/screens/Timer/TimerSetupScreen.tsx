@@ -1,5 +1,5 @@
-import React, {useEffect, useMemo, useState} from "react";
-import {Alert, Pressable, StyleSheet, Switch, View} from "react-native";
+import React, {useEffect, useState} from "react";
+import {Pressable, StyleSheet, Switch, View} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {SafeAreaView} from "react-native-safe-area-context";
 import {NativeStackScreenProps} from "@react-navigation/native-stack";
@@ -105,7 +105,7 @@ export default function TimerSetupScreen() {
                 />
 
                 {/*  actions  */}
-                <View style={{ flexDirection: 'row', marginTop: 4 }}>
+                <View style={{ flexDirection: 'row', marginTop: 4, alignSelf: 'flex-end' }}>
                     <PrimaryBtn label="START" onPress={onStart}/>
                 </View>
 

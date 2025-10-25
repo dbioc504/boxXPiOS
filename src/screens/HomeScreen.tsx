@@ -26,7 +26,7 @@ export default function HomeScreen() {
                 <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
                 <MainButton label="COMBOS" onPress={() => nav.navigate('CombosIndex')}/>
                 <MainButton label="MECHANICS" onPress={() => nav.navigate('MechanicsCat')}/>
-                <MainButton label="DOWNLOADS" onPress={() => {}}/>
+                {/*<MainButton label="DOWNLOADS" onPress={() => {}}/>*/}
                 <MainButton label="TIMER" onPress={() => nav.navigate('TimerSetup')}/>
 
             </View>
@@ -66,7 +66,7 @@ export const homeBtns = StyleSheet.create({
         borderRadius: 25,
         backgroundColor: colors.mainBtn,
         alignItems: 'center',
-        height: 97,
+        height: 125,
         width: 310,
         borderColor: colors.text,
         borderWidth: 2,
