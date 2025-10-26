@@ -19,6 +19,8 @@ import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 import {useAuth} from "@/lib/AuthProvider";
 import {ComboMeta} from "@/lib/repos/combos.repo";
 import {ComboRow} from "@/screens/Combos/ComboRow";
+import { buildComboRoundSchedule, deriveFocusSeqFromCombos } from "./comboPlanner";
+
 
 
 type Phase = "getReady" | "round" | "rest" | "done";
@@ -214,12 +216,6 @@ export default function TimerRunScreen() {
         clack: 'sticksClack.wav'
     }, isRunning);
 
-    const combosVisible = useMemo(() => {
-        if (!cfg?.showCombos) return false;
-        if (!ps || ps.phase !== "round") return false;
-        return selectedCombos.length > 0;
-    }, [cfg?.showCombos, ps?.phase, selectedCombos]);
-
     const onToggleCombo = (id: string) => {
         setComboExpanded(prev => {
             const next = new Set(prev);
@@ -228,6 +224,25 @@ export default function TimerRunScreen() {
         });
     };
 
+    // combo rounds
+    const rounds = Math.max(1, cfg?.rounds?? 1);
+
+    const focusSeq = useMemo<(Category | null)[]>(() => {
+        if (plan && cfg && plan.rounds === cfg.rounds) {
+            return plan.plans.map(p => p.categoryFocus ?? null);
+        }
+        return deriveFocusSeqFromCombos(rounds, selectedCombos);
+    }, [plan, cfg, rounds, selectedCombos]);
+
+    const comboSchedule = useMemo<ComboMeta[][]>(() => {
+        if (!selectedCombos.length) return Array.from({ length: rounds }, () => []);
+        return buildComboRoundSchedule(rounds, selectedCombos, focusSeq);
+    }, [rounds, selectedCombos, focusSeq]);
+
+    const combosForRound = useMemo(
+        () => (ps?.phase === "round" ? comboSchedule[ps.roundIndex] ?? [] : []),
+        [ps?.phase, ps?.roundIndex, comboSchedule]
+    );
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
@@ -271,11 +286,18 @@ export default function TimerRunScreen() {
                     </View>
                 )}
 
-                {combosVisible && (
+                {cfg?.showCombos && ps?.phase === "round" && combosForRound.length > 0 && (
                     <View style={styles.skillsWrap}>
-                        <BodyText style={styles.skillsTitle}>COMBOS</BodyText>
+                        <BodyText style={styles.skillsTitle}>
+                            {"COMBOS"}
+                            {/* Optional: show which category is focused this round */}
+                            {focusSeq[ps.roundIndex]
+                                ? ` - ${CATEGORY_LABEL[focusSeq[ps.roundIndex] as Category]?.toUpperCase?.() || ""}`
+                                : ""}
+                        </BodyText>
+
                         <View style={{ alignSelf: 'stretch', gap: 12 }}>
-                            {selectedCombos.map((meta) => (
+                            {combosForRound.map((meta) => (
                                 <ComboRow
                                     key={meta.id}
                                     meta={meta}
@@ -289,6 +311,7 @@ export default function TimerRunScreen() {
                         </View>
                     </View>
                 )}
+
             </ScrollView>
 
             <View style={styles.footer}>
