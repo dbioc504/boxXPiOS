@@ -246,13 +246,13 @@ export default function TimerRunScreen() {
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
-            <Header title=""/>
-
             <ScrollView
                 contentContainerStyle={styles.center}
                 style={{ flex: 1, alignSelf: 'stretch' }}
             >
-                <BodyText style={[styles.phase, { color: colors.offWhite }]}>{phaseLabel}</BodyText>
+                <Header title={phaseLabel}/>
+
+                {/*<BodyText style={[styles.phase, { color: colors.offWhite }]}>{phaseLabel}</BodyText>*/}
                 <BodyText style={styles.time}>{fmtMMSS(remainSec)}</BodyText>
 
                 <View style={styles.progressWrap}>
@@ -277,8 +277,8 @@ export default function TimerRunScreen() {
                                     <BodyText style={styles.skillName}>{item.title}</BodyText>
                                 </View>
                             )}
-                            contentContainerStyle={{ paddingVertical: 6, gap: 16 }}
-                            style={{ alignSelf: 'stretch' }}
+                            contentContainerStyle={styles.skillList}
+                            style={styles.skillListContainer}
                             scrollEnabled={false}
                             removeClippedSubviews={false}
                         />
@@ -296,17 +296,18 @@ export default function TimerRunScreen() {
                                 : ""}
                         </BodyText>
 
-                        <View style={{ alignSelf: 'stretch', gap: 12 }}>
+                        <View style={styles.comboList}>
                             {combosForRound.map((meta) => (
-                                <ComboRow
-                                    key={meta.id}
-                                    meta={meta}
-                                    userId={userId!}
-                                    expanded={comboExpanded.has(meta.id)}
-                                    onToggle={onToggleCombo}
-                                    selectMode={false}
-                                    selected={false}
-                                />
+                                <View key={meta.id} style={styles.comboItem}>
+                                    <ComboRow
+                                        meta={meta}
+                                        userId={userId!}
+                                        expanded={comboExpanded.has(meta.id)}
+                                        onToggle={onToggleCombo}
+                                        selectMode={false}
+                                        selected={false}
+                                    />
+                                </View>
                             ))}
                         </View>
                     </View>
@@ -379,18 +380,24 @@ const styles = StyleSheet.create({
     },
     progressBar: { height: "100%" },
     skillsWrap: {
-        alignSelf: "stretch",
-        marginTop: 8,
-        marginHorizontal: 16,
+        width: "90%",
+        maxWidth: 420,
+        alignSelf: "center",
+        alignItems: "center",
+        marginTop: 12,
         borderRadius: 12,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
+        paddingHorizontal: 16,
+        paddingVertical: 12,
         backgroundColor: '#030603'
     },
-    skillsTitle: { color: colors.offWhite, fontWeight: "600", fontSize: 20, marginBottom: 4 },
-    skillRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-    skillName: { color: colors.offWhite,  },
+    skillsTitle: { color: colors.offWhite, fontWeight: "600", fontSize: 20, marginBottom: 4, textAlign: "center" },
+    skillListContainer: { alignSelf: "center", width: "100%" },
+    skillList: { paddingVertical: 6, gap: 16, alignItems: "center", width: "100%" },
+    skillRow: { flexDirection: "row", justifyContent: "center", alignItems: "center", width: "100%" },
+    skillName: { color: colors.offWhite, textAlign: "center" },
     skillCat: { color: colors.offWhite, opacity: 0.8, fontSize: 12 },
+    comboList: { width: "100%", gap: 12, alignItems: "center" },
+    comboItem: { width: "100%", maxWidth: 420, alignSelf: "center" },
     footer: { padding: 16 },
     primaryBtn: {
         height: 56,
