@@ -156,7 +156,7 @@ export default function ComboDisplayScreen() {
                 contentContainerStyle={{ padding: 8, gap: 8 }}
                 renderSectionHeader={({ section }) => (
                     <View style={S.sectionHeader}>
-                        <Text style={S.sectionText}>{section.title}</Text>
+                        <Text style={[S.sectionText, { textAlign: 'center' }]}>{section.title.toUpperCase()}</Text>
                     </View>
                 )}
                 renderItem={({ item }) => (
@@ -201,7 +201,7 @@ const S = StyleSheet.create({
     sectionText: {
         color: colors.offWhite,
         fontWeight: '700',
-        fontSize: 16,
+        fontSize: 20,
         opacity: 0.95,
     },
     saveWrap: { padding: 16 },
