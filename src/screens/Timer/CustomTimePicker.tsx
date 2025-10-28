@@ -19,7 +19,7 @@ const CONTAINER_HEIGHT = ITEM_HEIGHT * VISIBLE_ITEMS;
 const SPACER = (CONTAINER_HEIGHT - ITEM_HEIGHT) / 2;
 const CENTER = (VISIBLE_ITEMS - 1) / 2;
 
-const TIME_VALUES = [15, 30, 45, 60, 90, 120, 150, 180, 210, 240];
+const TIME_VALUES = [0, 15, 30, 45, 60, 90, 120, 150, 180, 210, 240];
 const ROUND_VALUES = Array.from({ length: 50 }, (_, i) => i + 1);
 
 function getValuesForMode(mode: PickerMode): number[] {
@@ -29,7 +29,7 @@ function getValuesForMode(mode: PickerMode): number[] {
 
 function formatValue(value: number, mode: PickerMode) {
     if (mode === "rounds") return String(value);
-    if (value < 60) return `00:${value}`;
+    if (value === 0) return '00:00';
     const m = Math.floor(value / 60);
     const s = value % 60;
     return `0${m}:${String(s).padStart(2, "0")}`;

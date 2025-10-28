@@ -202,19 +202,19 @@ export default function TimerSetupScreen() {
                 {/* ROUND TIME */}
                 <Row onPress={() => openPicker("round")}>
                     <RowLabel>ROUND TIME</RowLabel>
-                    <Pill>{fmtMMSS(cfg.roundSec)}</Pill>
+                    <Pill>{fmtMMSS(cfg.roundSec, { padMinutes: true })}</Pill>
                 </Row>
 
                 {/* REST TIME */}
                 <Row onPress={() => openPicker("rest")}>
                     <RowLabel>REST TIME</RowLabel>
-                    <Pill>{fmtMMSS(cfg.restSec)}</Pill>
+                    <Pill>{fmtMMSS(cfg.restSec, { padMinutes: true })}</Pill>
                 </Row>
 
                 {/* GET READY */}
                 <Row onPress={() => openPicker("warmup")}>
                     <RowLabel>GET READY TIME</RowLabel>
-                    <Pill>{fmtMMSS(cfg.warmupSec)}</Pill>
+                    <Pill>{fmtMMSS(cfg.warmupSec, { padMinutes: true })}</Pill>
                 </Row>
 
                 {/* TOGGLES */}
