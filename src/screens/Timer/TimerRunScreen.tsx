@@ -45,7 +45,7 @@ export default function TimerRunScreen() {
 
     const [comboIds, setComboIds] = useState<string[] | null>(null);
     const [selectedCombos, setSelectedCombos] = useState<ComboMeta[]>([]);
-    const [comboExpanded, setComboExpanded] = useState<Set<string>>(new Set());
+    const [collapsedCombos, setCollapsedCombos] = useState<Set<string>>(new Set());
     const [comboPlan, setComboPlan] = useState<ComboPlanSaved | null>(null);
 
     const [ps, setPs] = useState<PhaseState | null>(null);
@@ -58,6 +58,11 @@ export default function TimerRunScreen() {
     const { playBell, playClack } = useTimerSounds();
 
     const prevPhaseRef = useRef<Phase | null>(null);
+
+    useEffect(() => {
+        setCollapsedCombos(new Set());
+    }, [ps?.roundIndex]);
+
     useEffect(() => {
         if (!ps) return;
         if (ps.phase !== prevPhaseRef.current) {
@@ -235,9 +240,10 @@ export default function TimerRunScreen() {
     }, isRunning);
 
     const onToggleCombo = (id: string) => {
-        setComboExpanded(prev => {
+        setCollapsedCombos(prev => {
             const next = new Set(prev);
-            next.has(id) ? next.delete(id) : next.add(id);
+            if (next.has(id)) next.delete(id);
+            else next.add(id);
             return next;
         });
     };
@@ -319,7 +325,7 @@ export default function TimerRunScreen() {
                                     <ComboRow
                                         meta={meta}
                                         userId={userId!}
-                                        expanded={comboExpanded.has(meta.id)}
+                                        expanded={!collapsedCombos.has(meta.id)}
                                         onToggle={onToggleCombo}
                                         selectMode={false}
                                         selected={false}
