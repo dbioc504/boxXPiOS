@@ -21,12 +21,22 @@ import { STYLE_TO_CATEGORIES } from "@/types/validation";
 import type { Category } from "@/types/common";
 import type { Technique } from "@/types/technique";
 import { planBalanced, planSpecialized } from "@/screens/Timer/planner";
+
 import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved } from "@/types/skillPlan";
+import {
+    COMBO_PLAN_STORE_KEY,
+    type ComboPlanSaved,
+    buildComboRoundSchedule,
+    deriveFocusSeqFromCombos,
+} from "@/screens/Timer/comboPlanner";
+import { COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved } from "@/types/comboDisplay";
+import { useCombosRepo } from "@/lib/repos/CombosRepoContext";
+import type { ComboMeta } from "@/lib/repos/combos.repo";
 
 type Nav = NativeStackScreenProps<RootStackParamList, "TimerSetup">["navigation"];
 type OpenPickerTarget = null | "rounds" | "round" | "rest" | "warmup";
 
-// seed creator
+/** --- seeded shuffle helpers (fresh randomness per session) --- */
 const hashString = (s: string) => {
     let h = 2166136261 >>> 0;
     for (let i = 0; i < s.length; i++) {
@@ -38,7 +48,7 @@ const hashString = (s: string) => {
 const mulberry32 = (seed: number) => {
     let t = seed >>> 0;
     return () => {
-        t += 0x6D2B79F5;
+        t += 0x6d2b79f5;
         let x = Math.imul(t ^ (t >>> 15), 1 | t);
         x ^= x + Math.imul(x ^ (x >>> 7), 61 | x);
         return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
@@ -62,6 +72,7 @@ export default function TimerSetupScreen() {
     const { user } = useAuth();
     const userId = user?.id ?? null;
     const { style: userStyle } = useStyle();
+    const combos = useCombosRepo();
 
     const [cfg, setCfg] = useState<TimerConfig>(DEFAULT_TIMER_CONFIG);
     const [open, setOpen] = useState<OpenPickerTarget>(null);
@@ -101,7 +112,7 @@ export default function TimerSetupScreen() {
             })
         );
 
-        for (const [c,rows] of results) {
+        for (const [c, rows] of results) {
             if (rows.length) out[c as Category] = rows as Technique[];
         }
         return out;
@@ -125,12 +136,14 @@ export default function TimerSetupScreen() {
     const onStart = async () => {
         try {
             setStarting(true);
+            const rounds = Math.max(1, cfg.rounds);
+            const seed = Date.now();
 
+            /** -------------------- SKILL PLAN -------------------- */
             if (cfg.showSkills) {
-                const rounds = Math.max(1, cfg.rounds);
-                const seed = Date.now();
-
                 const groupsRaw = await loadStyleGroups();
+
+                // Shuffle category order and each category pool for freshness per start
                 const catOrder = seededShuffle(Object.keys(groupsRaw) as Category[], seed);
                 const groupsShuffled: Record<Category, Technique[]> = {} as any;
                 for (const cat of catOrder) {
@@ -138,6 +151,7 @@ export default function TimerSetupScreen() {
                     groupsShuffled[cat] = seededShuffle(groupsRaw[cat] ?? [], catSeed);
                 }
 
+                // keep only non-empty categories (in the shuffled order)
                 const nonEmpty: Record<Category, Technique[]> = {} as any;
                 for (const cat of catOrder) {
                     const arr = groupsShuffled[cat];
@@ -145,7 +159,6 @@ export default function TimerSetupScreen() {
                 }
 
                 let plans: SkillPlanSaved["plans"];
-
                 if (Object.keys(nonEmpty).length > 0 && userStyle) {
                     if (cfg.skillMode === "specialized" && cfg.specializedCategory) {
                         plans = planSpecialized(
@@ -159,7 +172,7 @@ export default function TimerSetupScreen() {
                         plans = planBalanced(rounds, nonEmpty as any);
                     }
                 } else {
-                    // no style or no techniques — write empty rounds to keep Run stable
+                    // no style/techniques — write empty rounds to keep Run stable
                     plans = Array.from({ length: rounds }, (_, i) => ({
                         roundIndex: i,
                         categoryFocus: null,
@@ -170,14 +183,51 @@ export default function TimerSetupScreen() {
                     }
                 }
 
-                const blob: SkillPlanSaved = {
+                const skillBlob: SkillPlanSaved = {
                     mode: (cfg.skillMode as any) ?? "balanced",
                     rounds,
                     specializedCategory: (cfg.specializedCategory as Category | null) ?? null,
                     plans,
                     createdAt: Date.now(),
                 };
-                await AsyncStorage.setItem(SKILL_PLAN_STORE_KEY, JSON.stringify(blob));
+                await AsyncStorage.setItem(SKILL_PLAN_STORE_KEY, JSON.stringify(skillBlob));
+            }
+
+            /** -------------------- COMBO PLAN -------------------- */
+            if (cfg.showCombos) {
+                const rawSel = await AsyncStorage.getItem(COMBO_DISPLAY_STORE_KEY);
+                const selectedIds = rawSel ? (JSON.parse(rawSel) as ComboDisplaySaved).selectedIds ?? [] : [];
+
+                const all = await combos.listCombos();
+                const byId = new Map(all.map((c) => [c.id, c] as const));
+                let picked: ComboMeta[] = selectedIds.map((id) => byId.get(id)).filter(Boolean) as ComboMeta[];
+
+                // Shuffle input order for fresh feel each start
+                picked = seededShuffle(picked, seed);
+
+                // Prefer skill plan’s category focus sequence if it exists and matches rounds
+                const skillRaw = await AsyncStorage.getItem(SKILL_PLAN_STORE_KEY);
+                const skillBlob: SkillPlanSaved | null = skillRaw ? JSON.parse(skillRaw) : null;
+
+                let focusSeq: (Category | null)[];
+                if (cfg.showSkills && skillBlob?.plans?.length === rounds) {
+                    focusSeq = skillBlob.plans.map((p) => p.categoryFocus ?? null);
+                } else {
+                    // derive from combos (includes NO_CAT and avoids immediate repeats)
+                    focusSeq = deriveFocusSeqFromCombos(rounds, picked);
+                }
+
+                const perRoundCombos = buildComboRoundSchedule(rounds, picked, focusSeq);
+
+                const comboPlan: ComboPlanSaved = {
+                    rounds,
+                    roundsMap: perRoundCombos.map((arr, roundIndex) => ({
+                        roundIndex,
+                        comboIds: arr.map((c) => c.id),
+                    })),
+                    createdAt: Date.now(),
+                };
+                await AsyncStorage.setItem(COMBO_PLAN_STORE_KEY, JSON.stringify(comboPlan));
             }
 
             nav.navigate("TimerRun");
@@ -277,6 +327,8 @@ export default function TimerSetupScreen() {
     );
 }
 
+/** -------------------- presentation bits -------------------- */
+
 function Row({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) {
     return (
         <Pressable
@@ -307,9 +359,7 @@ function RowLabel({ children }: { children: React.ReactNode }) {
 function Pill({ children }: { children: React.ReactNode }) {
     return (
         <View style={S.pill}>
-            <BodyText style={{ color: colors.offWhite, fontWeight: "700", fontSize: 20 }}>
-                {children}
-            </BodyText>
+            <BodyText style={{ color: colors.offWhite, fontWeight: "700", fontSize: 20 }}>{children}</BodyText>
         </View>
     );
 }
@@ -334,7 +384,12 @@ function ToggleRow({
         >
             <BodyText style={{ color: colors.offWhite, fontWeight: "600", fontSize: 16 }}>{label}</BodyText>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Switch value={value} onValueChange={onValueChange} trackColor={{ false: "#667", true: colors.text }} thumbColor={value ? colors.mainBtn : "#bbb"} />
+                <Switch
+                    value={value}
+                    onValueChange={onValueChange}
+                    trackColor={{ false: "#667", true: colors.text }}
+                    thumbColor={value ? colors.mainBtn : "#bbb"}
+                />
                 {onMore && (
                     <Pressable onPress={onMore} style={({ pressed }) => [S.moreBtn, pressed && { opacity: 0.7 }]}>
                         <Ionicons name="cog-outline" color={colors.offWhite} size={30} />

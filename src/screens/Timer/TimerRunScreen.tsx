@@ -20,7 +20,7 @@ import {useAuth} from "@/lib/AuthProvider";
 import {ComboMeta} from "@/lib/repos/combos.repo";
 import {ComboRow} from "@/screens/Combos/ComboRow";
 import { buildComboRoundSchedule, deriveFocusSeqFromCombos } from "./comboPlanner";
-
+import { COMBO_PLAN_STORE_KEY, type ComboPlanSaved } from "@/screens/Timer/comboPlanner";
 
 
 type Phase = "getReady" | "round" | "rest" | "done";
@@ -46,6 +46,7 @@ export default function TimerRunScreen() {
     const [comboIds, setComboIds] = useState<string[] | null>(null);
     const [selectedCombos, setSelectedCombos] = useState<ComboMeta[]>([]);
     const [comboExpanded, setComboExpanded] = useState<Set<string>>(new Set());
+    const [comboPlan, setComboPlan] = useState<ComboPlanSaved | null>(null);
 
     const [ps, setPs] = useState<PhaseState | null>(null);
     const [isRunning, setIsRunning] = useState(false);
@@ -87,6 +88,23 @@ export default function TimerRunScreen() {
             } catch { setPlan(null); }
         })();
     }, []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const raw = await AsyncStorage.getItem(COMBO_PLAN_STORE_KEY);
+                setComboPlan(raw ? JSON.parse(raw) : null);
+            } catch {}
+        })();
+    }, []);
+
+    const combosForCurrentRound = useMemo(() => {
+        if (!comboPlan || !ps || ps.phase !== "round") return [];
+        const entry = comboPlan.roundsMap.find(e => e.roundIndex === ps.roundIndex);
+        if (!entry) return [];
+        const byId = new Map(selectedCombos.map(c => [c.id, c] as const));
+        return entry.comboIds.map(id => byId.get(id)).filter(Boolean) as ComboMeta[];
+    }, [comboPlan, ps?.phase, ps?.roundIndex, selectedCombos]);
 
     useEffect(() => {
         (async () => {
@@ -239,10 +257,12 @@ export default function TimerRunScreen() {
         return buildComboRoundSchedule(rounds, selectedCombos, focusSeq);
     }, [rounds, selectedCombos, focusSeq]);
 
-    const combosForRound = useMemo(
-        () => (ps?.phase === "round" ? comboSchedule[ps.roundIndex] ?? [] : []),
-        [ps?.phase, ps?.roundIndex, comboSchedule]
-    );
+    const combosForRound = combosForCurrentRound;
+
+    const comboFocusLabel =
+        combosForRound[0]?.category
+            ? CATEGORY_LABEL[combosForRound[0].category as Category]?.toUpperCase?.() ?? ""
+            : "";
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
@@ -290,10 +310,7 @@ export default function TimerRunScreen() {
                     <View style={styles.skillsWrap}>
                         <BodyText style={styles.skillsTitle}>
                             {"COMBOS"}
-                            {/* Optional: show which category is focused this round */}
-                            {focusSeq[ps.roundIndex]
-                                ? ` - ${CATEGORY_LABEL[focusSeq[ps.roundIndex] as Category]?.toUpperCase?.() || ""}`
-                                : ""}
+                            {comboFocusLabel ? ` - ${comboFocusLabel}` : ""}
                         </BodyText>
 
                         <View style={styles.comboList}>

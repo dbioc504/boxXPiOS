@@ -9,14 +9,7 @@ export function groupByCategory(combos: ComboMeta[]): Buckets {
     const by: Buckets = {};
     const norm = (s?: string | null) => (s ?? NO_CAT);
 
-    const sorted = [...combos].sort((a,b) => {
-        const an = (a.name || "").toLowerCase();
-        const bn = (b.name || "").toLowerCase();
-        if (an !== bn) return an.localeCompare(bn);
-        return a.id.localeCompare(b.id);
-    });
-
-    for (const c of sorted) {
+    for (const c of combos) {
         const k = norm(c.category);
         if (!by[k]) by[k] = [];
         by[k].push(c);
@@ -30,65 +23,90 @@ export function buildComboRoundSchedule(
     focusSeq: (Category | null | undefined)[],
 ): ComboMeta[][] {
     const r = Math.max(1, rounds);
-    const total = selected.length;
-    if (total === 0) return Array.from({ length: r }, () => []);
+    const n = selected.length;
+    if (n === 0) return Array.from({ length: r }, () => []);
 
-    const perRound = Math.ceil(total / r);
+    const perRound = Math.max(1, Math.ceil(n / r));
+    const totalSlots = perRound * r;
 
-    const buckets = groupByCategory(selected);
-    const cats = Object.keys(buckets);
+    const base = Math.floor(totalSlots / n);
+    let extra = totalSlots % n;
 
-    const take = (k: string, n: number): ComboMeta[] => {
-        const q = buckets[k] ?? [];
-        if (!q.length || n <= 0) return [];
-        return q.splice(0, Math.min(n, q.length));
-    };
+    const bag: ComboMeta[] = [];
+    for (let i = 0; i < n; i++) {
+        const times = base + (i < extra ? 1 : 0);
+        for (let t = 0; t < times; t++) bag.push(selected[i]);
+    }
 
-    const out: ComboMeta[][] = Array.from({ length: r }, () => []);
+    const by = groupByCategory(selected);
+    const allCats = Object.keys(by);
+
+    const catKey = (m: ComboMeta) => (m.category ?? NO_CAT);
+
+    const roundsOut: ComboMeta[][] = Array.from({ length: r }, () => []);
+
+    const queues: Record<string, ComboMeta[]> = {};
+    for (const c of allCats) queues[c] = [];
+    for (const item of bag) queues[catKey(item)]?.push(item);
+
+    function tryPickFrom(cat: string, roundIdx: number): ComboMeta | null {
+        const q = queues[cat];
+        if (!q || q.length === 0) return null;
+
+        const last = roundsOut[roundIdx].at(-1);
+        if (last && catKey(last) === cat) return null;
+
+        return q.shift() ?? null;
+    }
+
+    function pickAnyBut(excludeCat: string | null, roundIdx: number): ComboMeta | null {
+        for (const c of allCats) {
+            if (excludeCat && c === excludeCat) continue;
+            const got = tryPickFrom(c, roundIdx);
+            if (got) return got;
+        }
+        for (const c of allCats) {
+            const q = queues[c];
+            if (q?.length) return q.shift()!;
+        }
+        return null;
+    }
+
     for (let i = 0; i < r; i++) {
         const want = perRound;
         const focus = (focusSeq[i] ?? null) as Category | null;
-        const focusKey = focus ?? NO_CAT;
+        const focusKey = (focus ?? NO_CAT) as string;
 
-        let need = want;
-        if (focusKey && buckets[focusKey]) {
-            const picked = take(focusKey, need);
-            out[i].push(...picked);
-            need -= picked.length;
+        const prevFirst = roundsOut[i - 1]?.[0] ?? null;
+        const prevFirstCat = prevFirst ? catKey(prevFirst) : null;
+
+        let first = null as ComboMeta | null;
+
+        if (focusKey && focusKey !== prevFirstCat) {
+            first = tryPickFrom(focusKey, i);
         }
 
-        if (need > 0) {
-            const others = cats
-                .filter((k) => k !== focusKey)
-                .slice(i % cats.length)
-                .concat(cats.filter((k) => k !== focusKey).slice(0, i % cats.length));
+        if (!first) {
+            first = pickAnyBut(prevFirstCat, i);
+        }
+        if (first) roundsOut[i].push(first);
 
-            for (const k of others) {
-                if (need <= 0) break;
-                const picked = take(k, need);
-                if (picked.length) {
-                    out[i].push(...picked);
-                    need -= picked.length;
-                }
+        while (roundsOut[i].length < want) {
+            let next = null as ComboMeta | null;
+            if (focusKey) next = tryPickFrom(focusKey, i);
+
+            if (!next) {
+                const last = roundsOut[i].at(-1);
+                const lastCat = last ? catKey(last) : null;
+                next = pickAnyBut(lastCat, i);
             }
+
+            if (!next) break;
+            roundsOut[i].push(next);
         }
     }
 
-    const remaining = cats.reduce((acc, k) => acc + (buckets[k]?.length ?? 0), 0);
-    if (remaining > 0) {
-        for (let i = 0; i < r; i++) {
-            const need = Math.max(0, perRound - out[i].length);
-            if (!need) continue;
-            for (const k of cats) {
-                if (out[i].length >= perRound) break;
-                const takeN = perRound - out[i].length;
-                const picked = take(k, takeN);
-                if (picked.length) out[i].push(...picked);
-            }
-        }
-    }
-
-    return out;
+    return roundsOut;
 }
 
 export function deriveFocusSeqFromCombos(
@@ -96,8 +114,24 @@ export function deriveFocusSeqFromCombos(
     selected: ComboMeta[],
 ): (Category | null)[] {
     const by = groupByCategory(selected);
-    const keys = Object.keys(by).filter((k) => k !== NO_CAT);
+    const keys = Object.keys(by);
     if (keys.length === 0) return Array.from({ length: rounds }, () => null);
 
-    return Array.from({ length: rounds }, (_, i) => (keys[i % keys.length] as Category));
+    const out: (Category | null)[] = [];
+    let idx = 0;
+    for (let i = 0; i < rounds; i++) {
+        const last = out.at(-1) ?? null;
+        let pick = keys[idx % keys.length];
+        if (last && pick === last) {
+            pick = keys[(idx + 1) % keys.length];
+            idx += 1;
+        }
+        out.push(pick as Category);
+        idx += 1;
+    }
+    return out;
 }
+
+export const COMBO_PLAN_STORE_KEY = "combo_plan.v1"
+export type ComboRound = { roundIndex: number; comboIds: string[] };
+export type ComboPlanSaved = { rounds: number; roundsMap: ComboRound[]; createdAt: number };
