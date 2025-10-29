@@ -1,38 +1,38 @@
 // src/screens/Timer/TimerSetupScreen.tsx
-import React, { useEffect, useState } from "react";
-import { Pressable, StyleSheet, Switch, View, Alert, ActivityIndicator } from "react-native";
+import React, {useEffect, useState} from "react";
+import {ActivityIndicator, Alert, Pressable, StyleSheet, View} from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SafeAreaView } from "react-native-safe-area-context";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { useNavigation } from "@react-navigation/native";
-import { BodyText, Header } from "@/theme/T";
-import { colors, sharedStyle } from "@/theme/theme";
-import { fmtMMSS } from "@/lib/time";
-import { CustomTimePicker } from "@/screens/Timer/CustomTimePicker";
-import { DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig } from "@/types/timer";
-import type { RootStackParamList } from "@/navigation/RootNavigator";
-import { Ionicons } from "@expo/vector-icons";
+import {SafeAreaView} from "react-native-safe-area-context";
+import {NativeStackScreenProps} from "@react-navigation/native-stack";
+import {useNavigation} from "@react-navigation/native";
+import {BodyText, Header} from "@/theme/T";
+import {colors, sharedStyle} from "@/theme/theme";
+import {fmtMMSS} from "@/lib/time";
+import {CustomTimePicker} from "@/screens/Timer/CustomTimePicker";
+import {DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig} from "@/types/timer";
+import type {RootStackParamList} from "@/navigation/RootNavigator";
+import ToggleRow from '@/screens/Timer/ToggleRow';
 import SkillDisplayModal from "@/screens/Timer/SkillDisplayModal";
 
-import { useRepos } from "@/lib/providers/RepoProvider";
-import { useAuth } from "@/lib/AuthProvider";
-import { useStyle } from "@/lib/providers/StyleProvider";
-import { STYLE_TO_CATEGORIES } from "@/types/validation";
-import type { Category } from "@/types/common";
-import type { Technique } from "@/types/technique";
-import { planBalanced, planSpecialized } from "@/screens/Timer/planner"; // use the updated file
-
-import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved } from "@/types/skillPlan";
+import {useRepos} from "@/lib/providers/RepoProvider";
+import {useAuth} from "@/lib/AuthProvider";
+import {useStyle} from "@/lib/providers/StyleProvider";
+import {STYLE_TO_CATEGORIES} from "@/types/validation";
+import type {Category} from "@/types/common";
+import type {Technique} from "@/types/technique";
+import {planBalanced, planSpecialized} from "@/screens/Timer/planner"; // use the updated file
+import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
 import {
+    alignFocusSeqToAvailable,
+    buildComboRoundSchedule,
     COMBO_PLAN_STORE_KEY,
     type ComboPlanSaved,
-    buildComboRoundSchedule,
     deriveFocusSeqFromCombos,
-    NO_CAT, alignFocusSeqToAvailable,
+    NO_CAT,
 } from "@/screens/Timer/comboPlanner";
-import { COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved } from "@/types/comboDisplay";
-import { useCombosRepo } from "@/lib/repos/CombosRepoContext";
-import type { ComboMeta } from "@/lib/repos/combos.repo";
+import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
+import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
+import type {ComboMeta} from "@/lib/repos/combos.repo";
 
 type Nav = NativeStackScreenProps<RootStackParamList, "TimerSetup">["navigation"];
 type OpenPickerTarget = null | "rounds" | "round" | "rest" | "warmup";
@@ -406,42 +406,6 @@ function Pill({ children }: { children: React.ReactNode }) {
     return (
         <View style={S.pill}>
             <BodyText style={{ color: colors.offWhite, fontWeight: "700", fontSize: 20 }}>{children}</BodyText>
-        </View>
-    );
-}
-
-function ToggleRow({
-                       label,
-                       value,
-                       onValueChange,
-                       onMore,
-                   }: {
-    label: string;
-    value: boolean;
-    onValueChange: (v: boolean) => void;
-    onMore?: () => void;
-}) {
-    return (
-        <View
-            style={[
-                S.row,
-                { backgroundColor: colors.mainBtn, justifyContent: "space-between", height: 70, borderWidth: 0 },
-            ]}
-        >
-            <BodyText style={{ color: colors.offWhite, fontWeight: "600", fontSize: 16 }}>{label}</BodyText>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <Switch
-                    value={value}
-                    onValueChange={onValueChange}
-                    trackColor={{ false: "#667", true: colors.text }}
-                    thumbColor={value ? colors.mainBtn : "#bbb"}
-                />
-                {onMore && (
-                    <Pressable onPress={onMore} style={({ pressed }) => [S.moreBtn, pressed && { opacity: 0.7 }]}>
-                        <Ionicons name="cog-outline" color={colors.offWhite} size={30} />
-                    </Pressable>
-                )}
-            </View>
         </View>
     );
 }
