@@ -3,6 +3,8 @@
 **Box XP Plus** is a full-featured boxing training companion built with **Expo SDK 54** and **React 19**.  
 It guides athletes from **sign-in** to **skill libraries**, **drag-and-drop combo building**, and **interval timing** — all within a cohesive, polished UI.
 
+Soon to be deployed on the official Apple **App Store** for **iOS**.
+
 ---
 
 ## 🚀 Features
