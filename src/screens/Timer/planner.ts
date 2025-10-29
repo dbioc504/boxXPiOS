@@ -1,6 +1,6 @@
 // src/lib/skills/planner.ts
-import type {Technique} from "@/types/technique";
-import type {Category} from "@/types/common";
+import type { Technique } from "@/types/technique";
+import type { Category } from "@/types/common";
 
 export type RoundPlan = {
     roundIndex: number;
@@ -26,7 +26,10 @@ function totalSize(groups: ByCategory): number {
 }
 
 function categoriesInStyle(groups: ByCategory): Category[] {
-    return (Object.keys(groups) as Category[]).filter((c) => (groups[c]?.length ?? 0) > 0);
+    // stable alphabetical order so rotation feels predictable across sessions
+    return (Object.keys(groups) as Category[])
+        .filter((c) => (groups[c]?.length ?? 0) > 0)
+        .sort((a, b) => String(a).localeCompare(String(b)));
 }
 
 function roundCounts(totalSlots: number, rounds: number): number[] {
@@ -85,19 +88,29 @@ function fillFromRotatingQueues(
         if (!anyLeft) break;
     }
 
-    const  seen = new Set<string>();
-    const uniqueOut = out.filter(t => {
+    // de-dupe just in case
+    const seen = new Set<string>();
+    const uniqueOut = out.filter((t) => {
         if (!t?.id) return false;
         if (seen.has(t.id)) return false;
         seen.add(t.id);
         return true;
     });
 
-    return { list: out };
+    return { list: uniqueOut };
 }
 
-// BALANCED (unchanged) — already no-repeats because we consume queues once
-export function planBalanced(rounds: number, groups: ByCategory): RoundPlan[] {
+/**
+ * BALANCED with rotating start.
+ * @param rounds
+ * @param groups
+ * @param startOffset - which category index to start with this time (rotates across launches)
+ */
+export function planBalanced(
+    rounds: number,
+    groups: ByCategory,
+    startOffset = 0
+): RoundPlan[] {
     const cats = categoriesInStyle(groups);
     const total = totalSize(groups);
     if (rounds <= 0 || total === 0) {
@@ -112,16 +125,25 @@ export function planBalanced(rounds: number, groups: ByCategory): RoundPlan[] {
     const counts = roundCounts(total, rounds);
 
     const plans: RoundPlan[] = [];
+    const nCats = cats.length;
+    const baseOffset = nCats > 0 ? (startOffset % nCats + nCats) % nCats : 0;
+
     for (let r = 0; r < rounds; r++) {
         const k = counts[r];
-        const focus = cats[r % cats.length];
-        const borrowOrder = cats.slice(r % cats.length).concat(cats.slice(0, r % cats.length));
+        const focusIdx = nCats > 0 ? (baseOffset + r) % nCats : 0;
+        const focus = nCats > 0 ? cats[focusIdx] : null;
+
+        // borrow order begins at this round's focus, then wraps
+        const borrowOrder =
+            nCats > 0
+                ? cats.slice(focusIdx).concat(cats.slice(0, focusIdx))
+                : [];
+
         const { list } = fillFromRotatingQueues(k, focus, borrowOrder, queues);
         plans.push({ roundIndex: r, categoryFocus: focus, techniques: list });
     }
     return plans;
 }
-
 // SPECIALIZED
 // Add opts.noRepeats: if true, do not top-up beyond the unique pool (global uniqueness).
 export function planSpecialized(

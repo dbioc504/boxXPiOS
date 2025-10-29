@@ -20,7 +20,7 @@ import { useStyle } from "@/lib/providers/StyleProvider";
 import { STYLE_TO_CATEGORIES } from "@/types/validation";
 import type { Category } from "@/types/common";
 import type { Technique } from "@/types/technique";
-import { planBalanced, planSpecialized } from "@/screens/Timer/planner";
+import { planBalanced, planSpecialized } from "@/screens/Timer/planner"; // use the updated file
 
 import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved } from "@/types/skillPlan";
 import {
@@ -28,6 +28,7 @@ import {
     type ComboPlanSaved,
     buildComboRoundSchedule,
     deriveFocusSeqFromCombos,
+    NO_CAT, alignFocusSeqToAvailable,
 } from "@/screens/Timer/comboPlanner";
 import { COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved } from "@/types/comboDisplay";
 import { useCombosRepo } from "@/lib/repos/CombosRepoContext";
@@ -63,6 +64,25 @@ const seededShuffle = <T,>(arr: T[], seed: number): T[] => {
     }
     return a;
 };
+
+/** ---------- rotation state persisted in AsyncStorage ---------- */
+const ROTATE_KEY = "focus_rotation.v1";
+type RotMap = {
+    skills?: Record<string, number>;
+    combos?: Record<string, number>;
+};
+
+// returns the current offset (then advances it for next time)
+async function getAndAdvanceRotation(ns: "skills" | "combos", cats: string[]): Promise<number> {
+    const raw = await AsyncStorage.getItem(ROTATE_KEY);
+    const map: RotMap = raw ? JSON.parse(raw) : {};
+    const bag = (map[ns] ??= {});
+    const catsKey = cats.join("|");
+    const current = bag[catsKey] ?? 0;
+    bag[catsKey] = current + 1;
+    await AsyncStorage.setItem(ROTATE_KEY, JSON.stringify(map));
+    return current;
+}
 
 export default function TimerSetupScreen() {
     const nav = useNavigation<Nav>();
@@ -101,6 +121,7 @@ export default function TimerSetupScreen() {
         const allowedCats = STYLE_TO_CATEGORIES[userStyle] ?? [];
         if (allowedCats.length === 0) return out;
 
+        // keep fetch but we will keep category order stable later
         const results = await Promise.all(
             allowedCats.map(async (c) => {
                 try {
@@ -143,17 +164,18 @@ export default function TimerSetupScreen() {
             if (cfg.showSkills) {
                 const groupsRaw = await loadStyleGroups();
 
-                // Shuffle category order and each category pool for freshness per start
-                const catOrder = seededShuffle(Object.keys(groupsRaw) as Category[], seed);
+                // Stable category list for rotation; shuffle techniques inside each category for freshness
+                const stableCats = (Object.keys(groupsRaw) as Category[]).sort((a, b) => String(a).localeCompare(String(b)));
+
                 const groupsShuffled: Record<Category, Technique[]> = {} as any;
-                for (const cat of catOrder) {
-                    const catSeed = seed ^ hashString(cat);
+                for (const cat of stableCats) {
+                    const catSeed = seed ^ hashString(String(cat));
                     groupsShuffled[cat] = seededShuffle(groupsRaw[cat] ?? [], catSeed);
                 }
 
-                // keep only non-empty categories (in the shuffled order)
+                // keep only non-empty categories (in stable order)
                 const nonEmpty: Record<Category, Technique[]> = {} as any;
-                for (const cat of catOrder) {
+                for (const cat of stableCats) {
                     const arr = groupsShuffled[cat];
                     if (arr && arr.length) nonEmpty[cat] = arr;
                 }
@@ -169,10 +191,13 @@ export default function TimerSetupScreen() {
                             { noRepeats: true }
                         );
                     } else {
-                        plans = planBalanced(rounds, nonEmpty as any);
+                        // Rotating start for BALANCED
+                        const skillCats = Object.keys(nonEmpty) as Category[];
+                        const startOffset = await getAndAdvanceRotation("skills", skillCats);
+                        plans = planBalanced(rounds, nonEmpty as any, startOffset);
                     }
                 } else {
-                    // no style/techniques — write empty rounds to keep Run stable
+                    // empty fallback
                     plans = Array.from({ length: rounds }, (_, i) => ({
                         roundIndex: i,
                         categoryFocus: null,
@@ -202,32 +227,53 @@ export default function TimerSetupScreen() {
                 const byId = new Map(all.map((c) => [c.id, c] as const));
                 let picked: ComboMeta[] = selectedIds.map((id) => byId.get(id)).filter(Boolean) as ComboMeta[];
 
-                // Shuffle input order for fresh feel each start
+                // light shuffle for freshness without changing category membership
                 picked = seededShuffle(picked, seed);
 
-                // Prefer skill plan’s category focus sequence if it exists and matches rounds
+                // read the skill plan if present
                 const skillRaw = await AsyncStorage.getItem(SKILL_PLAN_STORE_KEY);
                 const skillBlob: SkillPlanSaved | null = skillRaw ? JSON.parse(skillRaw) : null;
 
                 let focusSeq: (Category | null)[];
+
                 if (cfg.showSkills && skillBlob?.plans?.length === rounds) {
-                    focusSeq = skillBlob.plans.map((p) => p.categoryFocus ?? null);
+                    // 1) start from the skills’ category for each round
+                    const skillsFocus = skillBlob.plans.map((p) => p.categoryFocus ?? null);
+
+                    // 2) align each round’s focus to a category that actually has selected combos;
+                    //    if a skills focus has no combos, pick the next available category for that round.
+                    focusSeq = alignFocusSeqToAvailable(skillsFocus, picked, 0);
+
+                    // 3) build rounds and enforce “strict focus” so we can take back-to-back from the focused category
+                    const perRoundCombos = buildComboRoundSchedule(rounds, picked, focusSeq, { strictFocus: true });
+
+                    const comboPlan: ComboPlanSaved = {
+                        rounds,
+                        roundsMap: perRoundCombos.map((arr, roundIndex) => ({
+                            roundIndex,
+                            comboIds: arr.map((c) => c.id),
+                        })),
+                        createdAt: Date.now(),
+                    };
+                    await AsyncStorage.setItem(COMBO_PLAN_STORE_KEY, JSON.stringify(comboPlan));
                 } else {
-                    // derive from combos (includes NO_CAT and avoids immediate repeats)
-                    focusSeq = deriveFocusSeqFromCombos(rounds, picked);
+                    // SkillDisplay is off or missing — use rotating combo focus sequence
+                    const catsFromCombos = Array.from(new Set(picked.map((c) => c.category ?? NO_CAT)));
+                    const startOffset = await getAndAdvanceRotation("combos", catsFromCombos);
+                    focusSeq = deriveFocusSeqFromCombos(rounds, picked, startOffset);
+
+                    const perRoundCombos = buildComboRoundSchedule(rounds, picked, focusSeq, { strictFocus: false });
+
+                    const comboPlan: ComboPlanSaved = {
+                        rounds,
+                        roundsMap: perRoundCombos.map((arr, roundIndex) => ({
+                            roundIndex,
+                            comboIds: arr.map((c) => c.id),
+                        })),
+                        createdAt: Date.now(),
+                    };
+                    await AsyncStorage.setItem(COMBO_PLAN_STORE_KEY, JSON.stringify(comboPlan));
                 }
-
-                const perRoundCombos = buildComboRoundSchedule(rounds, picked, focusSeq);
-
-                const comboPlan: ComboPlanSaved = {
-                    rounds,
-                    roundsMap: perRoundCombos.map((arr, roundIndex) => ({
-                        roundIndex,
-                        comboIds: arr.map((c) => c.id),
-                    })),
-                    createdAt: Date.now(),
-                };
-                await AsyncStorage.setItem(COMBO_PLAN_STORE_KEY, JSON.stringify(comboPlan));
             }
 
             nav.navigate("TimerRun");
@@ -272,19 +318,19 @@ export default function TimerSetupScreen() {
                     label="SKILL DISPLAY"
                     value={cfg.showSkills}
                     onValueChange={(v) => setCfg((c) => ({ ...c, showSkills: v }))}
-                    onMore={goSkillDisplay}
+                    onMore={() => setShowSkillModal(true)}
                 />
                 <ToggleRow
                     label="COMBO DISPLAY"
                     value={cfg.showCombos}
                     onValueChange={(v) => setCfg((c) => ({ ...c, showCombos: v }))}
-                    onMore={goComboDisplay}
+                    onMore={() => nav.navigate("ComboDisplay")}
                 />
                 <ToggleRow
                     label="MECHANICS DISPLAY"
                     value={cfg.showMechanics}
                     onValueChange={(v) => setCfg((c) => ({ ...c, showMechanics: v }))}
-                    onMore={goMechanicsDisplay}
+                    onMore={() => nav.navigate("MechanicsDisplay")}
                 />
 
                 {/* actions */}
