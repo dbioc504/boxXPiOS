@@ -21,7 +21,7 @@ export default function HomeScreen() {
             <Header title={"BOX XP+"}/>
 
             {/*App Buttons*/}
-            <View style={[signInStyles.buttonGroup, {rowGap: 20}, {marginBottom: 20}]}>
+            <View style={[signInStyles.buttonGroup, {rowGap: 20, marginBottom: 20, marginTop: 5}]}>
 
                 <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
                 <MainButton label="COMBOS" onPress={() => nav.navigate('CombosIndex')}/>
@@ -66,7 +66,7 @@ export const homeBtns = StyleSheet.create({
         borderRadius: 25,
         backgroundColor: colors.mainBtn,
         alignItems: 'center',
-        height: 125,
+        height: 129,
         width: 310,
         borderColor: colors.text,
         borderWidth: 2,
