@@ -21,7 +21,13 @@ import {ComboMeta} from "@/lib/repos/combos.repo";
 import {ComboRow} from "@/screens/Combos/ComboRow";
 import { buildComboRoundSchedule, deriveFocusSeqFromCombos } from "./comboPlanner";
 import { COMBO_PLAN_STORE_KEY, type ComboPlanSaved } from "@/screens/Timer/comboPlanner";
-
+import { BASE_MECHANICS_CATALOG } from "@/screens/Mechanics/mechanicsCatalog.base";
+import {
+    MECH_PLAN_STORE_KEY,
+    type MechanicsPlanSaved,
+} from "@/screens/Timer/mechanicsPlanner";
+import type { Mechanic } from "@/types/mechanic";
+import { MOVEMENT_LABEL } from "@/types/common";
 
 type Phase = "getReady" | "round" | "rest" | "done";
 
@@ -58,6 +64,27 @@ export default function TimerRunScreen() {
     const { playBell, playClack } = useTimerSounds();
 
     const prevPhaseRef = useRef<Phase | null>(null);
+    const [mechPlan, setMechPlan] = useState<MechanicsPlanSaved | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const raw = await AsyncStorage.getItem(MECH_PLAN_STORE_KEY);
+                setMechPlan(raw ? JSON.parse(raw) : null);
+            } catch {
+                setMechPlan(null);
+            }
+        })();
+    }, []);
+
+    const mechanicsForCurrentRound = useMemo<Mechanic[]>(() => {
+        if (!mechPlan || !ps || ps.phase !== "round") return [];
+        const entry = mechPlan.roundsMap.find(e => e.roundIndex === ps.roundIndex);
+        if (!entry || !entry.mechanicIds?.length) return [];
+
+        const byId = new Map(BASE_MECHANICS_CATALOG.items.map(m => [m.id, m] as const));
+        return entry.mechanicIds.map(id => byId.get(id)).filter(Boolean) as Mechanic[];
+    }, [mechPlan, ps?.phase, ps?.roundIndex]);
 
     useEffect(() => {
         setCollapsedCombos(new Set());
@@ -336,6 +363,19 @@ export default function TimerRunScreen() {
                     </View>
                 )}
 
+                {/* MECHANICS */}
+                {cfg?.showMechanics && ps?.phase === "round" && mechanicsForCurrentRound.length > 0 && (
+                    <View style={styles.skillsWrap}>
+                        <BodyText style={styles.skillsTitle}>MECHANICS</BodyText>
+                        <View style={styles.mechList}>
+                            {mechanicsForCurrentRound.map(m => (
+                                <MechanicCard key={m.id} item={m} />
+                            ))}
+                        </View>
+                    </View>
+                )}
+
+
             </ScrollView>
 
             <View style={styles.footer}>
@@ -346,6 +386,30 @@ export default function TimerRunScreen() {
 }
 
 // helpers
+function MechanicCard({ item }: { item: Mechanic }) {
+    const title =
+        item.kind === "movement"
+            ? (MOVEMENT_LABEL[item.movement] ?? item.movement)
+            : item.title;
+
+    return (
+        <View style={styles.mechCard}>
+            <BodyText style={styles.mechTitle}>{title}</BodyText>
+            <View style={{ gap: 6 }}>
+                {item.bullets
+                    .filter(b => b.text?.trim().length)
+                    .map(b => (
+                        <View key={b.id} style={styles.mechBulletRow}>
+                            <BodyText style={styles.mechDot}>{"\u2022"}</BodyText>
+                            <BodyText style={styles.mechBullet}>{b.text}</BodyText>
+                        </View>
+                    ))}
+            </View>
+        </View>
+    );
+}
+
+
 function makePhase(phase: Phase, roundIndex: number, cfg: TimerConfig): PhaseState {
     const now = Date.now();
     const durMs =
@@ -430,4 +494,22 @@ const styles = StyleSheet.create({
         justifyContent: "center",
     },
     primaryBtnText: { color: colors.background, fontWeight: "600", fontSize: 20, letterSpacing: 0.5 },
+    mechList: { width: "100%", gap: 10, alignItems: "center" },
+    mechCard: {
+        width: "100%",
+        maxWidth: 420,
+        borderRadius: 12,
+        padding: 12,
+    },
+    mechTitle: {
+        color: colors.offWhite,
+        fontWeight: "700",
+        fontSize: 16,
+        marginBottom: 6,
+        textAlign: "center",
+    },
+    mechBulletRow: { flexDirection: "row", gap: 8, alignItems: "flex-start" },
+    mechDot: { color: colors.offWhite, fontSize: 16, lineHeight: 20 },
+    mechBullet: { color: colors.offWhite, fontSize: 14, lineHeight: 20, flex: 1 },
+
 });

@@ -20,7 +20,7 @@ import {useStyle} from "@/lib/providers/StyleProvider";
 import {STYLE_TO_CATEGORIES} from "@/types/validation";
 import type {Category} from "@/types/common";
 import type {Technique} from "@/types/technique";
-import {planBalanced, planSpecialized} from "@/screens/Timer/planner"; // use the updated file
+import {planBalanced, planSpecialized} from "@/screens/Timer/planner";
 import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
 import {
     alignFocusSeqToAvailable,
@@ -33,6 +33,19 @@ import {
 import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 import type {ComboMeta} from "@/lib/repos/combos.repo";
+import { BASE_MECHANICS_CATALOG } from "@/screens/Mechanics/mechanicsCatalog.base";
+import {
+    MECH_PLAN_STORE_KEY,
+    buildMechanicRoundSchedule,
+    deriveFocusSeqFromGroups,
+    alignFocusSeqToAvailableForCategory,
+} from "@/screens/Timer/mechanicsPlanner";
+import {
+    MECH_DISPLAY_STORE_KEY,
+    type MechanicsDisplaySaved,
+} from "@/screens/Timer/MechanicsDisplayScreen";
+import type { MechanicsGroup } from "@/types/mechanic";
+
 
 type Nav = NativeStackScreenProps<RootStackParamList, "TimerSetup">["navigation"];
 type OpenPickerTarget = null | "rounds" | "round" | "rest" | "warmup";
@@ -271,6 +284,98 @@ export default function TimerSetupScreen() {
                     await AsyncStorage.setItem(COMBO_PLAN_STORE_KEY, JSON.stringify(comboPlan));
                 }
             }
+
+            /** -------------------- MECHANICS PLAN -------------------- */
+            if (cfg.showMechanics) {
+                const rounds = Math.max(1, cfg.rounds);
+
+                // 1) read display settings
+                const rawDisp = await AsyncStorage.getItem(MECH_DISPLAY_STORE_KEY);
+                const disp: MechanicsDisplaySaved | null = rawDisp ? JSON.parse(rawDisp) : null;
+                const mode = disp?.mode ?? "sync";
+
+                // 2) pool of mechanics; optionally filter by selected groups (group mode)
+                const allItems = BASE_MECHANICS_CATALOG.items.slice();
+                let activeGroups: MechanicsGroup[] = Array.from(
+                    new Set(allItems.map((m) => m.group))
+                ).sort((a, b) => a.localeCompare(b));
+
+                let pool = allItems;
+                if (mode === "group") {
+                    const chosen = new Set(disp?.selectedGroups ?? []);
+                    if (chosen.size === 0) {
+                        // write empty-but-well-formed plan so TimerRun doesn't crash
+                        const empty = Array.from({ length: rounds }, (_, i) => ({
+                            roundIndex: i,
+                            mechanicIds: [],
+                        }));
+                        await AsyncStorage.setItem(
+                            MECH_PLAN_STORE_KEY,
+                            JSON.stringify({ rounds, roundsMap: empty, createdAt: Date.now() })
+                        );
+                        Alert.alert("Mechanics", "Pick at least one group in Mechanics Display.");
+                        // fall through (we still navigate to run to keep UX consistent)
+                    } else {
+                        pool = pool.filter((m) => chosen.has(m.group));
+                        activeGroups = Array.from(chosen).sort((a, b) => a.localeCompare(b));
+                    }
+                }
+
+                // 3) build plan per mode
+                if (mode === "sync") {
+                    // require a skill plan to sync
+                    const skillRaw = await AsyncStorage.getItem(SKILL_PLAN_STORE_KEY);
+                    const skillBlob: SkillPlanSaved | null = skillRaw ? JSON.parse(skillRaw) : null;
+
+                    const skillCats = skillBlob?.plans?.map((p) => p.categoryFocus ?? null) ?? [];
+                    const fallbackGroups = activeGroups;
+                    // naive: start focus on first group; you could also rotate with ROTATE_KEY if desired
+                    const focusSeqGuess = Array.from({ length: rounds }, (_, i) => fallbackGroups[i % Math.max(1, fallbackGroups.length)]);
+
+                    // ensure each round's focus group can serve the target category (or neutrals/any)
+                    const focusSeq = alignFocusSeqToAvailableForCategory(
+                        focusSeqGuess,
+                        skillCats,
+                        pool
+                    );
+
+                    const perRound = buildMechanicRoundSchedule(rounds, pool, {
+                        focusSeq,
+                        targetCategorySeq: skillCats,
+                        strictFocus: true,
+                    });
+
+                    const mechPlan = {
+                        rounds,
+                        roundsMap: perRound.map((arr, roundIndex) => ({
+                            roundIndex,
+                            mechanicIds: arr.map((m) => m.id),
+                        })),
+                        createdAt: Date.now(),
+                    };
+                    await AsyncStorage.setItem(MECH_PLAN_STORE_KEY, JSON.stringify(mechPlan));
+                } else {
+                    // balanced or group: rotate across active groups (no category constraint)
+                    const startOffset = 0; // you can plug your getAndAdvanceRotation("mechanics", activeGroups) here if you want rotation persistence
+                    const focusSeq = deriveFocusSeqFromGroups(rounds, activeGroups, startOffset);
+
+                    const perRound = buildMechanicRoundSchedule(rounds, pool, {
+                        focusSeq,
+                        strictFocus: false,
+                    });
+
+                    const mechPlan = {
+                        rounds,
+                        roundsMap: perRound.map((arr, roundIndex) => ({
+                            roundIndex,
+                            mechanicIds: arr.map((m) => m.id),
+                        })),
+                        createdAt: Date.now(),
+                    };
+                    await AsyncStorage.setItem(MECH_PLAN_STORE_KEY, JSON.stringify(mechPlan));
+                }
+            }
+
 
             nav.navigate("TimerRun");
         } catch (e: any) {

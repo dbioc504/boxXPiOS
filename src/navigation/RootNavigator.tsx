@@ -11,6 +11,7 @@ import MechanicsCategoriesScreen from "@/screens/Mechanics/MechanicsCategoriesSc
 import {MechanicsGroup} from "@/types/mechanic";
 import MechanicsGroupScreen from "@/screens/Mechanics/MechanicsGroupScreen";
 import ComboDisplayScreen from "@/screens/Timer/ComboDisplayScreen";
+import MechanicsDisplayScreen from "@/screens/Timer/MechanicsDisplayScreen";
 
 export type RootStackParamList = {
     Home: undefined;
@@ -23,6 +24,7 @@ export type RootStackParamList = {
     MechanicsCat: undefined;
     MechanicsGroup: {group: MechanicsGroup};
     ComboDisplay: undefined;
+    MechanicsDisplay: undefined;
 };
 
 const NAV_ID = 'Rootstack' as const;
@@ -47,6 +49,7 @@ export default function RootNavigator() {
                 <Stack.Screen name='MechanicsCat' component={MechanicsCategoriesScreen}/>
                 <Stack.Screen name='MechanicsGroup' component={MechanicsGroupScreen} />
                 <Stack.Screen name='ComboDisplay' component={ComboDisplayScreen}/>
+                <Stack.Screen name='MechanicsDisplay' component={MechanicsDisplayScreen}/>
             </Stack.Navigator>
         </NavigationContainer>
     );
