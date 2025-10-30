@@ -221,7 +221,9 @@ export default function TimerSetupScreen() {
             /** -------------------- COMBO PLAN -------------------- */
             if (cfg.showCombos) {
                 const rawSel = await AsyncStorage.getItem(COMBO_DISPLAY_STORE_KEY);
-                const selectedIds = rawSel ? (JSON.parse(rawSel) as ComboDisplaySaved).selectedIds ?? [] : [];
+                const saved = rawSel ? (JSON.parse(rawSel) as ComboDisplaySaved) : null;
+                const selectedIds = saved?.selectedIds ?? [];
+                const wantSync = saved?.syncWithSkills ?? true;
 
                 const all = await combos.listCombos();
                 const byId = new Map(all.map((c) => [c.id, c] as const));
@@ -236,15 +238,10 @@ export default function TimerSetupScreen() {
 
                 let focusSeq: (Category | null)[];
 
-                if (cfg.showSkills && skillBlob?.plans?.length === rounds) {
-                    // 1) start from the skills’ category for each round
+                if (wantSync && cfg.showSkills && skillBlob?.plans?.length === rounds) {
                     const skillsFocus = skillBlob.plans.map((p) => p.categoryFocus ?? null);
-
-                    // 2) align each round’s focus to a category that actually has selected combos;
-                    //    if a skills focus has no combos, pick the next available category for that round.
                     focusSeq = alignFocusSeqToAvailable(skillsFocus, picked, 0);
 
-                    // 3) build rounds and enforce “strict focus” so we can take back-to-back from the focused category
                     const perRoundCombos = buildComboRoundSchedule(rounds, picked, focusSeq, { strictFocus: true });
 
                     const comboPlan: ComboPlanSaved = {
@@ -257,7 +254,6 @@ export default function TimerSetupScreen() {
                     };
                     await AsyncStorage.setItem(COMBO_PLAN_STORE_KEY, JSON.stringify(comboPlan));
                 } else {
-                    // SkillDisplay is off or missing — use rotating combo focus sequence
                     const catsFromCombos = Array.from(new Set(picked.map((c) => c.category ?? NO_CAT)));
                     const startOffset = await getAndAdvanceRotation("combos", catsFromCombos);
                     focusSeq = deriveFocusSeqFromCombos(rounds, picked, startOffset);

@@ -3,5 +3,6 @@ export const COMBO_DISPLAY_STORE_KEY = '@boxxp/combosDisplay';
 
 export type ComboDisplaySaved = {
     selectedIds: string[];
+    syncWithSkills?: boolean;
     createdAt: number;
 };

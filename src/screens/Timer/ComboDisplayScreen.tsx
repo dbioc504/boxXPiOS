@@ -11,6 +11,7 @@ import {ComboMeta} from "@/lib/repos/combos.repo";
 import {ComboRow} from "@/screens/Combos/ComboRow";
 import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
 import {useAuth} from "@/lib/AuthProvider";
+import ToggleRow from "@/screens/Timer/ToggleRow";
 
 type Section = {
     title: string;
@@ -31,6 +32,7 @@ export default function ComboDisplayScreen() {
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [syncWithSkills, setSyncWithSkills] = useState<boolean>(true);
 
     useEffect(() => {
         (async () => {
@@ -39,6 +41,7 @@ export default function ComboDisplayScreen() {
                 if (raw) {
                     const prev = JSON.parse(raw) as ComboDisplaySaved;
                     setSelectedIds(new Set(prev.selectedIds));
+                    setSyncWithSkills(prev.syncWithSkills ?? true);
                 }
             } catch {}
         })();
@@ -125,6 +128,7 @@ export default function ComboDisplayScreen() {
             setSaving(true);
             const payload: ComboDisplaySaved = {
                 selectedIds: Array.from(selectedIds),
+                syncWithSkills,
                 createdAt: Date.now(),
             };
             await AsyncStorage.setItem(COMBO_DISPLAY_STORE_KEY, JSON.stringify(payload));
@@ -133,7 +137,7 @@ export default function ComboDisplayScreen() {
         } catch (e) {
             setSaving(false);
         }
-    }, [nav, selectedIds]);
+    }, [nav, selectedIds, syncWithSkills]);
 
     if (authLoading || loading) {
         return (
@@ -149,6 +153,13 @@ export default function ComboDisplayScreen() {
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
             <Header title="COMBO DISPLAY"/>
+
+            <View>
+                <ToggleRow
+                    label="Sync with Skill Display"
+                    value={syncWithSkills}
+                    onValueChange={setSyncWithSkills}/>
+            </View>
 
             <SectionList
                 sections={sections}
