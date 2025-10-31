@@ -9,7 +9,7 @@ import { BASE_MECHANICS_CATALOG } from '@/screens/Mechanics/mechanicsCatalog.bas
 import { MOVEMENT_LABEL } from '@/types/common';
 import type { RootStackParamList } from '@/navigation/RootNavigator';
 import { ExpandableSection } from '@/screens/Skills/ExpandableSection';
-import type { Mechanic, MechanicsGroup } from '@/types/mechanic';
+import {getMechanicTitle, Mechanic, MechanicsGroup} from '@/types/mechanic';
 import { MECHANICS_GROUP_LABEL } from '@/types/mechanic';
 
 type Route = RouteProp<RootStackParamList, 'MechanicsGroup'>;
@@ -23,11 +23,8 @@ export default function MechanicsGroupScreen() {
     }, [group]);
 
     const renderItem = ({ item }: { item: Mechanic }) => {
-        const title =
-            item.kind === 'movement'
-                ? (MOVEMENT_LABEL[item.movement] ?? item.movement) // guard
-                : item.title;
-
+        const title = getMechanicTitle(item, MOVEMENT_LABEL);
+0
         return (
             <ExpandableSection
                 key={item.id}
