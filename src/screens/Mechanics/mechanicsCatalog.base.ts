@@ -156,21 +156,6 @@ export const BASE_MECHANICS_CATALOG: MechanicsCatalog = {
             ]
         },
         {
-            id: 'roll_rear',
-            kind: 'title',
-            title: 'Roll/ Weave Rear Side',
-            movements: ['roll_left', 'roll_right'],
-            group: 'defense',
-            category: ['defense', 'counterpunching', "placement_timing"],
-            bullets: [
-                { id: 'rr1', text: 'Often synonymous with term "weave", so clarify which terminology you reference with your coach.' },
-                { id: 'rr2', text: 'Similar mechanics to the rear slip and the jab.' },
-                { id: 'rr3', text: 'Bend knees and change levels with hips while making a U-shape with your head.' },
-                { id: 'rr4', text: 'Situationally works better on the inside to counter and chain into hooks and body shots' },
-                { id: 'rr5', text: 'Good escape when used after throwing the rear straight.' }
-            ]
-        },
-        {
             id: 'roll_lead',
             kind: 'title',
             title: 'Roll/ Weave Lead Side',
@@ -184,6 +169,21 @@ export const BASE_MECHANICS_CATALOG: MechanicsCatalog = {
                 { id: 'rl4', text: 'Form a U-shape with head.' },
                 { id: 'rl5', text: 'Chains well into lead hooks to the body or head.' },
                 { id: 'rl6', text: 'Good escape after throwing lead hook or uppercut.' }
+            ]
+        },
+        {
+            id: 'roll_rear',
+            kind: 'title',
+            title: 'Roll/ Weave Rear Side',
+            movements: ['roll_left', 'roll_right'],
+            group: 'defense',
+            category: ['defense', 'counterpunching', "placement_timing"],
+            bullets: [
+                { id: 'rr1', text: 'Often synonymous with term "weave", so clarify which terminology you reference with your coach.' },
+                { id: 'rr2', text: 'Similar mechanics to the rear slip and the jab.' },
+                { id: 'rr3', text: 'Bend knees and change levels with hips while making a U-shape with your head.' },
+                { id: 'rr4', text: 'Situationally works better on the inside to counter and chain into hooks and body shots' },
+                { id: 'rr5', text: 'Good escape when used after throwing the rear straight.' }
             ]
         },
         {
@@ -201,15 +201,33 @@ export const BASE_MECHANICS_CATALOG: MechanicsCatalog = {
             ]
         },
         {
-          id: 'catch_rear',
-          kind: 'title',
-          title: 'Catch Rear Side',
-          movements: ['catch_right', 'catch_left'],
-          group: "defense",
-          category: ['defense', 'counterpunching', 'pressure', 'work_rate'],
-          bullets: [
-              { id: 'cr1', text: '' },
+            id: 'catch_rear',
+            kind: 'title',
+            title: 'Catch Rear Side',
+            movements: ['catch_right', 'catch_left'],
+            group: "defense",
+            category: ['defense', 'counterpunching', 'pressure', 'work_rate'],
+            bullets: [
+              { id: 'cr1', text: 'Similar mechanics to the rear hand straight. Bend and lower your back knee, and pivot your back foot.' },
+              { id: 'cr2', text: 'Take head off centerline and keep both hands to temples. Don\'t let your head extend past your lead knee.' },
+              { id: 'cr3', text: 'Stiffen your rear hand an inch or 2 away from your head. Only let your hand keep in contact with your head as a last resort' },
+              { id: 'cr4', text: 'Chains well into lead hooks, body hooks and upjab+flurry combos.' },
+              { id: 'cr5', text: 'Chain catches and straight punches during forward movement.' }
           ]
+        },
+        {
+            id: 'catch_body_shots',
+            kind: 'title',
+            title: 'Catch Body Shots',
+            movements: ['sit_left', 'sit_right'],
+            group: 'defense',
+            category: ['defense', "placement_timing", "pressure"],
+            bullets: [
+                { id: 'sl1', text: 'High guard up and hands remain at cheeks to temple in case you make a wrong read.' },
+                { id: 'sl2', text: 'Change levels and squat to catch the punch at your shoulder-elbow range.' },
+                { id: 'sl3', text: 'Do not simply drop your elbows. It leaves your head wide open.' },
+                { id: 'sl4', text: 'Chains well into hook flurries to digging to the body and rolling out.' }
+            ]
         },
 
         // Group: PUNCHES
@@ -254,5 +272,48 @@ export const BASE_MECHANICS_CATALOG: MechanicsCatalog = {
                 { id: 'up5', text: 'Works best with combinations and double triple jabs.' }
             ]
         },
+        {
+            id: 'straight',
+            kind: 'movement',
+            movement: 'straight',
+            group: 'punches',
+            bullets: [
+                { id: 'sp1', text: 'Lead hand stays guarding the chin/nose area ready to catch.' },
+                { id: 'sp2', text: 'Pull lead shoulder back, drop hips, transfer weight to front foot.' },
+                { id: 'sp3', text: 'Pivot rear foot and lower rear knee. Align rear shoulder above hip and knee.' },
+                { id: 'sp4', text: 'Tuck chin in rear shoulder and extend arm to full extension and turn knuckle.' },
+                { id: 'sp5', text: 'Align eyes with rear shoulder and aim to land with first two knuckles.' },
+                { id: 'sp6', text: 'Snap rear hand back to face to guard.' },
+                { id: 'sp7', text: 'Chains well with rolling to the rear, throwing straight flurries, or lead hooks.' }
+            ]
+        },
+        {
+            id: 'lead_hook',
+            kind: 'title',
+            title: 'Lead Hook',
+            movements: ['left_hook', 'right_hook'],
+            group: 'punches',
+            bullets: [
+                { id: 'lh1', text: 'Stay responsible with rear hand to face/temple ready to catch or parry.' },
+                { id: 'lh2', text: 'Transfer weight onto back foot, lower hips, and sit slightly.' },
+                { id: 'lh3', text: 'Create a 90 degree angle with your elbow and align elbow/forearm with shoulder perfectly horizontal.' },
+                { id: 'lh4', text: 'Thumb up grants more power and damage. Thumb neutral allows hook to follow if opponent dodges.' },
+                { id: 'lh5', text: 'Follow through and use the momentum of the punch to circle hand back to guard.' }
+            ]
+        },
+        {
+            id: 'rear_hook',
+            kind: 'title',
+            title: 'Rear Hook',
+            movements: ['left_hook', "right_hook"],
+            group: 'punches',
+            bullets: [
+                { id: 'rh1', text: 'Use very seldomly being that the punch leaves you more open than any other punch.' },
+                { id: 'rh2', text: 'Best used when opponent has their back to the ropes.' },
+                { id: 'rh3', text: 'Transfer weight on to front foot and keep lead hand responsible to face.' },
+                { id: 'rh4', text: 'Punch is not a forward motion, but coming from the side to the middle.' },
+                { id: 'rh5', text: 'Roll to rear side to exit and be ready to attack/defend immediately.' }
+            ]
+        }
     ]
 }
