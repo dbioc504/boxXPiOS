@@ -229,6 +229,18 @@ export const BASE_MECHANICS_CATALOG: MechanicsCatalog = {
                 { id: 'sl4', text: 'Chains well into hook flurries to digging to the body and rolling out.' }
             ]
         },
+        {
+            id: 'parry',
+            kind: 'title',
+            title: 'Parry',
+            movements: ['parry_left', 'parry_right'],
+            group: 'defense',
+            bullets: [
+                { id: 'p1', text: 'You must be fully relaxed in your stance and look for the punch.' },
+                { id: 'p2', text: 'Allow yourself to catch the punch like a baseball. Do not over reach or let your hand leave your face.' },
+                { id: 'p3', text: 'Can be used before after or even during multiple types of jabs for countering opportunities.' }
+            ]
+        },
 
         // Group: PUNCHES
         {
@@ -313,6 +325,96 @@ export const BASE_MECHANICS_CATALOG: MechanicsCatalog = {
                 { id: 'rh3', text: 'Transfer weight on to front foot and keep lead hand responsible to face.' },
                 { id: 'rh4', text: 'Punch is not a forward motion, but coming from the side to the middle.' },
                 { id: 'rh5', text: 'Roll to rear side to exit and be ready to attack/defend immediately.' }
+            ]
+        },
+        {
+            id: 'lead_uppercut',
+            kind: 'title',
+            title: 'Lead Uppercut',
+            movements: ['left_uppercut', 'right_uppercut'],
+            group: 'punches',
+            bullets: [
+                { id: 'lu1', text: 'Slip/roll to the left and keep head off centerline. Keep head to temple' },
+                { id: 'lu2', text: 'Transfer weight to back leg and pull rear shoulder back ' },
+                { id: 'lu3', text: 'Follow up immediately with either a rear straight, rear catch, or roll your head to the lead.' }
+            ]
+        },
+        {
+            id: 'rear_uppercut',
+            kind: 'title',
+            title: 'Rear Uppercut',
+            movements: ['left_uppercut', 'right_uppercut'],
+            group: 'punches',
+            bullets: [
+                { id: 'ru1', text: 'Plant feet, and start with keeping both hands responsible' },
+                { id: 'ru2', text: 'Pull lead shoulder and throw punch right up the middle. Follow through with hip rotation.' },
+                { id: 'ru3', text: 'Punch can be doubled up, mixed high/low, into combos. Just stay responsible and be careful of counters.' }
+            ]
+        },
+        {
+            id: 'stab',
+            kind: 'movement',
+            movement: 'stab',
+            group: 'punches',
+            bullets: [
+                { id: 'stp1', text: 'Keep rear hand responsible in front of your face/ ready to catch to the temple during whole move.' },
+                { id: 'stp2', text: 'Bend at the hips and the knees without widening stance to change levels.' },
+                { id: 'stp3', text: 'Same mechanics as the jab. Spring off the back foot, align shoulder with eyes, and pull rear shoulder to snap.' },
+                { id: 'stp5', text: 'Keep head off centerline by slipping to the rearside throughout punch to remain responsible' },
+                { id: 'stp4', text: 'In the proper situation, you can take a step forward to increase range. Just don\'t lunge.' }
+            ]
+        },
+        {
+            id: 'body_straight',
+            kind: 'movement',
+            movement: 'body_straight',
+            group: 'punches',
+            bullets: [
+                { id: 'str1', text: 'Keep lead hand responsible by temple.' },
+                { id: 'str2', text: 'Change levels by bending at hips and knees without widening stance.' },
+                { id: 'str3', text: 'Transfer weight to front foot, pivot back foot and turn hips' },
+                { id: 'str4', text: 'Make sure head doesn\'t go over lead knee.' },
+                { id: 'str5', text: 'Chains well with rolling head to the lead side to remain responsible.' }
+            ]
+        },
+        {
+            id: 'lead_shovel_hook',
+            kind: 'title',
+            title: 'Lead Shovel Hook',
+            movements: ['left_shovel_hook', 'right_shovel_hook'],
+            group: 'punches',
+            bullets: [
+                { id: 'lsh1', text: 'Sit down, change levels and plant feet before throwing any body hook or uppercut.' },
+                { id: 'lsh2', text: 'Slip, roll, or combo into the rear side in order for proper positioning.' },
+                { id: 'lsh3', text: 'Transfer weight to back foot and pull rear shoulder back.' },
+                { id: 'lsh4', text: 'Keep rear hand responsible and shoot the punch at an upward diagonal trajectory.' },
+                { id: 'lsh5', text: 'Chains well into rear shovel hook, lead hook to the head, or rolling to the leadside.' }
+            ]
+        },
+        {
+            id: 'rear_shovel_hook',
+            kind: 'title',
+            title: 'Rear Shovel Hook',
+            movements: ['left_shovel_hook', 'right_shovel_hook'],
+            group: 'punches',
+            bullets: [
+                { id: 'rs1', text: 'Sitting and changing levels is crucial in providing the position and power behind body hooks and uppercuts.' },
+                { id: 'rs2', text: 'Punch is best and safest used after either a stab or lead body hook in flurries.' },
+                { id: 'rs3', text: 'Also situationally effective in repetition for orthodox fighters when opponent is bladed up on the inside' },
+                { id: 'rs4', text: 'Keep lead hand responsible, transfer weight onto front foot, pivot back foot and turn hip into punch.' }
+            ]
+        },
+        {
+            id: 'body_rear_uppercut',
+            kind: 'title',
+            title: 'Body Rear Uppercut',
+            movements: ['body_left_uppercut', 'body_right_uppercut'],
+            group: 'punches',
+            bullets: [
+                { id: 'bru1', text: 'Change levels and sit down with lead hand responsible to temple.' },
+                { id: 'bru2', text: 'Transfer weight onto front foot, pull lead shoulder back, and pivot right foot.' },
+                { id: 'bru3', text: 'Shoot punch up the middle and follow through.' },
+                { id: 'bru4', text: 'Chains well into lead hook or rolling out to the rear side.' }
             ]
         }
     ]

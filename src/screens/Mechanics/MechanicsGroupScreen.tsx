@@ -66,6 +66,9 @@ export default function MechanicsGroupScreen() {
                     </BodyText>
                 )}
             </View>
+            <View style={S.footer}>
+                <BodyText>""</BodyText>
+            </View>
         </SafeAreaView>
     );
 }
@@ -78,4 +81,5 @@ const S = StyleSheet.create({
     },
     dot: { color: colors.offWhite, fontSize: 16, lineHeight: 20 },
     bulletText: { color: colors.offWhite, fontSize: 14, lineHeight: 20, flex: 1 },
+    footer: { paddingTop: 14 }
 });
