@@ -1,5 +1,5 @@
 import React from 'react';
-import {Button, View, StyleSheet, Pressable} from 'react-native';
+import {Button, View, StyleSheet, Pressable, Image, ImageSourcePropType} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context'
 import {colors, sharedStyle, signInStyles} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
@@ -7,7 +7,10 @@ import {useNavigation} from "@react-navigation/native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {RootStackParamList} from "@/navigation/RootNavigator";
 import {useAuth} from "@/lib/AuthProvider";
-
+import skillsIcon from "../../assets/skillsIcon.png";
+import mechanicsIcon from "../../assets/mechanicsIcon.png";
+import combosIcon from "../../assets/combosIcon.png";
+import timerIcon from "../../assets/timerIcon.png";
 
 
 type HomeScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -23,11 +26,11 @@ export default function HomeScreen() {
             {/*App Buttons*/}
             <View style={[signInStyles.buttonGroup, {rowGap: 20, marginBottom: 20, marginTop: 5}]}>
 
-                <MainButton label="SKILLS" onPress={() => nav.navigate('Skills')}/>
-                <MainButton label="COMBOS" onPress={() => nav.navigate('CombosIndex')}/>
-                <MainButton label="MECHANICS" onPress={() => nav.navigate('MechanicsCat')}/>
+                <MainButton label="SKILLS" iconSource={skillsIcon} onPress={() => nav.navigate('Skills')}/>
+                <MainButton label="COMBOS" iconSource={combosIcon} onPress={() => nav.navigate('CombosIndex')}/>
+                <MainButton label="MECHANICS" iconSource={mechanicsIcon} onPress={() => nav.navigate('MechanicsCat')}/>
                 {/*<MainButton label="DOWNLOADS" onPress={() => {}}/>*/}
-                <MainButton label="TIMER" onPress={() => nav.navigate('TimerSetup')}/>
+                <MainButton label="TIMER" iconSource={timerIcon} onPress={() => nav.navigate('TimerSetup')}/>
 
             </View>
             {/*login buttons*/}
@@ -80,10 +83,29 @@ export const homeBtns = StyleSheet.create({
         textAlign: 'center',
         paddingVertical: 10,
 
-    }
+    },
+    iconLabelRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 12,
+    },
+    icon: {
+        width: 80,
+        height: 80,
+    },
 });
 
-export function MainButton({ label, onPress }: { label: string; onPress?: () => void }) {
+export function MainButton({
+    label,
+    onPress,
+    iconSource,
+    disabled
+}: {
+    label: string;
+    onPress?: () => void;
+    iconSource?: ImageSourcePropType;
+    disabled?: boolean;
+}) {
     return (
         <Pressable
             onPress={onPress}
@@ -97,11 +119,14 @@ export function MainButton({ label, onPress }: { label: string; onPress?: () => 
             ]}
         >
             {({ pressed }) => (
-                <BodyText style={[
-                    homeBtns.btnTxt,
-                    pressed && { color: colors.form }]}>
-                    {label}
-                </BodyText>
+                <View style={homeBtns.iconLabelRow}>
+                    { iconSource ? <Image source={iconSource} style={homeBtns.icon} resizeMode="contain" /> : null }
+                    <BodyText style={[
+                        homeBtns.btnTxt,
+                        pressed && {color: colors.form}]}>
+                        {label.toUpperCase()}
+                    </BodyText>
+                </View>
             )}
         </Pressable>
     )
