@@ -1,16 +1,18 @@
 import React from 'react';
-import {Button, View, StyleSheet, Pressable, Image, ImageSourcePropType} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context'
+import {Button, Image, ImageSourcePropType, Pressable, StyleSheet, View} from 'react-native';
+import { SvgProps } from 'react-native-svg';
+import {SafeAreaView} from 'react-native-safe-area-context'
 import {colors, sharedStyle, signInStyles} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
 import {useNavigation} from "@react-navigation/native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {RootStackParamList} from "@/navigation/RootNavigator";
 import {useAuth} from "@/lib/AuthProvider";
-import skillsIcon from "../../assets/skillsIcon.png";
-import mechanicsIcon from "../../assets/mechanicsIcon.png";
-import combosIcon from "../../assets/combosIcon.png";
-import timerIcon from "../../assets/timerIcon.png";
+import BxpLogo from "../../assets/bxpLogo.svg";
+import SkillsIconSvg from "../../assets/skillsIcon.svg";
+import MechanicsIconSvg from "../../assets/mechanicsIcon.svg";
+import CombosIconSvg from "../../assets/combosIcon.svg";
+import TimerIconSvg from "../../assets/timerIcon.svg";
 
 
 type HomeScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -26,11 +28,11 @@ export default function HomeScreen() {
             {/*App Buttons*/}
             <View style={[signInStyles.buttonGroup, {rowGap: 20, marginBottom: 20, marginTop: 5}]}>
 
-                <MainButton label="SKILLS" iconSource={skillsIcon} onPress={() => nav.navigate('Skills')}/>
-                <MainButton label="COMBOS" iconSource={combosIcon} onPress={() => nav.navigate('CombosIndex')}/>
-                <MainButton label="MECHANICS" iconSource={mechanicsIcon} onPress={() => nav.navigate('MechanicsCat')}/>
+                <MainButton label="SKILLS" iconSource={SkillsIconSvg} onPress={() => nav.navigate('Skills')}/>
+                <MainButton label="COMBOS" iconSource={CombosIconSvg} onPress={() => nav.navigate('CombosIndex')}/>
+                <MainButton label="MECHANICS" iconSource={MechanicsIconSvg} onPress={() => nav.navigate('MechanicsCat')}/>
                 {/*<MainButton label="DOWNLOADS" onPress={() => {}}/>*/}
-                <MainButton label="TIMER" iconSource={timerIcon} onPress={() => nav.navigate('TimerSetup')}/>
+                <MainButton label="TIMER" iconSource={TimerIconSvg} onPress={() => nav.navigate('TimerSetup')}/>
 
             </View>
             {/*login buttons*/}
@@ -103,9 +105,12 @@ export function MainButton({
 }: {
     label: string;
     onPress?: () => void;
-    iconSource?: ImageSourcePropType;
+    iconSource?: React.FC<SvgProps> | ImageSourcePropType;
     disabled?: boolean;
 }) {
+    const isSvgComponent = iconSource && typeof iconSource === 'function';
+    const SvgIcon = isSvgComponent ? iconSource as React.FC<SvgProps> : null;
+
     return (
         <Pressable
             onPress={onPress}
@@ -120,7 +125,11 @@ export function MainButton({
         >
             {({ pressed }) => (
                 <View style={homeBtns.iconLabelRow}>
-                    { iconSource ? <Image source={iconSource} style={homeBtns.icon} resizeMode="contain" /> : null }
+                    { isSvgComponent && SvgIcon ? (
+                        <SvgIcon width={80} height={80} />
+                    ) : iconSource ? (
+                        <Image source={iconSource as ImageSourcePropType} style={homeBtns.icon} resizeMode="contain" />
+                    ) : null }
                     <BodyText style={[
                         homeBtns.btnTxt,
                         pressed && {color: colors.form}]}>
