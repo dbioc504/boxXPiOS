@@ -16,7 +16,7 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -49,16 +49,7 @@
       "expo-build-properties",
       "expo-apple-authentication",
       "expo-audio",
-      "expo-web-browser",
-      [
-        "expo-notifications",
-        {
-          "sounds": [
-            "./assets/sounds/roundBell.wav",
-            "./assets/sounds/sticksClack.wav"
-          ]
-        }
-      ]
+      "expo-web-browser"
     ],
     "extra": {
       "EXPO_PUBLIC_SUPABASE_URL": "https://okhbdsvzevhfqbeoclft.supabase.co",

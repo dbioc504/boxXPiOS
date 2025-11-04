@@ -1,5 +1,5 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
+import {Alert, FlatList, Pressable, StyleSheet, Text, View} from 'react-native';
 import {ComboRow} from './ComboRow';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
 import {Header} from "@/theme/T";
@@ -10,14 +10,30 @@ import {RootStackParamList} from "@/navigation/RootNavigator";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 import {ComboMeta} from "@/lib/repos/combos.repo";
 import {useAuth} from "@/lib/AuthProvider";
-import {probeStepsOnce} from "@/dev/selfTest";
 
 export default function CombosIndexScreen() {
     const nav = useNavigation<NativeStackScreenProps<RootStackParamList, 'CombosIndex'>['navigation']>();
     const repo = useCombosRepo();
     const { user, loading } = useAuth();
     const userId = user?.id;
-    if (!userId) return null;
+    const promptedRef = useRef(false);
+
+    useEffect(() => {
+        if (!loading && !user && !promptedRef.current) {
+            promptedRef.current = true;
+            Alert.alert(
+                "Sign in required",
+                "Create or sign in to your account to save your boxing skills and combos.",
+                [
+                    {
+                        text: "Sign In",
+                        onPress: () => nav.navigate('SignIn'),
+                    }
+                ],
+                { cancelable: false },
+            );
+        }
+    }, [loading, user, nav]);
 
     const [combos, setCombos] = useState<ComboMeta[]>([]);
     const [openId, setOpenId] = useState<string | null>(null);
@@ -33,13 +49,6 @@ export default function CombosIndexScreen() {
             load();
         }, [load])
     )
-
-    useEffect(() => {
-        let done = false;
-        if (loading || !user || done) return;
-        probeStepsOnce().catch(err => console.log("probe error", err));
-    }, [loading, user]);
-
 
     const onToggle = (id: string) => setOpenId(prev => prev === id ? null : id);
     const onEdit = (id: string) => nav.navigate('ComboBuilder', { comboId: id });

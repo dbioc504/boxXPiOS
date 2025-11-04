@@ -13,7 +13,7 @@ Soon to be deployed on the official Apple **App Store** for **iOS**.
 - Secure **authentication** and **session handling** via Supabase (or offline mocks).
 - Curated **Skill Library** for storing and tagging training techniques.
 - **Combo Builder** with drag-and-drop editing and linked-list sequencing.
-- Integrated **Interval Timer** that plays bells and clacks, both in-app and in the background.
+- Integrated **Interval Timer** that plays bells and clacks during active sessions.
 
 ### 🎨 Modern, Polished UI
 - Built on **React Native + Expo** with **TypeScript 5.9**.
@@ -27,10 +27,8 @@ Soon to be deployed on the official Apple **App Store** for **iOS**.
 - **AsyncStorage** caching for offline continuity.
 - **Zod** validation and strong TypeScript typing for domain safety.
 
-### 🔔 Background Audio & Notifications
-- Local notifications play short bell/clack sounds even when the app is locked.
-- Time-sensitive cues scheduled through **expo-notifications**.
-- In-app playback powered by **expo-audio** with haptic feedback for realism.
+### 🔔 Audio & Timing Feedback
+  - Foreground playback powered by **expo-audio** with haptic feedback for realism.
 - Intelligent phase syncing ensures timer recovery on app resume.
 
 ---
@@ -43,7 +41,7 @@ Soon to be deployed on the official Apple **App Store** for **iOS**.
 | **Navigation** | React Navigation v7 |
 | **State & Animation** | Zustand • Reanimated |
 | **Backend** | Supabase (Auth + Storage) |
-| **Audio & Notifications** | Expo Audio • Expo Notifications • Expo Haptics |
+| **Audio & Haptics** | Expo Audio - Expo Haptics |
 | **Persistence** | AsyncStorage |
 | **Validation & Testing** | Zod • Jest |
 | **Design System** | Custom fonts, icons, and colors in `/src/theme/` |

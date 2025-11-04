@@ -12,8 +12,6 @@ import {useKeepAwake} from "expo-keep-awake";
 import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
 import {type Category, CATEGORY_LABEL} from "@/types/common";
 import {useTenSecondClack, useTimerSounds} from "@/screens/Timer/useTimerSounds";
-import {ensureNotifPermissions} from "@/notifications/setup";
-import {useBackgroundCues} from './useBackgroundCues';
 import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
 import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
 import {useAuth} from "@/lib/AuthProvider";
@@ -258,13 +256,6 @@ export default function TimerRunScreen() {
 
         return { techs, focusLabel };
     }, [plan, cfg, ps]);
-
-    useEffect(() => { ensureNotifPermissions().catch(() => {}); }, []);
-
-    useBackgroundCues(ps, cfg ?? null, {
-        bell: 'roundBell.wav',
-        clack: 'sticksClack.wav'
-    }, isRunning);
 
     const onToggleCombo = (id: string) => {
         setCollapsedCombos(prev => {

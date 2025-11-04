@@ -1,5 +1,5 @@
-import { useState } from "react";
-import {View, Pressable, ScrollView} from "react-native";
+import {useEffect, useRef, useState} from "react";
+import {Alert, View, Pressable, ScrollView} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BodyText, Header } from "@/theme/T";
 import { colors } from "@/theme/theme";
@@ -9,10 +9,37 @@ import { STYLE_TO_CATEGORIES } from "@/types/validation";
 import { CategoryCard } from "@/screens/Skills/CategoryCard";
 import StylePickerModal from "@/screens/Skills/StylePickerModal";
 import { useStyle } from "@/lib/providers/StyleProvider";
+import {useAuth} from "@/lib/AuthProvider";
+import {useNavigation} from "@react-navigation/native";
+import {NativeStackNavigationProp} from "@react-navigation/native-stack";
+import {RootStackParamList} from "@/navigation/RootNavigator";
 
 export default function SkillsScreen() {
+    const nav = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Skills'>>();
+    const { user, loading } = useAuth();
     const { ready, style } = useStyle();
     const [pickerOpen, setPickerOpen] = useState(false);
+    const promptedRef = useRef(false);
+
+    useEffect(() => {
+        if (!loading && !user && !promptedRef.current) {
+            promptedRef.current = true;
+            Alert.alert(
+                "Sign in required",
+                "Create or sign in to your account to save your boxing skills and combos.",
+                [
+                    {
+                        text: "Sign In",
+                        onPress: () => nav.navigate('SignIn'),
+                    }
+                ],
+                { cancelable: false },
+            );
+        }
+    }, [loading, user, nav]);
+
+    if (loading) return null;
+    if (!user) return null;
 
     if (!ready) return null;
 

@@ -134,7 +134,7 @@ export default function SignInScreen() {
                             style={[
                                 sharedStyle.backButton,
                                 // Optional: tint on press for feedback
-                                { tintColor: pressed ? '#C9C9C9' : undefined },
+                                { tintColor: pressed ? colors.pressedBorder : colors.text },
                             ]}
                         />
                     )}

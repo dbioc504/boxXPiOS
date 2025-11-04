@@ -1,6 +1,6 @@
 import React from 'react';
-import {Button, Image, ImageSourcePropType, Pressable, StyleSheet, View} from 'react-native';
-import { SvgProps } from 'react-native-svg';
+import {Alert, Button, Image, ImageSourcePropType, Pressable, StyleSheet, View} from 'react-native';
+import {SvgProps} from 'react-native-svg';
 import {SafeAreaView} from 'react-native-safe-area-context'
 import {colors, sharedStyle, signInStyles} from "@/theme/theme";
 import {BodyText, Header} from "@/theme/T";
@@ -8,7 +8,6 @@ import {useNavigation} from "@react-navigation/native";
 import {NativeStackNavigationProp} from "@react-navigation/native-stack";
 import {RootStackParamList} from "@/navigation/RootNavigator";
 import {useAuth} from "@/lib/AuthProvider";
-import BxpLogo from "../../assets/bxpLogo.svg";
 import SkillsIconSvg from "../../assets/skillsIcon.svg";
 import MechanicsIconSvg from "../../assets/mechanicsIcon.svg";
 import CombosIconSvg from "../../assets/combosIcon.svg";
@@ -21,6 +20,25 @@ export default function HomeScreen() {
     const { user, signOut } = useAuth();
     const nav = useNavigation<HomeScreenNavProp>();
 
+    const requireAuthFor = (destination: 'Skills' | 'CombosIndex') => {
+        if (user) {
+            nav.navigate(destination);
+            return;
+        }
+
+        Alert.alert(
+            "Sign in required",
+            "Create or sign in to your account to save your boxing skills and combos.",
+            [
+                {
+                    text: "Sign In",
+                    onPress: () => nav.navigate('SignIn'),
+                },
+            ],
+            { cancelable: false },
+        );
+    };
+
     return (
         <SafeAreaView style={sharedStyle.safeArea}>
             <Header title={"BOX XP+"}/>
@@ -28,8 +46,8 @@ export default function HomeScreen() {
             {/*App Buttons*/}
             <View style={[signInStyles.buttonGroup, {rowGap: 20, marginBottom: 20, marginTop: 5}]}>
 
-                <MainButton label="SKILLS" iconSource={SkillsIconSvg} onPress={() => nav.navigate('Skills')}/>
-                <MainButton label="COMBOS" iconSource={CombosIconSvg} onPress={() => nav.navigate('CombosIndex')}/>
+                <MainButton label="SKILLS" iconSource={SkillsIconSvg} onPress={() => requireAuthFor('Skills')}/>
+                <MainButton label="COMBOS" iconSource={CombosIconSvg} onPress={() => requireAuthFor('CombosIndex')}/>
                 <MainButton label="MECHANICS" iconSource={MechanicsIconSvg} onPress={() => nav.navigate('MechanicsCat')}/>
                 {/*<MainButton label="DOWNLOADS" onPress={() => {}}/>*/}
                 <MainButton label="TIMER" iconSource={TimerIconSvg} onPress={() => nav.navigate('TimerSetup')}/>
