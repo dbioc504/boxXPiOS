@@ -26,7 +26,7 @@ export function useComboBuilder(opts: Options = {}) {
         let mounted = true;
         (async () => {
             if (!comboId) return;
-            const res = await repo.getCombo(userId, comboId);
+            const res = await repo.getCombo(comboId);
             if (mounted && res) {
                 setLL(llFromArray(res.steps));
             }
@@ -57,11 +57,11 @@ export function useComboBuilder(opts: Options = {}) {
     const save = useCallback(async () => {
         if (!comboId) {
             // create a new combo on first save
-            const meta = await repo.createCombo(userId, { name: "New Combo" }, steps);
+            const meta = await repo.createCombo({ name: "New Combo" }, steps);
             setComboId(meta.id);
             return;
         }
-        await repo.saveSteps(userId, comboId, steps);
+        await repo.saveSteps(comboId, steps);
     }, [comboId, repo, steps, userId]);
 
     return {

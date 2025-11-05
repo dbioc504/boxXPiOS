@@ -1,0 +1,64 @@
+import type { ExpoConfig } from "expo/config";
+
+function requiredEnv(name: string): string {
+  const value = process.env[name];
+  // if (!value) {
+  //   throw new Error(`Missing environment variable ${name}. Update your EAS secrets or local .env file.`);
+  // }
+  return value;
+}
+
+const config: ExpoConfig = {
+  name: "Boxxp",
+  slug: "boxxp",
+  scheme: "boxxp",
+  owner: "dominickbioc",
+  platforms: ["ios"],
+  version: "1.0.0",
+  orientation: "portrait",
+  icon: "./assets/icon.png",
+  userInterfaceStyle: "light",
+  newArchEnabled: false,
+  splash: {
+    image: "./assets/splash-icon.png",
+    resizeMode: "contain",
+    backgroundColor: "#ffffff",
+  },
+  assetBundlePatterns: ["assets/sounds/*", "assets/fonts/*", "assets/*"],
+  ios: {
+    supportsTablet: true,
+    bundleIdentifier: "com.dominickbioc.boxxp",
+    usesAppleSignIn: true,
+    infoPlist: {
+      ITSAppUsesNonExemptEncryption: false,
+    },
+    buildNumber: process.env.IOS_BUILD_NUMBER ?? "1.0.0",
+  },
+  android: {
+    adaptiveIcon: {
+      foregroundImage: "./assets/adaptive-icon.png",
+      backgroundColor: "#ffffff",
+    },
+    edgeToEdgeEnabled: true,
+    package: "com.dominickbioc.boxxp",
+  },
+  web: {
+    favicon: "./assets/favicon.png",
+  },
+  plugins: [
+    "expo-font",
+    "expo-build-properties",
+    "expo-apple-authentication",
+    "expo-audio",
+    "expo-web-browser",
+  ],
+  extra: {
+    EXPO_PUBLIC_SUPABASE_URL: requiredEnv("EXPO_PUBLIC_SUPABASE_URL"),
+    EXPO_PUBLIC_SUPABASE_ANON_KEY: requiredEnv("EXPO_PUBLIC_SUPABASE_ANON_KEY"),
+    eas: {
+      projectId: "76c6e858-658e-4a4e-9d3e-15a972307f8f",
+    },
+  },
+};
+
+export default config;
