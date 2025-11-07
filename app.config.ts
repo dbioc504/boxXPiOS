@@ -18,11 +18,11 @@ const config: ExpoConfig = {
   orientation: "portrait",
   icon: "./assets/icon.png",
   userInterfaceStyle: "light",
-  newArchEnabled: false,
+  newArchEnabled: true,
   splash: {
     image: "./assets/splash-icon.png",
     resizeMode: "contain",
-    backgroundColor: "#ffffff",
+    backgroundColor: "#120B17",
   },
   assetBundlePatterns: ["assets/sounds/*", "assets/fonts/*", "assets/*"],
   ios: {
@@ -32,15 +32,7 @@ const config: ExpoConfig = {
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
     },
-    buildNumber: process.env.IOS_BUILD_NUMBER ?? "1.0.0",
-  },
-  android: {
-    adaptiveIcon: {
-      foregroundImage: "./assets/adaptive-icon.png",
-      backgroundColor: "#ffffff",
-    },
-    edgeToEdgeEnabled: true,
-    package: "com.dominickbioc.boxxp",
+    buildNumber: process.env.IOS_BUILD_NUMBER ?? "1",
   },
   web: {
     favicon: "./assets/favicon.png",
@@ -51,6 +43,8 @@ const config: ExpoConfig = {
     "expo-apple-authentication",
     "expo-audio",
     "expo-web-browser",
+    "expo-local-authentication",
+    "expo-asset"
   ],
   extra: {
     EXPO_PUBLIC_SUPABASE_URL: requiredEnv("EXPO_PUBLIC_SUPABASE_URL"),

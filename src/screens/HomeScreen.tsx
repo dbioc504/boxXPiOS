@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import {Alert, Button, Image, ImageSourcePropType, Pressable, StyleSheet, View} from 'react-native';
 import {SvgProps} from 'react-native-svg';
 import {SafeAreaView} from 'react-native-safe-area-context'
@@ -12,13 +12,53 @@ import SkillsIconSvg from "../../assets/skillsIcon.svg";
 import MechanicsIconSvg from "../../assets/mechanicsIcon.svg";
 import CombosIconSvg from "../../assets/combosIcon.svg";
 import TimerIconSvg from "../../assets/timerIcon.svg";
+import AccountActionsSheet from "@/screens/AccountsActionsSheet";
 
 
 type HomeScreenNavProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
 
 export default function HomeScreen() {
-    const { user, signOut } = useAuth();
+    const { user, signOut, deleteAccount } = useAuth();
+    const [sheetOpen, setSheetOpen] = useState(false);
     const nav = useNavigation<HomeScreenNavProp>();
+
+    const confirmSignOut = () => {
+        Alert.alert("Sign out", "You'll need to sign in again to access Skills and Combos.", [
+            { text: "Cancel", style: "cancel" },
+            { text: "Sign Out", style: "destructive", onPress: signOut },
+        ]);
+    };
+
+    const confirmDelete = () => {
+        Alert.alert("Delete account?", "This will permanently remove your account and all saved data." +
+            "This cannot be undone.",
+            [
+                { text: "Cancel", style: "cancel" },
+                {
+                    text: "Delete",
+                    style: "destructive",
+                    onPress: async () => {
+                        Alert.alert("Are you absolutely sure?", "This action is permanent.",
+                            [
+                                { text: "Cancel", style: "cancel" },
+                                {
+                                    text: "Yes, delete",
+                                    style: "destructive",
+                                    onPress: async () => {
+                                        try {
+                                            await deleteAccount();
+                                        } catch (e: any) {
+                                            Alert.alert("Delete failed", e?.message ?? "Please try again");
+                                        }
+                                    }
+                                }
+                            ]
+                        );
+                    }
+                }
+            ]
+        );
+    };
 
     const requireAuthFor = (destination: 'Skills' | 'CombosIndex') => {
         if (user) {
@@ -55,13 +95,17 @@ export default function HomeScreen() {
             </View>
             {/*login buttons*/}
             { user ?
-                <View style={homeBtns.signInBtn}>
-                    <Button
-                        title="Sign Out"
-                        color="#F0FFFF"
-                        onPress={signOut}
+                <>
+                    <View style={homeBtns.signInBtn}>
+                        <Button title="Sign Out/ Delete Account" color="#F0FFFF" onPress={() => setSheetOpen(true)} />
+                    </View>
+                    <AccountActionsSheet
+                        visible={sheetOpen}
+                        onClose={() => setSheetOpen(false)}
+                        onSignOut={confirmSignOut}
+                        onDeleteAccount={confirmDelete}
                     />
-                </View>
+                </>
             :
                 <View style={homeBtns.signInBtn}>
                     <Button
