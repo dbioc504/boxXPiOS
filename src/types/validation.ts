@@ -130,9 +130,9 @@ export type MechanicRow = z.infer<typeof zMechanicRow>;
 /** combos */
 export const zComboTemplateRow = z.object({
     id: zUuidV7,
-    name: z.string().min(1),
+    name: z.string().min(1).optional(),
     category: zCategory,
-    steps: z.array(zMovement).min(1, 'at least one move'),
+    steps: z.array(zMovement).min(2, 'at least two moves'),
 });
 export type ComboTemplateRow = z.infer<typeof zComboTemplateRow>;
 

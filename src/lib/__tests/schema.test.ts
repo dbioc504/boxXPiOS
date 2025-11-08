@@ -49,8 +49,8 @@ test("local id and any id work", () => {
 test("style and category enums accept only known values", () => {
     expectOk(zStyle, "outboxer");
     expectOk(zCategory, "pressure");
-    expectFail(zStyle, "slugger", "Invalid enum");
-    expectFail(zCategory, "random_cat", "Invalid enum");
+    expectZodFail(zStyle, "slugger", { path: [], code: "invalid_value" });
+    expectZodFail(zCategory, "random_cat", { path: [], code: "invalid_value" });
 });
 
 test("category must match style rule", () => {

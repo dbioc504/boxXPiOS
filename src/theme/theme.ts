@@ -1,7 +1,4 @@
 import {StyleSheet} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const insets = useSafeAreaInsets();
 
 export const colors = {
     text: '#FCEAA2',
@@ -34,9 +31,9 @@ export const theme = {
 
 export const sharedStyle = StyleSheet.create({
     safeArea: {
-        flex: 1,
         backgroundColor: colors.background,
         flexDirection:"column",
+        paddingBottom: 20
     },
     headerRow: {
         flexDirection: 'row',

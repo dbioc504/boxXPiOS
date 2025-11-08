@@ -80,7 +80,7 @@ export default function HomeScreen() {
     };
 
     return (
-        <SafeAreaView style={sharedStyle.safeArea}>
+        <SafeAreaView style={sharedStyle.safeArea} edges={['top', 'bottom']}>
             <Header title={"BOX XP+"}/>
 
             {/*App Buttons*/}
@@ -94,29 +94,31 @@ export default function HomeScreen() {
 
             </View>
             {/*login buttons*/}
-            { user ?
-                <>
+            <View style={{  paddingBottom: 20, alignItems: 'center' }}>
+                {user ? (
+                    <>
+                        <View style={homeBtns.signInBtn}>
+                            <Button title="Sign Out / Delete Account" color="#F0FFFF" onPress={() => setSheetOpen(true)} />
+                        </View>
+                        <AccountActionsSheet
+                            visible={sheetOpen}
+                            onClose={() => setSheetOpen(false)}
+                            onSignOut={confirmSignOut}
+                            onDeleteAccount={confirmDelete}
+                        />
+                    </>
+                ) : (
                     <View style={homeBtns.signInBtn}>
-                        <Button title="Sign Out/ Delete Account" color="#F0FFFF" onPress={() => setSheetOpen(true)} />
+                        <Button
+                            title="Sign In / Create Account"
+                            onPress={() => nav.navigate('SignIn')}
+                            color="#F0FFFF"
+                        />
                     </View>
-                    <AccountActionsSheet
-                        visible={sheetOpen}
-                        onClose={() => setSheetOpen(false)}
-                        onSignOut={confirmSignOut}
-                        onDeleteAccount={confirmDelete}
-                    />
-                </>
-            :
-                <View style={homeBtns.signInBtn}>
-                    <Button
-                        title="Sign In/ Create Account"
-                        onPress={() => nav.navigate('SignIn')}
-                        color="#F0FFFF"
-                    />
-                </View>
-            }
+                )}
 
-
+                <View style={{ height: 16 }} />
+            </View>
         </SafeAreaView>
     );
 }
@@ -127,7 +129,7 @@ export const homeBtns = StyleSheet.create({
         borderRadius: 25,
         backgroundColor: colors.signIn,
         alignItems: 'center',
-        marginHorizontal: 80
+        width: 275
     },
     mainBtn: {
         borderRadius: 25,
