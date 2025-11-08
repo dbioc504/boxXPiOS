@@ -5,7 +5,7 @@
   },
   "build": {
     "development": {
-      "node": "20.18.0",
+      "node": "20.20.1",
       "developmentClient": true,
       "env": {
         "EXPO_PUBLIC_USE_SUPABASE": "true"
@@ -13,11 +13,11 @@
       "distribution": "internal"
     },
     "preview": {
-      "node": "20.18.0",
+      "node": "20.20.1",
       "distribution": "internal"
     },
     "production": {
-      "node": "20.18.0",
+      "node": "20.20.1",
       "autoIncrement": true,
       "env": {
         "EXPO_PUBLIC_USE_SUPABASE": "true"
