@@ -47,7 +47,7 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.4",
-    "@react-native/assets-registry": "^0.82.1",
+    "@react-native/assets-registry": "0.75.4",
     "@types/jest": "29.5.14",
     "@types/react": "~19.1.10",
     "jest": "~29.7.0",
@@ -57,6 +57,11 @@
   "private": true,
   "packageManager": "yarn@1.22.22",
   "resolutions": {
-    "expo-web-browser": "~15.0.9"
+    "expo-web-browser": "~15.0.9",
+    "@react-native/babel-preset": "0.75.4",
+    "@react-native/codegen": "0.75.4",
+    "@react-native/dev-middleware": "0.75.4",
+    "@react-native/debugger-frontend": "0.75.4",
+    "@react-native/normalize-colors": "0.75.4"
   }
 }
