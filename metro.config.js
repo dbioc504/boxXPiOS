@@ -16,4 +16,9 @@ config.resolver = {
   sourceExts: [...resolver.sourceExts, "svg"],
 };
 
+if (config.watcher) {
+  delete config.watcher.unstable_lazySha1;
+  delete config.watcher.unstable_autoSaveCache;
+}
+
 module.exports = config;

@@ -33,7 +33,6 @@ const config: ExpoConfig = {
       CFBundleDisplayName: "BoxXP+",
       ITSAppUsesNonExemptEncryption: false,
     },
-    buildNumber: process.env.IOS_BUILD_NUMBER ?? "1",
   },
   web: {
     favicon: "./assets/favicon.png",
