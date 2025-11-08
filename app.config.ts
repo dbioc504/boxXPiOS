@@ -16,7 +16,7 @@ const config: ExpoConfig = {
   platforms: ["ios"],
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/appStoreLogo.png",
+  icon: "./assets/appStoreLogo1.png",
   userInterfaceStyle: "dark",
   newArchEnabled: true,
   splash: {
