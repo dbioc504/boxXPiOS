@@ -16,11 +16,11 @@ const config: ExpoConfig = {
   platforms: ["ios"],
   version: "1.0.0",
   orientation: "portrait",
-  icon: "./assets/icon.png",
-  userInterfaceStyle: "light",
+  icon: "./assets/appStoreLogo.png",
+  userInterfaceStyle: "dark",
   newArchEnabled: true,
   splash: {
-    image: "./assets/splash-icon.png",
+    image: "./assets/appStoreSplash.png",
     resizeMode: "contain",
     backgroundColor: "#120B17",
   },
@@ -30,6 +30,7 @@ const config: ExpoConfig = {
     bundleIdentifier: "com.dominickbioc.boxxp",
     usesAppleSignIn: true,
     infoPlist: {
+      CFBundleDisplayName: "BoxXP+",
       ITSAppUsesNonExemptEncryption: false,
     },
     buildNumber: process.env.IOS_BUILD_NUMBER ?? "1",
@@ -43,7 +44,6 @@ const config: ExpoConfig = {
     "expo-apple-authentication",
     "expo-audio",
     "expo-web-browser",
-    "expo-local-authentication",
     "expo-asset"
   ],
   extra: {

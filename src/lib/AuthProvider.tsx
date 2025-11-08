@@ -1,7 +1,7 @@
 // src/lib/AuthProvider.tsx
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { Alert } from 'react-native';
 import { supabase } from '@/lib/supabase';
-import * as LocalAuthentication from "expo-local-authentication";
 
 type AuthUser = {
     id: string;
@@ -54,18 +54,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     const deleteAccount = async () => {
-        try {
-            const avail = await LocalAuthentication.hasHardwareAsync();
-            const enrolled = avail ? await LocalAuthentication.isEnrolledAsync() : false;
-            if (enrolled) {
-                const res = await LocalAuthentication.authenticateAsync({
-                    promptMessage: "Confirm Identification to Delete Account",
-                    cancelLabel: "Cancel",
-                    disableDeviceFallback: false,
-                });
-                if (!res.success) return;
-            }
-        } catch {}
+        const confirmed = await new Promise<boolean>((resolve) => {
+            Alert.alert(
+                'Delete Account',
+                'This will permanently delete your account and associated data. This action cannot be undone.',
+                [
+                    { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+                    { text: 'Delete', style: 'destructive', onPress: () => resolve(true) },
+                ]
+            );
+        });
+        if (!confirmed) return;
 
         const { data, error } = await supabase.functions.invoke('delete-account', { body: {} });
         if (error) {
