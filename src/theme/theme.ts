@@ -31,9 +31,9 @@ export const theme = {
 
 export const sharedStyle = StyleSheet.create({
     safeArea: {
+        flex: 1,
         backgroundColor: colors.background,
         flexDirection:"column",
-        paddingBottom: 20
     },
     headerRow: {
         flexDirection: 'row',
