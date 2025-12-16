@@ -63,6 +63,7 @@ export default function TimerRunScreen() {
 
     const prevPhaseRef = useRef<Phase | null>(null);
     const [mechPlan, setMechPlan] = useState<MechanicsPlanSaved | null>(null);
+    const pausedAtRef = useRef<number | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -163,9 +164,18 @@ export default function TimerRunScreen() {
                 bgAt.current = Date.now();
             }
             if (appState.current.match(/inactive|background/) && next === "active") {
-                if (bgAt.current && ps && isRunning) {
+                if (
+                    bgAt.current &&
+                    ps &&
+                    isRunning &&
+                    pausedAtRef.current == null
+                ) {
                     const away = Date.now() - bgAt.current;
-                    setPs((cur) => (cur ? { ...cur, phaseStartAtMs: cur.phaseStartAtMs - away } : cur));
+                    setPs(cur =>
+                        cur
+                            ? { ...cur, phaseStartAtMs: cur.phaseStartAtMs + away }
+                            : cur
+                    );
                 }
                 bgAt.current = null;
             }
@@ -288,6 +298,24 @@ export default function TimerRunScreen() {
             ? CATEGORY_LABEL[combosForRound[0].category as Category]?.toUpperCase?.() ?? ""
             : "";
 
+    const onToggleRun = () => {
+        if (isRunning) {
+            pausedAtRef.current = Date.now();
+            setIsRunning(false);
+        } else {
+            if (pausedAtRef.current && ps) {
+                const pausedFor = Date.now() - pausedAtRef.current;
+                setPs(cur =>
+                    cur
+                        ? { ...cur, phaseStartAtMs: cur.phaseStartAtMs + pausedFor }
+                        : cur
+                );
+            }
+            pausedAtRef.current = null;
+            setIsRunning(true);
+        }
+    }
+
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
             <ScrollView
@@ -370,7 +398,10 @@ export default function TimerRunScreen() {
             </ScrollView>
 
             <View style={styles.footer}>
-                <PrimaryBtn label={isRunning ? "Pause" : "Resume"} onPress={() => setIsRunning((r) => !r)} />
+                <PrimaryBtn
+                    label={isRunning ? "Pause" : "Resume"}
+                    onPress={onToggleRun}
+                />
             </View>
         </SafeAreaView>
     );

@@ -8,7 +8,8 @@
       "node": "20.19.4",
       "developmentClient": true,
       "env": {
-        "EXPO_PUBLIC_USE_SUPABASE": "true"
+        "EXPO_PUBLIC_USE_SUPABASE": "true",
+        "EXPO_PUBLIC_CHANNEL": "dev"
       },
       "distribution": "internal"
     },
@@ -20,7 +21,7 @@
       "node": "20.19.4",
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_USE_SUPABASE": "true"
+        "EXPO_PUBLIC_USE_SUPABASE": "true",
       }
     }
   },
