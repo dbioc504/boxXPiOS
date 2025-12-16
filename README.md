@@ -47,12 +47,3 @@ Soon to be deployed on the official Apple **App Store** for **iOS**.
 | **Design System** | Custom fonts, icons, and colors in `/src/theme/` |
 
 ---
-
-## Environment Setup
-- Duplicate `.env.example` as `.env` and populate `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_USE_SUPABASE`, and `IOS_BUILD_NUMBER` for local runs.
-- When building with EAS, set the same variables as project-scoped secrets, for example:
-  - `eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value https://your-project.supabase.co`
-  - `eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value <anon-key>`
-  - `eas secret:create --scope project --name EXPO_PUBLIC_USE_SUPABASE --value true`
-  - `eas secret:create --scope project --name IOS_BUILD_NUMBER --value 1.0.0`
-- Expo automatically exposes variables prefixed with `EXPO_PUBLIC_` at runtime; update them per environment before creating a build.
