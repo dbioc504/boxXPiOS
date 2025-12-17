@@ -26,6 +26,7 @@ import {
 } from "@/screens/Timer/mechanicsPlanner";
 import type { Mechanic } from "@/types/mechanic";
 import { MOVEMENT_LABEL } from "@/types/common";
+import {derivePhaseAtTime, Timeline} from "@/screens/Timer/timeline";
 
 type Phase = "getReady" | "round" | "rest" | "done";
 
@@ -57,13 +58,10 @@ export default function TimerRunScreen() {
     const [now, setNowMs] = useState(() => Date.now());
 
     const tickRef = useRef<NodeJS.Timeout | null>(null);
-    const appState = useRef<AppStateStatus>(AppState.currentState);
-    const bgAt = useRef<number | null>(null);
     const { playBell, playClack } = useTimerSounds();
 
     const prevPhaseRef = useRef<Phase | null>(null);
     const [mechPlan, setMechPlan] = useState<MechanicsPlanSaved | null>(null);
-    const pausedAtRef = useRef<number | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -150,66 +148,50 @@ export default function TimerRunScreen() {
         })();
     }, []);
 
+    const [timeline, setTimeline] = useState<Timeline | null>(null);
+
     useEffect(() => {
         if (!cfg) return;
-        const first = makePhase(cfg.warmupSec > 0 ? "getReady" : "round", 0, cfg);
-        setPs(first);
+
+        const first = makePhase(cfg.warmupSec > 0 ? "getReady" : "round", 0, cfg, now);
+
+        setTimeline({
+            anchorMs: Date.now(),
+            ps: first,
+            cfg,
+        });
+
         setIsRunning(true);
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }, [cfg]);
 
     useEffect(() => {
-        const sub = AppState.addEventListener("change", (next) => {
-            if (appState.current.match(/active/) && next.match(/inactive|background/)) {
-                bgAt.current = Date.now();
-            }
-            if (appState.current.match(/inactive|background/) && next === "active") {
-                if (
-                    bgAt.current &&
-                    ps &&
-                    isRunning &&
-                    pausedAtRef.current == null
-                ) {
-                    const away = Date.now() - bgAt.current;
-                    setPs(cur =>
-                        cur
-                            ? { ...cur, phaseStartAtMs: cur.phaseStartAtMs + away }
-                            : cur
-                    );
-                }
-                bgAt.current = null;
-            }
-            appState.current = next;
-        });
-        return () => sub.remove();
-    }, [ps, isRunning]);
-
-    useEffect(() => {
-        if (!ps || !cfg) return;
+        if (!timeline || !cfg) return;
 
         const loop = () => {
             if (!isRunning) return;
+
             tickRef.current = setTimeout(() => {
+                if (!isRunning) return;
+
                 const t = Date.now();
                 setNowMs(t);
 
-                const rem = remainingMs(ps, t);
-                if (rem <= 0) {
-                    const next = nextPhase(ps, cfg);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-                    setPs(next);
-                    if (next.phase === "done") {
-                        setIsRunning(false);
-                        return;
-                    }
+                const derived = derivePhaseAtTime(timeline, t);
+                setPs(derived);
+
+                if (derived.phase === "done") {
+                    setIsRunning(false);
+                } else {
+                    loop();
                 }
-                loop();
             }, TICK_MS);
         };
 
         loop();
+
         return () => tickRef.current && clearTimeout(tickRef.current);
-    }, [ps, isRunning, cfg]);
+    }, [timeline, isRunning, cfg]);
 
     useEffect(() => {
         if (!comboIds || comboIds.length === 0) { setSelectedCombos([]); return; }
@@ -299,22 +281,36 @@ export default function TimerRunScreen() {
             : "";
 
     const onToggleRun = () => {
-        if (isRunning) {
-            pausedAtRef.current = Date.now();
+        const now = Date.now();
+
+        if (isRunning && timeline) {
+            const cur = derivePhaseAtTime(timeline, now);
+            const rem = remainingMs(cur, now);
+
+            setTimeline({
+                anchorMs: now,
+                ps: {
+                    ...cur,
+                    phaseDurationMs: rem,
+                    phaseStartAtMs: now,
+                },
+                cfg: timeline.cfg
+            });
+
             setIsRunning(false);
-        } else {
-            if (pausedAtRef.current && ps) {
-                const pausedFor = Date.now() - pausedAtRef.current;
-                setPs(cur =>
-                    cur
-                        ? { ...cur, phaseStartAtMs: cur.phaseStartAtMs + pausedFor }
-                        : cur
-                );
-            }
-            pausedAtRef.current = null;
+        } else if (!isRunning && timeline) {
+            setTimeline({
+                ...timeline,
+                anchorMs: now,
+                ps: {
+                    ...timeline.ps,
+                    phaseStartAtMs: now,
+                },
+            });
+
             setIsRunning(true);
         }
-    }
+    };
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
@@ -432,32 +428,19 @@ function MechanicCard({ item }: { item: Mechanic }) {
 }
 
 
-function makePhase(phase: Phase, roundIndex: number, cfg: TimerConfig): PhaseState {
-    const now = Date.now();
+function makePhase(
+    phase: Phase,
+    roundIndex: number,
+    cfg: TimerConfig,
+    startAtMs: number
+): PhaseState {
     const durMs =
         phase === "getReady" ? cfg.warmupSec * 1000 :
             phase === "round" ? cfg.roundSec * 1000 :
                 phase === "rest" ? cfg.restSec * 1000 : 0;
-    return { phase, roundIndex, phaseDurationMs: durMs, phaseStartAtMs: now };
+    return { phase, roundIndex, phaseDurationMs: durMs, phaseStartAtMs: startAtMs };
 }
 
-function nextPhase(ps: PhaseState, cfg: TimerConfig): PhaseState {
-    switch (ps.phase) {
-        case "getReady":
-            return makePhase("round", 0, cfg);
-        case "round": {
-            const isLast = ps.roundIndex >= cfg.rounds - 1;
-            if (isLast) return makePhase("done", ps.roundIndex, cfg);
-            if (cfg.restSec <= 0) return makePhase("round", ps.roundIndex + 1, cfg);
-            return makePhase("rest", ps.roundIndex, cfg);
-        }
-        case "rest":
-            return makePhase("round", ps.roundIndex + 1, cfg);
-        case "done":
-        default:
-            return makePhase("done", ps.roundIndex, cfg);
-    }
-}
 
 function remainingMs(ps: PhaseState, now: number) {
     return ps.phaseDurationMs - (now - ps.phaseStartAtMs);
