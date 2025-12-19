@@ -27,3 +27,10 @@ export function derivePhaseAtTime(
 
     return cur;
 }
+
+export function advanceTimeline(
+    timeline: Timeline,
+    now: number
+): PhaseState {
+    return derivePhaseAtTime(timeline, now);
+}

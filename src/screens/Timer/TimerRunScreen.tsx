@@ -27,6 +27,7 @@ import {
 import type { Mechanic } from "@/types/mechanic";
 import { MOVEMENT_LABEL } from "@/types/common";
 import {derivePhaseAtTime, Timeline} from "@/screens/Timer/timeline";
+import {nextPhase} from "@/screens/Timer/cues";
 
 type Phase = "getReady" | "round" | "rest" | "done";
 
@@ -62,6 +63,9 @@ export default function TimerRunScreen() {
 
     const prevPhaseRef = useRef<Phase | null>(null);
     const [mechPlan, setMechPlan] = useState<MechanicsPlanSaved | null>(null);
+
+    const appState = useRef<AppStateStatus>(AppState.currentState);
+    const backgroundedAt = useRef<number | null>(null);
 
     useEffect(() => {
         (async () => {
@@ -192,6 +196,39 @@ export default function TimerRunScreen() {
 
         return () => tickRef.current && clearTimeout(tickRef.current);
     }, [timeline, isRunning, cfg]);
+
+    useEffect(() => {
+        const sub = AppState.addEventListener("change", (nextState) => {
+            const prevState = appState.current;
+            appState.current = nextState;
+
+            if (
+                prevState === "active" &&
+                (nextState === "inactive" || nextState === "background")
+            ) {
+                if (isRunning) {
+                    backgroundedAt.current = Date.now();
+                }
+            }
+
+            if (
+                (prevState === "inactive" || prevState === "background") &&
+                nextState === "active"
+            ) {
+                if (isRunning && timeline) {
+                    const now = Date.now();
+
+                    const derived = derivePhaseAtTime(timeline, now);
+                    setPs(derived);
+                    setNowMs(now);
+                }
+
+                backgroundedAt.current = null;
+            }
+        });
+
+        return () => sub.remove();
+    }, [isRunning, timeline]);
 
     useEffect(() => {
         if (!comboIds || comboIds.length === 0) { setSelectedCombos([]); return; }
