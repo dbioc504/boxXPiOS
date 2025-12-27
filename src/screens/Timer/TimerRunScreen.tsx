@@ -1,50 +1,48 @@
 // src/screens/Timer/TimerRunScreen.tsx
-import React, {useEffect, useMemo, useRef, useState} from "react";
-import {AppState, AppStateStatus, FlatList, Pressable, ScrollView, StyleSheet, View} from "react-native";
-import {SafeAreaView} from "react-native-safe-area-context";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { FlatList, Pressable, ScrollView, StyleSheet, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
-import {BodyText, Header} from "@/theme/T";
-import {colors, sharedStyle} from "@/theme/theme";
-import {fmtMMSS} from "@/lib/time";
-import {DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig} from "@/types/timer";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import {useKeepAwake} from "expo-keep-awake";
-import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
-import {type Category, CATEGORY_LABEL} from "@/types/common";
-import {useTenSecondClack, useTimerSounds} from "@/screens/Timer/useTimerSounds";
-import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
-import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
-import {useAuth} from "@/lib/AuthProvider";
-import {ComboMeta} from "@/lib/repos/combos.repo";
-import {ComboRow} from "@/screens/Combos/ComboRow";
+import { useKeepAwake } from "expo-keep-awake";
+
+import { BodyText, Header } from "@/theme/T";
+import { colors, sharedStyle } from "@/theme/theme";
+import { fmtMMSS } from "@/lib/time";
+
+import { DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig } from "@/types/timer";
+import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved } from "@/types/skillPlan";
+import { type Category, CATEGORY_LABEL, MOVEMENT_LABEL } from "@/types/common";
+
+import { useTenSecondClack, useTimerSounds } from "@/screens/Timer/useTimerSounds";
+
+import { COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved } from "@/types/comboDisplay";
+import { useCombosRepo } from "@/lib/repos/CombosRepoContext";
+import { useAuth } from "@/lib/AuthProvider";
+import { ComboMeta } from "@/lib/repos/combos.repo";
+import { ComboRow } from "@/screens/Combos/ComboRow";
 import { buildComboRoundSchedule, deriveFocusSeqFromCombos } from "./comboPlanner";
 import { COMBO_PLAN_STORE_KEY, type ComboPlanSaved } from "@/screens/Timer/comboPlanner";
+
 import { BASE_MECHANICS_CATALOG } from "@/screens/Mechanics/mechanicsCatalog.base";
-import {
-    MECH_PLAN_STORE_KEY,
-    type MechanicsPlanSaved,
-} from "@/screens/Timer/mechanicsPlanner";
+import { MECH_PLAN_STORE_KEY, type MechanicsPlanSaved } from "@/screens/Timer/mechanicsPlanner";
 import type { Mechanic } from "@/types/mechanic";
-import { MOVEMENT_LABEL } from "@/types/common";
-import {derivePhaseAtTime, Timeline} from "@/screens/Timer/timeline";
-import {nextPhase} from "@/screens/Timer/cues";
 
-type Phase = "getReady" | "round" | "rest" | "done";
+import type { PhaseState } from "@/screens/Timer/cues";
+import type { Timeline } from "@/screens/Timer/timeline";
 
-type PhaseState = {
-    phase: Phase;
-    roundIndex: number;
-    phaseDurationMs: number;
-    phaseStartAtMs: number;
-};
+import { createTimerScheduler } from "@/screens/Timer/timerScheduler";
 
 const TICK_MS = 80;
 
 export default function TimerRunScreen() {
     useKeepAwake();
+
     const repo = useCombosRepo();
     const { user } = useAuth();
     const userId = user?.id ?? null;
+
+    const { playBell, playClack } = useTimerSounds();
 
     const [cfg, setCfg] = useState<TimerConfig | null>(null);
     const [plan, setPlan] = useState<SkillPlanSaved | null>(null);
@@ -54,19 +52,55 @@ export default function TimerRunScreen() {
     const [collapsedCombos, setCollapsedCombos] = useState<Set<string>>(new Set());
     const [comboPlan, setComboPlan] = useState<ComboPlanSaved | null>(null);
 
+    const [mechPlan, setMechPlan] = useState<MechanicsPlanSaved | null>(null);
+
+    const [timeline, setTimeline] = useState<Timeline | null>(null);
     const [ps, setPs] = useState<PhaseState | null>(null);
+
     const [isRunning, setIsRunning] = useState(false);
     const [now, setNowMs] = useState(() => Date.now());
 
-    const tickRef = useRef<NodeJS.Timeout | null>(null);
-    const { playBell, playClack } = useTimerSounds();
+    const [remainMsState, setRemainMsState] = useState(0);
+    const [remainSecState, setRemainSecState] = useState(0);
+    const [progress01, setProgress01] = useState(0);
 
-    const prevPhaseRef = useRef<Phase | null>(null);
-    const [mechPlan, setMechPlan] = useState<MechanicsPlanSaved | null>(null);
+    const cbRef = useRef({
+        playBell: (fn: () => void) => fn(),
+        playClack: (fn: () => void)=> fn(),
+    });
 
-    const appState = useRef<AppStateStatus>(AppState.currentState);
-    const backgroundedAt = useRef<number | null>(null);
+    useEffect(() => {
+        cbRef.current.playBell = (fn: () => void) => fn();
+        cbRef.current.playClack = (fn: () => void) => fn();
+    }, []);
 
+    const schedulerRef = useRef(
+        createTimerScheduler({
+            tickMs: TICK_MS,
+            callbacks: {
+                onTick: ({ now, ps, remainMs, remainSec, progress01 }) => {
+                    setNowMs(now);
+                    setPs(ps);
+                    setRemainMsState(remainMs);
+                    setRemainSecState(remainSec);
+                    setProgress01(progress01);
+                },
+                onPhaseChange: () => {
+                    playBell();
+                },
+                onDone: () => {
+                    setIsRunning(false);
+                },
+            },
+        })
+    );
+
+    // Attach AppState handling
+    useEffect(() => {
+        const detach = schedulerRef.current.attachAppState();
+    }, []);
+
+    // load mechanics plan
     useEffect(() => {
         (async () => {
             try {
@@ -78,27 +112,7 @@ export default function TimerRunScreen() {
         })();
     }, []);
 
-    const mechanicsForCurrentRound = useMemo<Mechanic[]>(() => {
-        if (!mechPlan || !ps || ps.phase !== "round") return [];
-        const entry = mechPlan.roundsMap.find(e => e.roundIndex === ps.roundIndex);
-        if (!entry || !entry.mechanicIds?.length) return [];
-
-        const byId = new Map(BASE_MECHANICS_CATALOG.items.map(m => [m.id, m] as const));
-        return entry.mechanicIds.map(id => byId.get(id)).filter(Boolean) as Mechanic[];
-    }, [mechPlan, ps?.phase, ps?.roundIndex]);
-
-    useEffect(() => {
-        setCollapsedCombos(new Set());
-    }, [ps?.roundIndex]);
-
-    useEffect(() => {
-        if (!ps) return;
-        if (ps.phase !== prevPhaseRef.current) {
-            playBell();
-            prevPhaseRef.current = ps.phase;
-        }
-    }, [ps, playBell]);
-
+    // load timer cfg and skills plan
     useEffect(() => {
         (async () => {
             try {
@@ -122,6 +136,7 @@ export default function TimerRunScreen() {
         })();
     }, []);
 
+    // load combo plan
     useEffect(() => {
         (async () => {
             try {
@@ -131,14 +146,7 @@ export default function TimerRunScreen() {
         })();
     }, []);
 
-    const combosForCurrentRound = useMemo(() => {
-        if (!comboPlan || !ps || ps.phase !== "round") return [];
-        const entry = comboPlan.roundsMap.find(e => e.roundIndex === ps.roundIndex);
-        if (!entry) return [];
-        const byId = new Map(selectedCombos.map(c => [c.id, c] as const));
-        return entry.comboIds.map(id => byId.get(id)).filter(Boolean) as ComboMeta[];
-    }, [comboPlan, ps?.phase, ps?.roundIndex, selectedCombos]);
-
+    // load combo dislay section
     useEffect(() => {
         (async () => {
             try {
@@ -152,84 +160,7 @@ export default function TimerRunScreen() {
         })();
     }, []);
 
-    const [timeline, setTimeline] = useState<Timeline | null>(null);
-
-    useEffect(() => {
-        if (!cfg) return;
-
-        const first = makePhase(cfg.warmupSec > 0 ? "getReady" : "round", 0, cfg, now);
-
-        setTimeline({
-            anchorMs: Date.now(),
-            ps: first,
-            cfg,
-        });
-
-        setIsRunning(true);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    }, [cfg]);
-
-    useEffect(() => {
-        if (!timeline || !cfg) return;
-
-        const loop = () => {
-            if (!isRunning) return;
-
-            tickRef.current = setTimeout(() => {
-                if (!isRunning) return;
-
-                const t = Date.now();
-                setNowMs(t);
-
-                const derived = derivePhaseAtTime(timeline, t);
-                setPs(derived);
-
-                if (derived.phase === "done") {
-                    setIsRunning(false);
-                } else {
-                    loop();
-                }
-            }, TICK_MS);
-        };
-
-        loop();
-
-        return () => tickRef.current && clearTimeout(tickRef.current);
-    }, [timeline, isRunning, cfg]);
-
-    useEffect(() => {
-        const sub = AppState.addEventListener("change", (nextState) => {
-            const prevState = appState.current;
-            appState.current = nextState;
-
-            if (
-                prevState === "active" &&
-                (nextState === "inactive" || nextState === "background")
-            ) {
-                if (isRunning) {
-                    backgroundedAt.current = Date.now();
-                }
-            }
-
-            if (
-                (prevState === "inactive" || prevState === "background") &&
-                nextState === "active"
-            ) {
-                if (isRunning && timeline) {
-                    const now = Date.now();
-
-                    const derived = derivePhaseAtTime(timeline, now);
-                    setPs(derived);
-                    setNowMs(now);
-                }
-
-                backgroundedAt.current = null;
-            }
-        });
-
-        return () => sub.remove();
-    }, [isRunning, timeline]);
-
+    // load selected combos from repo
     useEffect(() => {
         if (!comboIds || comboIds.length === 0) { setSelectedCombos([]); return; }
 
@@ -248,12 +179,54 @@ export default function TimerRunScreen() {
         return () => { alive = false };
     }, [repo, comboIds, userId]);
 
-    const remain = ps ? Math.max(0, remainingMs(ps, now)) : 0;
-    const remainSec = Math.ceil(remain / 1000);
+    // build timeline once cfg is ready, then hand it to scheduler and start
+    useEffect(() => {
+        if (!cfg) return;
 
-    useTenSecondClack(remainSec, ps?.phase, ps?.roundIndex, playClack);
+        const startNow = Date.now();
 
-    const progress = ps ? 1 - remain / ps.phaseDurationMs : 0;
+        const first: PhaseState = makePhase(cfg.warmupSec > 0 ? "getReady" : "round", 0, cfg, startNow);
+
+        const tl: Timeline = {
+            anchorMs: startNow,
+            ps: first,
+            cfg
+        };
+
+        setTimeline(tl);
+        setPs(first);
+        setNowMs(startNow);
+
+        schedulerRef.current.setTimeline(tl);
+        schedulerRef.current.start();
+        setIsRunning(true);
+
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }, [cfg]);
+
+    // reset collapsed combos per round
+    useEffect(() => {
+        setCollapsedCombos(new Set());
+    }, [ps?.roundIndex]);
+
+    const mechanicsForCurrentRound = useMemo<Mechanic[]>(() => {
+        if (!mechPlan || !ps || ps.phase !== "round") return [];
+        const entry = mechPlan.roundsMap.find(e => e.roundIndex === ps.roundIndex);
+        if (!entry || !entry.mechanicIds?.length) return [];
+
+        const byId = new Map(BASE_MECHANICS_CATALOG.items.map(m => [m.id, m] as const));
+        return entry.mechanicIds.map(id => byId.get(id)).filter(Boolean) as Mechanic[];
+    }, [mechPlan, ps?.phase, ps?.roundIndex]);
+
+    const combosForCurrentRound = useMemo(() => {
+        if (!comboPlan || !ps || ps.phase !== "round") return [];
+        const entry = comboPlan.roundsMap.find(e => e.roundIndex === ps.roundIndex);
+        if (!entry) return [];
+        const byId = new Map(selectedCombos.map(c => [c.id, c] as const));
+        return entry.comboIds.map(id => byId.get(id)).filter(Boolean) as ComboMeta[];
+    }, [comboPlan, ps?.phase, ps?.roundIndex, selectedCombos]);
+
+    useTenSecondClack(remainSecState, ps?.phase, ps?.roundIndex, playClack);
 
     const phaseLabel =
         ps?.phase === "getReady" ? "GET READY" :
@@ -305,7 +278,7 @@ export default function TimerRunScreen() {
         return deriveFocusSeqFromCombos(rounds, selectedCombos);
     }, [plan, cfg, rounds, selectedCombos]);
 
-    const comboSchedule = useMemo<ComboMeta[][]>(() => {
+    useMemo(() => {
         if (!selectedCombos.length) return Array.from({ length: rounds }, () => []);
         return buildComboRoundSchedule(rounds, selectedCombos, focusSeq);
     }, [rounds, selectedCombos, focusSeq]);
@@ -318,36 +291,20 @@ export default function TimerRunScreen() {
             : "";
 
     const onToggleRun = () => {
-        const now = Date.now();
+        if (!timeline) return;
 
-        if (isRunning && timeline) {
-            const cur = derivePhaseAtTime(timeline, now);
-            const rem = remainingMs(cur, now);
-
-            setTimeline({
-                anchorMs: now,
-                ps: {
-                    ...cur,
-                    phaseDurationMs: rem,
-                    phaseStartAtMs: now,
-                },
-                cfg: timeline.cfg
-            });
-
+        if (isRunning) {
+            schedulerRef.current.pause();
             setIsRunning(false);
-        } else if (!isRunning && timeline) {
-            setTimeline({
-                ...timeline,
-                anchorMs: now,
-                ps: {
-                    ...timeline.ps,
-                    phaseStartAtMs: now,
-                },
-            });
-
-            setIsRunning(true);
+            return;
         }
+
+        schedulerRef.current.resume();
+        setIsRunning(true);
     };
+
+    const remainSecForUi = remainSecState;
+    const progressForUi = Math.min(1, Math.max(0, progress01));
 
     return (
         <SafeAreaView style={[sharedStyle.safeArea, styles.screen, { backgroundColor: color }]}>
@@ -358,12 +315,12 @@ export default function TimerRunScreen() {
                 <Header title={phaseLabel}/>
 
                 {/*<BodyText style={[styles.phase, { color: colors.offWhite }]}>{phaseLabel}</BodyText>*/}
-                <BodyText style={styles.time}>{fmtMMSS(remainSec)}</BodyText>
+                <BodyText style={styles.time}>{fmtMMSS(remainSecForUi)}</BodyText>
 
                 <View style={styles.progressWrap}>
                     <View style={[
                         styles.progressBar,
-                        { width: `${Math.min(100, Math.max(0, progress * 100))}%`, backgroundColor: color }
+                        { width: `${Math.min(100, Math.max(0, progressForUi * 100))}%`, backgroundColor: color }
                     ]}/>
                 </View>
 
@@ -466,7 +423,7 @@ function MechanicCard({ item }: { item: Mechanic }) {
 
 
 function makePhase(
-    phase: Phase,
+    phase: "getReady" | "round" | "rest" | "done",
     roundIndex: number,
     cfg: TimerConfig,
     startAtMs: number
