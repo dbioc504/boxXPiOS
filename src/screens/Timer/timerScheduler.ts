@@ -1,6 +1,7 @@
 import {PhaseState, remainingMs} from "@/screens/Timer/cues";
 import {derivePhaseAtTime, Timeline} from "@/screens/Timer/timeline";
 import {AppState, AppStateStatus} from "react-native";
+import { audioSession } from "@/audioSession";
 
 export type TimerSchedulerCallbacks = {
     onTick?: (args: { now: number; ps: PhaseState; remainMs: number; remainSec: number; progress01: number }) => void;
@@ -26,6 +27,7 @@ export function createTimerScheduler(params: {
     tickMs: number;
     callbacks?: TimerSchedulerCallbacks;
 }): TimerScheduler {
+    let lastTenSecondRound: number | null = null;
     const tickMs = params.tickMs ?? 80;
     const cb = params.callbacks ?? {};
 
@@ -68,6 +70,21 @@ export function createTimerScheduler(params: {
 
         if (phaseChanged) {
             cb.onPhaseChange?.({ now, prev: prevPs, next: ps });
+
+            if (ps.phase === "round") {
+                audioSession.playBell();
+                lastTenSecondRound = null;
+            }
+
+            if (ps.phase === "rest") {
+                audioSession.playClack();
+            }
+
+            if (ps.phase === "done") {
+                audioSession.playBell();
+                audioSession.stopKeepAlive();
+            }
+
             prevPs = ps;
         } else {
             prevPs = ps;
@@ -79,6 +96,15 @@ export function createTimerScheduler(params: {
 
         cb.onTick?.({ now, ps, remainMs: rem, remainSec, progress01 });
 
+        if (
+            ps.phase === "round" &&
+            remainSec === 10 &&
+            ps.roundIndex !== lastTenSecondRound
+        ) {
+            lastTenSecondRound = ps.roundIndex;
+            audioSession.playClack();
+        }
+
         if (ps.phase === "done") {
             isRunning = false;
             clearTick();
@@ -89,10 +115,10 @@ export function createTimerScheduler(params: {
         tickHandle = setTimeout(tickOnce, tickMs);
     }
 
-    function start() {
-        if (isRunning) return;
-        if (!timeline) return;
+    async function start() {
+        if (isRunning || !timeline) return;
 
+        await audioSession.startKeepAlive();
         isRunning = true;
         clearTick();
         tickOnce();
@@ -101,12 +127,14 @@ export function createTimerScheduler(params: {
     function stop() {
         isRunning = false;
         clearTick();
+        audioSession.stopKeepAlive();
     }
 
     function pause() {
         if (!isRunning) return;
         if (!timeline) return;
 
+        audioSession.stopKeepAlive();
         const now = Date.now();
         const cur = derivePhaseAtTime(timeline, now);
         const rem = Math.max(0, remainingMs(cur, now));
@@ -125,10 +153,11 @@ export function createTimerScheduler(params: {
         clearTick();
     }
 
-    function resume() {
+    async function resume() {
         if (isRunning) return;
         if (!timeline) return;
 
+        await audioSession.startKeepAlive();
         const now = Date.now();
 
         timeline = {

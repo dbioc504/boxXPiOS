@@ -14,8 +14,6 @@ import { DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig } from "@/types
 import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved } from "@/types/skillPlan";
 import { type Category, CATEGORY_LABEL, MOVEMENT_LABEL } from "@/types/common";
 
-import { useTenSecondClack, useTimerSounds } from "@/screens/Timer/useTimerSounds";
-
 import { COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved } from "@/types/comboDisplay";
 import { useCombosRepo } from "@/lib/repos/CombosRepoContext";
 import { useAuth } from "@/lib/AuthProvider";
@@ -41,8 +39,6 @@ export default function TimerRunScreen() {
     const repo = useCombosRepo();
     const { user } = useAuth();
     const userId = user?.id ?? null;
-
-    const { playBell, playClack } = useTimerSounds();
 
     const [cfg, setCfg] = useState<TimerConfig | null>(null);
     const [plan, setPlan] = useState<SkillPlanSaved | null>(null);
@@ -86,7 +82,6 @@ export default function TimerRunScreen() {
                     setProgress01(progress01);
                 },
                 onPhaseChange: () => {
-                    playBell();
                 },
                 onDone: () => {
                     setIsRunning(false);
@@ -225,8 +220,6 @@ export default function TimerRunScreen() {
         const byId = new Map(selectedCombos.map(c => [c.id, c] as const));
         return entry.comboIds.map(id => byId.get(id)).filter(Boolean) as ComboMeta[];
     }, [comboPlan, ps?.phase, ps?.roundIndex, selectedCombos]);
-
-    useTenSecondClack(remainSecState, ps?.phase, ps?.roundIndex, playClack);
 
     const phaseLabel =
         ps?.phase === "getReady" ? "GET READY" :

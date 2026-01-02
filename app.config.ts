@@ -42,6 +42,7 @@ export default (): ExpoConfig => ({
     infoPlist: {
       CFBundleDisplayName: isDev ? "BoxXP+ Dev" : "BoxXP+",
       ITSAppUsesNonExemptEncryption: false,
+      UIBackgroundModes: ["audio"]
     },
   },
 

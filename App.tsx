@@ -1,6 +1,6 @@
 import 'react-native-gesture-handler'
 import RootNavigator from "./src/navigation/RootNavigator";
-import React from "react";
+import React, {useEffect} from "react";
 import {useFonts} from "expo-font";
 import {ThemeProvider} from "@/theme/ThemeProvider";
 import {SafeAreaProvider} from "react-native-safe-area-context";
@@ -11,6 +11,7 @@ import {StyleProvider} from "@/lib/providers/StyleProvider";
 import {GestureHandlerRootView} from "react-native-gesture-handler";
 import {CombosRepoProvider} from '@/lib/repos/CombosRepoContext';
 import { LogBox } from "react-native";
+import { audioSession } from "@/audioSession";
 
 LogBox.ignoreLogs([
     'Text strings must be rendered within a <Text> component',
@@ -18,6 +19,10 @@ LogBox.ignoreLogs([
 
 
 export default function App() {
+
+    useEffect(() => {
+        audioSession.init();
+    }, []);
 
     const [fontsLoaded] = useFonts({
         FugazOne: require('./assets/fonts/FugazOne-Regular.ttf'),
