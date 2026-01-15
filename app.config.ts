@@ -15,7 +15,7 @@ export default (): ExpoConfig => ({
   owner: "dominickbioc",
   platforms: ["ios"],
 
-  version: "1.0.0",
+  version: "1.0.1",
 
   orientation: "portrait",
   icon: "./assets/appStoreLogo1.png",
@@ -36,6 +36,8 @@ export default (): ExpoConfig => ({
     bundleIdentifier: isDev
       ? "com.dominickbioc.boxxp.dev"
       : "com.dominickbioc.boxxp",
+
+    ...(isDev ? { buildNumber: "1" } : {}),
 
     usesAppleSignIn: true,
 

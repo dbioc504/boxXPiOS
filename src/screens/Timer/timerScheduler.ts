@@ -71,13 +71,17 @@ export function createTimerScheduler(params: {
         if (phaseChanged) {
             cb.onPhaseChange?.({ now, prev: prevPs, next: ps });
 
+            if (ps.phase === "getReady") {
+                audioSession.playBell();
+            }
+
             if (ps.phase === "round") {
                 audioSession.playBell();
                 lastTenSecondRound = null;
             }
 
             if (ps.phase === "rest") {
-                audioSession.playClack();
+                audioSession.playBell();
             }
 
             if (ps.phase === "done") {

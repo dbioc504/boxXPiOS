@@ -1,35 +1,36 @@
 // src/screens/Timer/TimerRunScreen.tsx
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { FlatList, Pressable, ScrollView, StyleSheet, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import React, {useEffect, useMemo, useRef, useState} from "react";
+import {FlatList, Pressable, ScrollView, StyleSheet, View} from "react-native";
+import {SafeAreaView} from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useKeepAwake } from "expo-keep-awake";
+import {useKeepAwake} from "expo-keep-awake";
 
-import { BodyText, Header } from "@/theme/T";
-import { colors, sharedStyle } from "@/theme/theme";
-import { fmtMMSS } from "@/lib/time";
+import {BodyText, Header} from "@/theme/T";
+import {colors, sharedStyle} from "@/theme/theme";
+import {fmtMMSS} from "@/lib/time";
 
-import { DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig } from "@/types/timer";
-import { SKILL_PLAN_STORE_KEY, type SkillPlanSaved } from "@/types/skillPlan";
-import { type Category, CATEGORY_LABEL, MOVEMENT_LABEL } from "@/types/common";
+import {DEFAULT_TIMER_CONFIG, TIMER_STORE_KEY, type TimerConfig} from "@/types/timer";
+import {SKILL_PLAN_STORE_KEY, type SkillPlanSaved} from "@/types/skillPlan";
+import {type Category, CATEGORY_LABEL, MOVEMENT_LABEL} from "@/types/common";
 
-import { COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved } from "@/types/comboDisplay";
-import { useCombosRepo } from "@/lib/repos/CombosRepoContext";
-import { useAuth } from "@/lib/AuthProvider";
-import { ComboMeta } from "@/lib/repos/combos.repo";
-import { ComboRow } from "@/screens/Combos/ComboRow";
-import { buildComboRoundSchedule, deriveFocusSeqFromCombos } from "./comboPlanner";
-import { COMBO_PLAN_STORE_KEY, type ComboPlanSaved } from "@/screens/Timer/comboPlanner";
+import {COMBO_DISPLAY_STORE_KEY, type ComboDisplaySaved} from "@/types/comboDisplay";
+import {useCombosRepo} from "@/lib/repos/CombosRepoContext";
+import {useAuth} from "@/lib/AuthProvider";
+import {ComboMeta} from "@/lib/repos/combos.repo";
+import {ComboRow} from "@/screens/Combos/ComboRow";
+import {buildComboRoundSchedule, deriveFocusSeqFromCombos} from "./comboPlanner";
+import {COMBO_PLAN_STORE_KEY, type ComboPlanSaved} from "@/screens/Timer/comboPlanner";
 
-import { BASE_MECHANICS_CATALOG } from "@/screens/Mechanics/mechanicsCatalog.base";
-import { MECH_PLAN_STORE_KEY, type MechanicsPlanSaved } from "@/screens/Timer/mechanicsPlanner";
-import type { Mechanic } from "@/types/mechanic";
+import {BASE_MECHANICS_CATALOG} from "@/screens/Mechanics/mechanicsCatalog.base";
+import {MECH_PLAN_STORE_KEY, type MechanicsPlanSaved} from "@/screens/Timer/mechanicsPlanner";
+import type {Mechanic} from "@/types/mechanic";
 
-import type { PhaseState } from "@/screens/Timer/cues";
-import type { Timeline } from "@/screens/Timer/timeline";
+import type {PhaseState} from "@/screens/Timer/cues";
+import type {Timeline} from "@/screens/Timer/timeline";
 
-import { createTimerScheduler } from "@/screens/Timer/timerScheduler";
+import {createTimerScheduler} from "@/screens/Timer/timerScheduler";
+
 
 const TICK_MS = 80;
 
@@ -59,6 +60,7 @@ export default function TimerRunScreen() {
     const [remainMsState, setRemainMsState] = useState(0);
     const [remainSecState, setRemainSecState] = useState(0);
     const [progress01, setProgress01] = useState(0);
+
 
     const cbRef = useRef({
         playBell: (fn: () => void) => fn(),
