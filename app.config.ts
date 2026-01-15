@@ -15,7 +15,7 @@ export default (): ExpoConfig => ({
   owner: "dominickbioc",
   platforms: ["ios"],
 
-  version: "1.0.1",
+  version: "1.0.2",
 
   orientation: "portrait",
   icon: "./assets/appStoreLogo1.png",
